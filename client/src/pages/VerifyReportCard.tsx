@@ -1,18 +1,16 @@
 import { useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-import axios from 'axios';
+import { api, apiUrl } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
 import { Badge, Spinner } from '../components/ui';
 import { gradeBadgeClass, ordinal } from '../lib/utils';
 import type { ReportCardDetail } from '../lib/types';
 
-const API = (import.meta.env.VITE_API_URL as string | undefined) || '/api';
-
 /** Public report-card verification / printable view (linked from the QR code). */
 export default function VerifyReportCard() {
   const { code } = useParams<{ code: string }>();
   const { data, loading, error } = useQuery(
-    () => axios.get<ReportCardDetail>(`${API}/report-cards/verify/${code}`).then((r) => r.data),
+    () => api.get<ReportCardDetail>(`/report-cards/verify/${code}`).then((r) => r.data),
     [code],
   );
 
@@ -41,7 +39,7 @@ export default function VerifyReportCard() {
       <div className="print-area card mx-auto max-w-3xl overflow-hidden">
         <div className="bg-indigo-700 px-8 py-6 text-center text-white">
           {data.school.hasBadge && (
-            <img src={`${API}/school/badge`} alt={`${data.school.name} badge`} className="mx-auto mb-3 h-16 w-16 object-contain" />
+            <img src={apiUrl('/school/badge')} alt={`${data.school.name} badge`} className="mx-auto mb-3 h-16 w-16 object-contain" />
           )}
           <h1 className="text-2xl font-extrabold tracking-tight">{data.school.name}</h1>
           <p className="text-sm text-indigo-200">{data.school.motto}</p>

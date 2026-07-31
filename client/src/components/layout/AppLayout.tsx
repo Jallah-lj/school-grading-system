@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/auth';
 import { useToast } from '../toast';
 import { SignatureModal } from '../SignatureModal';
 import { Icon } from '../Icon';
-import { api } from '../../lib/api';
+import { api, apiUrl } from '../../lib/api';
 import { cx, fmtDate, initials } from '../../lib/utils';
 import type { AppNotification, PendingApproval, Role, SchoolPublicInfo } from '../../lib/types';
 
@@ -218,7 +218,7 @@ export function AppLayout() {
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 px-5 py-5">
         {school?.hasBadge
-          ? <img src="/api/school/badge" alt="School badge" className="h-10 w-10 rounded-xl object-contain" />
+          ? <img src={apiUrl('/school/badge')} alt="School badge" className="h-10 w-10 rounded-xl object-contain" />
           : <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-lg font-extrabold text-white">{(school?.name ?? 'S')[0]}</div>}
         <div className="min-w-0">
           <div className="truncate text-sm font-bold leading-tight text-slate-900 dark:text-white">{school?.name ?? 'Grading System'}</div>

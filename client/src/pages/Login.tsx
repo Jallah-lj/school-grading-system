@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { api, apiError } from '../lib/api';
+import { api, apiError, apiUrl } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
 import type { SchoolPublicInfo } from '../lib/types';
 
@@ -52,7 +52,7 @@ export default function Login() {
       <div className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
           {school?.hasBadge
-            ? <img src="/api/school/badge" alt="School badge" className="h-12 w-12 object-contain" />
+            ? <img src={apiUrl('/school/badge')} alt="School badge" className="h-12 w-12 object-contain" />
             : <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl font-extrabold">{(school?.name ?? 'S')[0]}</div>}
           <span className="text-lg font-semibold">{school?.name ?? 'School Grading System'}</span>
         </div>
@@ -75,7 +75,7 @@ export default function Login() {
       <div className="flex flex-1 items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            {school?.hasBadge && <img src="/api/school/badge" alt="" className="h-9 w-9 object-contain" />}
+            {school?.hasBadge && <img src={apiUrl('/school/badge')} alt="" className="h-9 w-9 object-contain" />}
             <div className="text-2xl font-bold">{school?.name ?? 'School Grading System'}</div>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back</h2>

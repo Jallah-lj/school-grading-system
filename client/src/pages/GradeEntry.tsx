@@ -35,6 +35,9 @@ export default function GradeEntry() {
   const [fillEmptyOnly, setFillEmptyOnly] = useState(true);
   const [saveState, setSaveState] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'error'>('idle');
   const cellRefs = useRef<Record<string, Record<string, HTMLInputElement | null>>>({});
+  const editVersionRef = useRef(0);
+  const lastFailedVersionRef = useRef<number | null>(null);
+  const saveInFlightRef = useRef(false);
 
   // ── Reference data ----------------------------------------
   const { data: year } = useQuery(() => api.get<AcademicYear>('/academic-years/active').then((r) => r.data), []);
@@ -93,6 +96,7 @@ export default function GradeEntry() {
   const setCell = (studentId: string, componentId: string, value: string) => {
     if (!/^\d*\.?\d*$/.test(value)) return;
     setCells((m) => ({ ...m, [studentId]: { ...m[studentId], [componentId]: value } }));
+    editVersionRef.current += 1;
     setDirty(true);
   };
 
@@ -140,6 +144,7 @@ export default function GradeEntry() {
       });
       return next;
     });
+    editVersionRef.current += 1;
     setDirty(true);
   };
 
@@ -161,6 +166,7 @@ export default function GradeEntry() {
       }
       return next;
     });
+    editVersionRef.current += 1;
     setDirty(true);
     toast('success', `${fillComp.name} = ${fillValue} applied to ${count} student${count === 1 ? '' : 's'}`);
     setFillComp(null);
@@ -180,7 +186,9 @@ export default function GradeEntry() {
   };
 
   const save = async (silent = false): Promise<boolean> => {
-    if (!grid) return false;
+    if (!grid || saveInFlightRef.current) return false;
+    const savingVersion = editVersionRef.current;
+    saveInFlightRef.current = true;
     setSaving(true);
     try {
       await api.post('/grades/entry', {
@@ -193,13 +201,18 @@ export default function GradeEntry() {
           })),
         })),
       });
-      setDirty(false);
+      // Do not mark the grid clean if the teacher changed another cell while
+      // this request was in flight; the effect below will queue one more save.
+      lastFailedVersionRef.current = null;
+      if (editVersionRef.current === savingVersion) setDirty(false);
       if (!silent) toast('success', 'Marks saved as draft');
       return true;
     } catch (err) {
+      lastFailedVersionRef.current = savingVersion;
       toast('error', apiError(err));
       return false;
     } finally {
+      saveInFlightRef.current = false;
       setSaving(false);
     }
   };
@@ -209,7 +222,7 @@ export default function GradeEntry() {
 
   // Auto-save drafts ~2s after the teacher stops typing.
   useEffect(() => {
-    if (!dirty || !editable || !ready) return;
+    if (!dirty || !editable || !ready || saving || lastFailedVersionRef.current === editVersionRef.current) return;
     setSaveState('dirty');
     const t = setTimeout(() => {
       void (async () => {
@@ -220,7 +233,7 @@ export default function GradeEntry() {
     }, 1800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cells, dirty, editable, ready]);
+  }, [cells, dirty, editable, ready, saving]);
 
   const manualSave = async () => {
     const ok = await save();
