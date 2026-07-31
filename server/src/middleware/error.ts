@@ -42,6 +42,15 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
       res.status(409).json({ error: { code: 'FK_CONSTRAINT', message: 'Related record constraint failed' } });
       return;
     }
+    if (err.code === 'P2024' || err.code === 'P2028') {
+      res.status(503).json({
+        error: {
+          code: 'DATABASE_BUSY',
+          message: 'The database is busy processing another request. Please retry in a moment.',
+        },
+      });
+      return;
+    }
   }
 
   console.error('Unhandled error:', err);

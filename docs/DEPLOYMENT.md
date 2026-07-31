@@ -25,7 +25,7 @@ Target architecture: **Vercel** (frontend) · **Railway/Render** (API) · **Supa
  DATABASE_URL="<supabase-uri>" npm run db:seed
  ```
 
-> Tip: keep direct (non-pooled) URI for `prisma migrate deploy` and the pooled URI in runtime `DATABASE_URL` if you hit prepared-statement issues (PgBouncer): append `?pgbouncer=true&connection_limit=1`.
+> Tip: keep a direct (non-pooled) URI for `prisma migrate deploy`. For this persistent Express API, use Supabase's **session pooler** URI at runtime and allow a small pool, for example `?connection_limit=5&pool_timeout=30`. Do not use `connection_limit=1`: concurrent page queries and grade auto-saves will exhaust a single connection. If you use a transaction-mode PgBouncer endpoint, also add `pgbouncer=true`.
 
 ## 2. API — Railway (Render is analogous)
 
@@ -37,9 +37,17 @@ Target architecture: **Vercel** (frontend) · **Railway/Render** (API) · **Supa
  | `DATABASE_URL` | Supabase URI |
  | `JWT_ACCESS_SECRET` | 32+ char random string |
  | `JWT_REFRESH_SECRET` | different 32+ char random string |
+ | `ACCESS_TOKEN_TTL` | `15m` (raw value, without quotes or `ACCESS_TOKEN_TTL=`) |
  | `CLIENT_URL` | `https://<your-app>.vercel.app` |
  | `SCHOOL_NAME` / `SCHOOL_MOTTO` | your school's branding |
  | `PORT` | `4000` (Railway injects `PORT` automatically — the app respects it) |
+
+ The `DATABASE_URL` value must be the URI itself and start with `postgresql://` (or `postgres://`). In a hosting dashboard, do **not** paste `DATABASE_URL=...`, `<supabase-uri>`, or surrounding quotes. For Supabase runtime connections, use `connection_limit=5&pool_timeout=30` rather than a single connection. If the database is another Railway service, use Railway's reference syntax (replace `Postgres` with the exact service name):
+ ```
+ ${{Postgres.DATABASE_URL}}
+ ```
+ Railway should resolve that reference to the actual URI before starting the API. An unresolved reference or placeholder is not a database URL.
+
 4. Build & start commands:
  ```
  Build: npm install && npm run build

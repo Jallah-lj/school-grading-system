@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icon } from '../components/Icon';
-import { api, apiError } from '../lib/api';
+import { api, apiError, apiUrl } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
 import { useToast } from '../components/toast';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -622,7 +622,7 @@ function SchoolTab() {
             {preview ? (
               <img src={preview} alt="New badge preview" className="h-full w-full object-contain" />
             ) : data.hasBadge ? (
-              <img src={`/api/school/badge?v=${badgeVersion}`} alt="Current badge" className="h-full w-full object-contain" />
+              <img src={`${apiUrl('/school/badge')}?v=${badgeVersion}`} alt="Current badge" className="h-full w-full object-contain" />
             ) : (
               <Icon name="home" size={30} className="text-slate-300 dark:text-slate-600" />
             )}

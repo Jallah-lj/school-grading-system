@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import ExcelJS from 'exceljs';
-import { GradeStatus, Role } from '@prisma/client';
+import { GradeStatus, Prisma, Role } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AppError } from '../lib/errors';
 import { ah, parseBody, parseQuery } from '../lib/helpers';
@@ -99,62 +99,74 @@ gradesRouter.post('/entry', authorize(Role.TEACHER, Role.ADMIN), ah(async (req, 
   const studentIds = body.entries.map((e) => e.studentId);
   const existing = await prisma.gradeEntry.findMany({
     where: { subjectId: body.subjectId, semesterId: body.semesterId, studentId: { in: studentIds } },
-    select: { studentId: true, componentId: true, status: true },
+    select: { studentId: true, componentId: true, score: true, status: true },
   });
-  const statusByKey = new Map(existing.map((e) => [`${e.studentId}:${e.componentId}`, e.status]));
+  const existingByKey = new Map(existing.map((e) => [`${e.studentId}:${e.componentId}`, e]));
+  const operations: Prisma.PrismaPromise<unknown>[] = [];
+  let changedApproved = false;
 
-  await prisma.$transaction(async (tx) => {
-    for (const row of body.entries) {
-      for (const [componentId, score] of Object.entries(row.scores)) {
-        const component = componentById.get(componentId);
-        if (!component) throw AppError.badRequest(`Unknown component ${componentId}`);
-        const key = `${row.studentId}:${componentId}`;
-        const status = statusByKey.get(key);
+  for (const row of body.entries) {
+    for (const [componentId, score] of Object.entries(row.scores)) {
+      const component = componentById.get(componentId);
+      if (!component) throw AppError.badRequest(`Unknown component ${componentId}`);
+      const key = `${row.studentId}:${componentId}`;
+      const current = existingByKey.get(key);
+      const status = current?.status;
 
-        // Marks are locked once published; teachers also cannot touch approved marks.
-        if (status === 'PUBLISHED') throw AppError.conflict('Marks are published. Ask an administrator to unlock them first.');
-        if (status === 'APPROVED' && req.user!.role !== Role.ADMIN) {
-          throw AppError.conflict('Marks have been approved and can no longer be edited by teachers.');
-        }
-
-        if (score === null) {
-          // Deleting a mark: allowed while draft/submitted; admins can also fix approved marks.
-          if (status && (status !== 'APPROVED' || req.user!.role === Role.ADMIN)) {
-            await tx.gradeEntry.deleteMany({ where: { studentId: row.studentId, componentId, semesterId: body.semesterId } });
-          }
-          continue;
-        }
-        if (score > component.maxScore) {
-          throw AppError.badRequest(`Score ${score} exceeds max (${component.maxScore}) for ${component.name}`);
-        }
-
-        await tx.gradeEntry.upsert({
-          where: {
-            studentId_componentId_semesterId: { studentId: row.studentId, componentId, semesterId: body.semesterId },
-          },
-          create: {
-            studentId: row.studentId,
-            componentId,
-            subjectId: body.subjectId,
-            semesterId: body.semesterId,
-            score,
-            enteredById: teacherProfile?.id ?? null,
-            // Admin edits on approved marks keep APPROVED so recomputation stays valid.
-            status: status === 'APPROVED' && req.user!.role === Role.ADMIN ? 'APPROVED' : 'DRAFT',
-          },
-          update: {
-            score,
-            enteredById: teacherProfile?.id ?? undefined,
-            status: status === 'APPROVED' && req.user!.role === Role.ADMIN ? 'APPROVED' : 'DRAFT',
-          },
-        });
+      // Marks are locked once published; teachers also cannot touch approved marks.
+      if (status === 'PUBLISHED') throw AppError.conflict('Marks are published. Ask an administrator to unlock them first.');
+      if (status === 'APPROVED' && req.user!.role !== Role.ADMIN) {
+        throw AppError.conflict('Marks have been approved and can no longer be edited by teachers.');
       }
+
+      if (score === null) {
+        // Do not issue no-op deletes for every empty grid cell.
+        if (current && (status !== 'APPROVED' || req.user!.role === Role.ADMIN)) {
+          changedApproved ||= status === 'APPROVED';
+          operations.push(prisma.gradeEntry.deleteMany({
+            where: { studentId: row.studentId, componentId, semesterId: body.semesterId },
+          }));
+        }
+        continue;
+      }
+      if (score > component.maxScore) {
+        throw AppError.badRequest(`Score ${score} exceeds max (${component.maxScore}) for ${component.name}`);
+      }
+      // Auto-save posts the visible grid. Skip cells that have not changed so a
+      // single edit does not turn into dozens of remote database round trips.
+      if (current?.score === score) continue;
+
+      changedApproved ||= status === 'APPROVED';
+      const nextStatus = status === 'APPROVED' && req.user!.role === Role.ADMIN ? 'APPROVED' : 'DRAFT';
+      operations.push(prisma.gradeEntry.upsert({
+        where: {
+          studentId_componentId_semesterId: { studentId: row.studentId, componentId, semesterId: body.semesterId },
+        },
+        create: {
+          studentId: row.studentId,
+          componentId,
+          subjectId: body.subjectId,
+          semesterId: body.semesterId,
+          score,
+          enteredById: teacherProfile?.id ?? null,
+          // Admin edits on approved marks keep APPROVED so recomputation stays valid.
+          status: nextStatus,
+        },
+        update: {
+          score,
+          enteredById: teacherProfile?.id ?? undefined,
+          status: nextStatus,
+        },
+      }));
     }
-  });
+  }
+
+  // A batch transaction avoids holding an interactive transaction open while
+  // each cell makes a separate round trip to a remote Supabase pooler.
+  if (operations.length > 0) await prisma.$transaction(operations);
 
   // If an admin edited approved marks, recompute immediately so results stay in sync.
-  const hasApproved = existing.some((e) => e.status === 'APPROVED');
-  if (hasApproved && req.user!.role === Role.ADMIN) {
+  if (changedApproved && req.user!.role === Role.ADMIN) {
     await recomputeSubjectResults(body.classId, body.subjectId, body.semesterId);
     await recomputeGpas(body.classId, body.semesterId);
   }
@@ -587,25 +599,24 @@ gradesRouter.post('/import', authorize(Role.TEACHER, Role.ADMIN), spreadsheetUpl
     select: { id: true },
   });
 
-  await prisma.$transaction(async (tx) => {
-    for (const op of ops) {
-      const st = statusByKey.get(`${op.studentId}:${op.componentId}`);
-      const keepApproved = st === 'APPROVED' && isAdmin;
-      await tx.gradeEntry.upsert({
-        where: { studentId_componentId_semesterId: { studentId: op.studentId, componentId: op.componentId, semesterId } },
-        create: {
-          studentId: op.studentId, componentId: op.componentId, subjectId, semesterId,
-          score: op.score, enteredById: teacherProfile?.id ?? null,
-          status: keepApproved ? 'APPROVED' : 'DRAFT',
-        },
-        update: {
-          score: op.score,
-          enteredById: teacherProfile?.id ?? undefined,
-          status: keepApproved ? 'APPROVED' : 'DRAFT',
-        },
-      });
-    }
+  const importOperations: Prisma.PrismaPromise<unknown>[] = ops.map((op) => {
+    const st = statusByKey.get(`${op.studentId}:${op.componentId}`);
+    const keepApproved = st === 'APPROVED' && isAdmin;
+    return prisma.gradeEntry.upsert({
+      where: { studentId_componentId_semesterId: { studentId: op.studentId, componentId: op.componentId, semesterId } },
+      create: {
+        studentId: op.studentId, componentId: op.componentId, subjectId, semesterId,
+        score: op.score, enteredById: teacherProfile?.id ?? null,
+        status: keepApproved ? 'APPROVED' : 'DRAFT',
+      },
+      update: {
+        score: op.score,
+        enteredById: teacherProfile?.id ?? undefined,
+        status: keepApproved ? 'APPROVED' : 'DRAFT',
+      },
+    });
   });
+  if (importOperations.length > 0) await prisma.$transaction(importOperations);
 
   // Admin overwriting approved marks → recompute immediately (mirrors /grades/entry).
   const overwroteApproved = isAdmin && ops.some((op) => statusByKey.get(`${op.studentId}:${op.componentId}`) === 'APPROVED');

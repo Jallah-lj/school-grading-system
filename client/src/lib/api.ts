@@ -1,6 +1,9 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || '/api';
+const baseURL = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+/** Build URLs for API-served assets (images/downloads) as well as JSON calls. */
+export const apiUrl = (path: string): string => `${baseURL}/${path.replace(/^\/+/, '')}`;
 
 export const api = axios.create({ baseURL });
 
