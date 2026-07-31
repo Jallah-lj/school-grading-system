@@ -117,7 +117,13 @@ export interface ReportCardListItem {
 
 export interface SignatureSlot { name: string; title: string; dataUrl: string | null; }
 
-export interface SchoolPublicInfo { name: string; motto: string; hasBadge: boolean; }
+export interface SchoolPublicInfo {
+  name: string;
+  motto: string;
+  hasBadge: boolean;
+  /** Active academic year name, when configured (e.g. "2025–2026"). */
+  academicYear?: string | null;
+}
 
 export interface SchoolSettings extends SchoolPublicInfo { studentIdPrefix: string; updatedAt?: string; }
 
@@ -150,11 +156,32 @@ export interface AuditLogRow {
   user: { name: string; email: string; role: Role } | null;
 }
 
-export interface ImportRowError { row: number; email: string; reason: string; }
+export interface ImportRowError { row: number; email: string; name?: string; reason: string; }
 export interface ImportCredential { name: string; email: string; password: string; }
 export interface ImportResult {
   created: number; failed: number; file?: string;
   errors: ImportRowError[]; credentials: ImportCredential[];
+}
+
+export interface ImportPreviewRow {
+  row: number;
+  name: string;
+  email: string;
+  gender: string;
+  dateOfBirth: string;
+  classLabel: string;
+  parentEmail: string;
+  passwordMode: 'provided' | 'generated';
+}
+
+export interface ImportPreviewResult {
+  file: string;
+  total: number;
+  ready: number;
+  problems: number;
+  preview: ImportPreviewRow[];
+  previewTotal: number;
+  errors: ImportRowError[];
 }
 
 export interface MarksImportError { row: number; admissionNumber: string; component: string; reason: string; }

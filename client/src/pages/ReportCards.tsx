@@ -124,7 +124,7 @@ function AdminReportCards() {
                 {data.data.map((c) => (
                   <tr key={c.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                     <td className="td">
-                      <div className="font-medium">{c.student.name}</div>
+                      <Link to={`/students/${c.student.id}`} className="font-medium text-indigo-700 hover:underline dark:text-indigo-300">{c.student.name}</Link>
                       <div className="font-mono text-xs text-slate-400">{c.student.admissionNumber}</div>
                     </td>
                     <td className="td font-semibold">{c.gpa !== null ? c.gpa.toFixed(2) : '—'}</td>

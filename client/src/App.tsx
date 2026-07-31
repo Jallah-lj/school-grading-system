@@ -5,7 +5,9 @@ import { Spinner } from './components/ui';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
+import StudentProfile from './pages/StudentProfile';
 import Teachers from './pages/Teachers';
+import TeacherProfile from './pages/TeacherProfile';
 import GradeEntry from './pages/GradeEntry';
 import Approvals from './pages/Approvals';
 import MyGrades from './pages/MyGrades';
@@ -14,6 +16,7 @@ import VerifyReportCard from './pages/VerifyReportCard';
 import Analytics from './pages/Analytics';
 import AuditLogs from './pages/AuditLogs';
 import Administration from './pages/Administration';
+import Legal from './pages/Legal';
 import type { Role } from './lib/types';
 import type { ReactNode } from 'react';
 
@@ -44,11 +47,15 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/terms" element={<Legal />} />
+      <Route path="/privacy" element={<Legal />} />
       <Route path="/verify/:code" element={<VerifyReportCard />} />
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/students" element={<RequireRole roles={['ADMIN', 'TEACHER']}><Students /></RequireRole>} />
+        <Route path="/students/:id" element={<RequireRole roles={['ADMIN', 'TEACHER']}><StudentProfile /></RequireRole>} />
         <Route path="/teachers" element={<RequireRole roles={['ADMIN']}><Teachers /></RequireRole>} />
+        <Route path="/teachers/:id" element={<RequireRole roles={['ADMIN']}><TeacherProfile /></RequireRole>} />
         <Route path="/grade-entry" element={<RequireRole roles={['TEACHER', 'ADMIN']}><GradeEntry /></RequireRole>} />
         <Route path="/approvals" element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
         <Route path="/grades" element={<RequireRole roles={['STUDENT', 'PARENT']}><MyGrades /></RequireRole>} />

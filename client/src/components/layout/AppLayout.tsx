@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { useToast } from '../toast';
 import { SignatureModal } from '../SignatureModal';
+import { ConfirmDialog } from '../ConfirmDialog';
 import { Icon } from '../Icon';
 import { api, apiUrl } from '../../lib/api';
 import { cx, fmtDate, initials } from '../../lib/utils';
@@ -48,6 +49,8 @@ function NotificationBell() {
   const [items, setItems] = useState<AppNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clearBusy, setClearBusy] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -67,13 +70,6 @@ function NotificationBell() {
     document.addEventListener('mousedown', onClick);
     return () => { clearInterval(timer); document.removeEventListener('mousedown', onClick); };
   }, []);
-
-  // Auto-cancel the "confirm clear" state after a few seconds.
-  useEffect(() => {
-    if (!confirmClear) return;
-    const t = setTimeout(() => setConfirmClear(false), 3500);
-    return () => clearTimeout(t);
-  }, [confirmClear]);
 
   const markRead = async (n: AppNotification) => {
     if (!n.isRead) {
@@ -96,18 +92,19 @@ function NotificationBell() {
     toast('success', 'All notifications marked as read');
   };
 
-  const remove = async (e: ReactMouseEvent, n: AppNotification) => {
-    e.stopPropagation();
+  const remove = async (n: AppNotification) => {
     try {
       await api.delete(`/notifications/${n.id}`);
       setItems((xs) => xs.filter((x) => x.id !== n.id));
       if (!n.isRead) setUnread((u) => Math.max(0, u - 1));
+      setDeletingId(null);
     } catch {
       toast('error', 'Could not delete the notification');
     }
   };
 
   const clearAll = async () => {
+    setClearBusy(true);
     try {
       await api.delete('/notifications');
       setItems([]);
@@ -116,8 +113,12 @@ function NotificationBell() {
       toast('success', 'All notifications cleared');
     } catch {
       toast('error', 'Could not clear notifications');
+    } finally {
+      setClearBusy(false);
     }
   };
+
+  const pendingDelete = deletingId ? items.find((x) => x.id === deletingId) ?? null : null;
 
   return (
     <div className="relative" ref={ref}>
@@ -138,15 +139,9 @@ function NotificationBell() {
             <div className="flex items-center gap-3">
               {unread > 0 && <button className="text-xs text-indigo-500 hover:underline" onClick={markAll}>Mark all read</button>}
               {items.length > 0 && (
-                confirmClear ? (
-                  <button className="text-xs font-semibold text-rose-500 hover:underline" onClick={() => void clearAll()}>
-                    Confirm clear?
-                  </button>
-                ) : (
-                  <button className="text-xs text-slate-400 hover:text-rose-500" onClick={() => setConfirmClear(true)}>
-                    Clear all
-                  </button>
-                )
+                <button className="text-xs text-slate-400 hover:text-rose-500" onClick={() => setConfirmClear(true)}>
+                  Clear all
+                </button>
               )}
             </div>
           </div>
@@ -172,7 +167,7 @@ function NotificationBell() {
                   </div>
                 </button>
                 <button
-                  onClick={(e) => void remove(e, n)}
+                  onClick={(e: ReactMouseEvent) => { e.stopPropagation(); setDeletingId(n.id); }}
                   title="Delete notification"
                   aria-label="Delete notification"
                   className="absolute right-2 top-2.5 rounded-md p-1 text-slate-300 transition hover:bg-rose-50 hover:text-rose-500 focus:opacity-100 dark:text-slate-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 sm:opacity-0 sm:group-hover:opacity-100">
@@ -185,6 +180,25 @@ function NotificationBell() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!pendingDelete}
+        danger
+        title="Delete notification"
+        message={pendingDelete ? `Remove “${pendingDelete.title}”? This cannot be undone.` : ''}
+        confirmText="Delete"
+        onConfirm={() => { if (pendingDelete) void remove(pendingDelete); }}
+        onCancel={() => setDeletingId(null)}
+      />
+      <ConfirmDialog
+        open={confirmClear && items.length > 0 && !pendingDelete}
+        danger
+        busy={clearBusy}
+        title="Clear all notifications"
+        message={`Permanently delete all ${items.length} notification${items.length === 1 ? '' : 's'}? This cannot be undone.`}
+        confirmText="Clear all"
+        onConfirm={() => void clearAll()}
+        onCancel={() => setConfirmClear(false)}
+      />
     </div>
   );
 }
@@ -222,16 +236,40 @@ export function AppLayout() {
 
   const sidebar = (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 px-5 py-5">
-        {school?.hasBadge
-          ? <img src={apiUrl('/school/badge')} alt="School badge" className="h-10 w-10 rounded-xl object-contain" />
-          : <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-lg font-extrabold text-white">{(school?.name ?? 'S')[0]}</div>}
-        <div className="min-w-0">
-          <div className="truncate text-sm font-bold leading-tight text-slate-900 dark:text-white">{school?.name ?? 'Grading System'}</div>
-          <div className="text-xs text-slate-400">School Grading System</div>
+      <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-800">
+        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-3 py-3 ring-1 ring-indigo-100 dark:from-indigo-500/15 dark:via-slate-900 dark:to-violet-500/10 dark:ring-indigo-500/25">
+          {school?.hasBadge
+            ? (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-md shadow-indigo-500/15 ring-2 ring-white dark:bg-slate-800 dark:ring-slate-700">
+                <img src={apiUrl('/school/badge')} alt="School badge" className="h-full w-full object-contain" />
+              </div>
+            )
+            : (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-xl font-extrabold text-white shadow-md shadow-indigo-500/30 ring-2 ring-white dark:ring-slate-700">
+                {(school?.name ?? 'S')[0]}
+              </div>
+            )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[15px] font-extrabold leading-snug tracking-tight text-slate-900 dark:text-white" title={school?.name ?? 'Grading System'}>
+              {school?.name ?? 'Grading System'}
+            </div>
+            {school?.motto ? (
+              <div className="mt-0.5 truncate text-[11px] italic leading-snug text-indigo-600/80 dark:text-indigo-300/80" title={school.motto}>
+                “{school.motto}”
+              </div>
+            ) : (
+              <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">School Grading System</div>
+            )}
+            {school?.academicYear && (
+              <div className="mt-1.5 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-indigo-600/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">
+                <Icon name="calendar" size={10} />
+                <span className="truncate">{school.academicYear}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pt-3">
         {links.map((n) => (
           <NavLink key={n.to} to={n.to} end={n.to === '/'} onClick={() => setMobileOpen(false)}
             className={({ isActive }) => cx('navlink', isActive && 'navlink-active')}>

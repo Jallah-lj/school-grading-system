@@ -23,7 +23,16 @@ const upload = multer({
 // GET /api/school/public — branding for the login page & verify page (no auth)
 schoolRouter.get('/public', ah(async (_req, res) => {
   const s = await getSchoolSettings();
-  res.json({ name: s.name, motto: s.motto, hasBadge: s.badgeData !== null });
+  const activeYear = await prisma.academicYear.findFirst({
+    where: { isActive: true },
+    select: { name: true },
+  });
+  res.json({
+    name: s.name,
+    motto: s.motto,
+    hasBadge: s.badgeData !== null,
+    academicYear: activeYear?.name ?? null,
+  });
 }));
 
 // GET /api/school/badge — the badge image itself (public, cacheable)
