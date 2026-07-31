@@ -1,0 +1,16 @@
+# Convenience Postgres for local development (skip this if you use Supabase).
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sgs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sgs
+      POSTGRES_PASSWORD: sgs
+      POSTGRES_DB: school_grading
+    ports:
+      - "5432:5432"
+    volumes:
+      - sgs_pgdata:/var/lib/postgresql/data
+volumes:
+  sgs_pgdata:

@@ -1,0 +1,428 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// School Grading System — PostgreSQL schema (Prisma ORM)
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum GradeStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PUBLISHED
+}
+
+enum ReportCardStatus {
+  GENERATED
+  PUBLISHED
+}
+
+enum ComponentType {
+  ASSIGNMENT
+  QUIZ
+  CAT
+  PRACTICAL
+  MIDTERM
+  FINAL
+  PROJECT
+}
+
+enum NotificationType {
+  GRADES_PUBLISHED
+  REPORT_CARD_AVAILABLE
+  GRADE_CORRECTION
+  ANNOUNCEMENT
+}
+
+// ────────────────────────────── Identity & RBAC ─────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role
+  phone        String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  refreshTokens   RefreshToken[]
+  studentProfile  StudentProfile?
+  teacherProfile  TeacherProfile?
+  parentProfile   ParentProfile?
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  approvedEntries GradeEntry[]     @relation("GradeApprover")
+  signature       Signature?
+  publishedCards  ReportCard[]     @relation("CardPublisher")
+  schoolSettings  SchoolSetting[]  @relation("SchoolSettingsUpdater")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ──────────────────────────────── Profiles ──────────────────────────────────
+
+model StudentProfile {
+  id              String         @id @default(cuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admissionNumber String         @unique
+  dateOfBirth     DateTime
+  gender          Gender
+  photoUrl        String?
+  address         String?
+  guardianPhone   String?
+  classId         String?
+  classRoom       ClassRoom?     @relation(fields: [classId], references: [id])
+  parentId        String?
+  parent          ParentProfile? @relation(fields: [parentId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  enrollments    Enrollment[]
+  gradeEntries   GradeEntry[]
+  subjectResults SubjectResult[]
+  gpaRecords     GPARecord[]
+  reportCards    ReportCard[]
+
+  @@index([classId])
+  @@index([parentId])
+}
+
+model TeacherProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  staffNumber   String    @unique
+  qualification String?
+  photoUrl      String?
+  hireDate      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  assignments     TeacherAssignment[]
+  homeroomClasses ClassRoom[]
+  gradeEntries    GradeEntry[]        @relation("GradeEntryAuthor")
+}
+
+model ParentProfile {
+  id        String           @id @default(cuid())
+  userId    String           @unique
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  children  StudentProfile[]
+  createdAt DateTime         @default(now())
+}
+
+// ─────────────────────────── Academic structure ─────────────────────────────
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  semesters Semester[]
+  classes   ClassRoom[]
+}
+
+model Semester {
+  id             String       @id @default(cuid())
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  name           String
+  number         Int
+  kind           String       @default("TERM") // TERM | SEMESTER
+  startDate      DateTime
+  endDate        DateTime
+  isCurrent      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  enrollments    Enrollment[]
+  gradeEntries   GradeEntry[]
+  subjectResults SubjectResult[]
+  gpaRecords     GPARecord[]
+  reportCards    ReportCard[]
+
+  @@unique([academicYearId, number])
+  @@index([isCurrent])
+}
+
+model ClassRoom {
+  id                String          @id @default(cuid())
+  academicYearId    String
+  academicYear      AcademicYear    @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  name              String
+  level             Int
+  stream            String          @default("A")
+  homeroomTeacherId String?
+  homeroomTeacher   TeacherProfile? @relation(fields: [homeroomTeacherId], references: [id])
+  createdAt         DateTime        @default(now())
+
+  students    StudentProfile[]
+  enrollments Enrollment[]
+  assignments TeacherAssignment[]
+
+  @@unique([academicYearId, name, stream])
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  creditUnits Float    @default(3)
+  department  String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  components     AssessmentComponent[]
+  assignments    TeacherAssignment[]
+  gradeEntries   GradeEntry[]
+  subjectResults SubjectResult[]
+}
+
+model AssessmentComponent {
+  id        String        @id @default(cuid())
+  subjectId String
+  subject   Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  type      ComponentType
+  name      String
+  weight    Float
+  maxScore  Float         @default(100)
+  entries   GradeEntry[]
+
+  @@index([subjectId])
+}
+
+model TeacherAssignment {
+  id        String         @id @default(cuid())
+  teacherId String
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subjectId String
+  subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classId   String
+  classRoom ClassRoom      @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, subjectId, classId])
+}
+
+// ────────────────────────── Enrolment & grading ─────────────────────────────
+
+model Enrollment {
+  id         String         @id @default(cuid())
+  studentId  String
+  student    StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classId    String
+  classRoom  ClassRoom      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  semesterId String
+  semester   Semester       @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+
+  @@unique([studentId, semesterId])
+  @@index([classId, semesterId])
+}
+
+model GradeEntry {
+  id           String              @id @default(cuid())
+  studentId    String
+  student      StudentProfile      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId    String
+  subject      Subject             @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  semesterId   String
+  semester     Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  componentId  String
+  component    AssessmentComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+  score        Float
+  status       GradeStatus         @default(DRAFT)
+  enteredById  String?
+  enteredBy    TeacherProfile?     @relation("GradeEntryAuthor", fields: [enteredById], references: [id])
+  approvedById String?
+  approvedBy   User?               @relation("GradeApprover", fields: [approvedById], references: [id])
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  publishedAt  DateTime?
+  remark       String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@unique([studentId, componentId, semesterId])
+  @@index([subjectId, semesterId, status])
+}
+
+model SubjectResult {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  semesterId  String
+  semester    Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  totalScore  Float
+  percentage  Float
+  letterGrade String
+  gradePoint  Float
+  remark      String
+  position    Int?
+  isPublished Boolean  @default(false)
+  computedAt  DateTime @default(now())
+
+  @@unique([studentId, subjectId, semesterId])
+  @@index([subjectId, semesterId])
+}
+
+model GPARecord {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  semesterId  String
+  semester    Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  gpa         Float
+  totalCredits Float
+  totalPoints Float
+  average     Float
+  position    Int?
+  classSize   Int?
+  isPublished Boolean  @default(false)
+  computedAt  DateTime @default(now())
+
+  @@unique([studentId, semesterId])
+}
+
+model GradeScale {
+  id        String           @id @default(cuid())
+  name      String           @unique
+  isActive  Boolean          @default(false)
+  bands     GradeScaleBand[]
+  createdAt DateTime         @default(now())
+}
+
+model GradeScaleBand {
+  id         String     @id @default(cuid())
+  scaleId    String
+  scale      GradeScale @relation(fields: [scaleId], references: [id], onDelete: Cascade)
+  minScore   Float
+  maxScore   Float
+  letter     String
+  gradePoint Float
+  remark     String
+
+  @@unique([scaleId, letter])
+}
+
+// ────────────────────── Report cards & communication ────────────────────────
+
+model ReportCard {
+  id               String           @id @default(cuid())
+  studentId        String
+  student          StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  semesterId       String
+  semester         Semester         @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  status           ReportCardStatus @default(GENERATED)
+  verificationCode String           @unique
+  teacherRemarks   String?
+  principalRemarks String?
+  publishedById    String?
+  publishedBy      User?            @relation("CardPublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  generatedAt      DateTime         @default(now())
+  publishedAt      DateTime?
+
+  @@unique([studentId, semesterId])
+}
+
+/// Digitally captured signature (drawn on screen or photographed & cleaned up),
+/// stamped onto report card PDFs. One per teacher/admin.
+model Signature {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String   // e.g. "Class Teacher" · "Principal / Head of School"
+  mime      String   @default("image/png")
+  data      Bytes
+  width     Int
+  height    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Atomic counters for auto-generating admission & staff numbers —
+/// row-locking UPDATE guarantees uniqueness even under concurrency.
+model IdSequence {
+  key  String @id
+  next Int    @default(1)
+}
+
+/// Singleton row (id = "school"): branding shown on report cards,
+/// transcripts, the login page and the sidebar.
+model SchoolSetting {
+  id              String   @id @default("school")
+  name            String
+  motto           String
+  studentIdPrefix String   @default("SGS")
+  badgeData       Bytes?
+  badgeMime       String?
+  updatedById     String?
+  updatedBy       User?    @relation("SchoolSettingsUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+}
