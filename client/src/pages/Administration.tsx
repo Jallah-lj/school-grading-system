@@ -556,6 +556,7 @@ function SchoolTab() {
       await api.patch('/school/settings', form);
       toast('success', 'School settings saved');
       void refetch();
+      window.dispatchEvent(new Event('school-updated'));
     } catch (err) { toast('error', apiError(err)); } finally { setBusy(false); }
   };
 

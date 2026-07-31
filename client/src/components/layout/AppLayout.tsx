@@ -199,7 +199,13 @@ export function AppLayout() {
 
   const links = NAV.filter((n) => user && n.roles.includes(user.role));
   const [school, setSchool] = useState<SchoolPublicInfo | null>(null);
-  useEffect(() => { api.get<SchoolPublicInfo>('/school/public').then((r) => setSchool(r.data)).catch(() => undefined); }, []);
+  const fetchSchool = () => api.get<SchoolPublicInfo>('/school/public').then((r) => setSchool(r.data)).catch(() => undefined);
+  useEffect(() => { void fetchSchool(); }, []);
+  useEffect(() => {
+    const handler = () => void fetchSchool();
+    window.addEventListener('school-updated', handler);
+    return () => window.removeEventListener('school-updated', handler);
+  }, []);
 
   // Live count of grade submissions awaiting admin approval (sidebar badge).
   useEffect(() => {
