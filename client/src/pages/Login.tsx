@@ -15,13 +15,6 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const DEMO = [
-  { role: 'Administrator', email: 'admin@school.rw', password: 'Admin@123' },
-  { role: 'Teacher', email: 'm.habimana@school.rw', password: 'Teacher@123' },
-  { role: 'Student', email: 'student@school.rw', password: 'Student@123' },
-  { role: 'Parent', email: 'parent@school.rw', password: 'Parent@123' },
-];
-
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -103,19 +96,7 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-8">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">Demo accounts</div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {DEMO.map((d) => (
-                <button key={d.email} type="button" onClick={() => fill(d.email, d.password)}
-                  className="card p-3 text-left transition hover:border-indigo-300 hover:shadow-md">
-                  <div className="text-sm font-semibold">{d.role}</div>
-                  <div className="truncate text-xs text-slate-400">{d.email}</div>
-                </button>
-              ))}
-            </div>
-            <p className="mt-2 text-xs text-slate-400">Click a card to pre-fill credentials (run the seed script first).</p>
-          </div>
+
         </div>
       </div>
     </div>
