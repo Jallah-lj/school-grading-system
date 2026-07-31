@@ -60,6 +60,22 @@ teachersRouter.get('/', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res)
   res.json({ data, total, page, pageSize });
 }));
 
+// GET /api/teachers/:id — full profile for detail page
+teachersRouter.get('/:id', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res) => {
+  const teacher = await prisma.teacherProfile.findUnique({
+    where: { id: req.params.id },
+    include: {
+      ...TEACHER_INCLUDE,
+      homeroomClasses: {
+        select: { id: true, name: true, stream: true, _count: { select: { students: true } } },
+        orderBy: { name: 'asc' },
+      },
+    },
+  });
+  if (!teacher) throw AppError.notFound('Teacher');
+  res.json(teacher);
+}));
+
 const upsertTeacherSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),

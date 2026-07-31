@@ -51,8 +51,23 @@ export function MarksImportModal({ open, onClose, ctx, onImported }: {
         toast('success', `Applied ${data.applied} mark${data.applied === 1 ? '' : 's'} — review the grid, then submit`);
         onImported();
       }
-      if (data.failed > 0) toast('error', `${data.failed} cell${data.failed === 1 ? '' : 's'} failed — see details`);
-    } catch (err) { toast('error', apiError(err)); } finally { setBusy(false); }
+      if (data.failed > 0) {
+        toast('error', `${data.failed} cell${data.failed === 1 ? '' : 's'} rejected — see actionable reasons below`);
+      }
+      if (data.applied === 0 && data.failed === 0) {
+        toast('info', 'No new marks found — blank cells keep existing values');
+      }
+    } catch (err) {
+      const msg = apiError(err);
+      // Surface common spreadsheet mistakes more clearly
+      if (/locked|approved|published/i.test(msg)) {
+        toast('error', `${msg} Ask an administrator to unlock the grade sheet first.`);
+      } else if (/template|header|column/i.test(msg)) {
+        toast('error', `${msg} Re-download the pre-filled template so column names match exactly.`);
+      } else {
+        toast('error', msg);
+      }
+    } finally { setBusy(false); }
   };
 
   return (
@@ -96,22 +111,35 @@ export function MarksImportModal({ open, onClose, ctx, onImported }: {
             <span><strong>{result.applied}</strong> marks applied · <strong>{result.skipped}</strong> blank cells kept · <strong>{result.failed}</strong> rejected</span>
           </div>
           {result.errors.length > 0 && (
-            <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800">
-                  <tr><th className="th py-2">Row</th><th className="th py-2">Admission no</th><th className="th py-2">Component</th><th className="th py-2">Problem</th></tr>
-                </thead>
-                <tbody>
-                  {result.errors.map((e, i) => (
-                    <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
-                      <td className="td py-1.5 font-mono text-xs">{e.row}</td>
-                      <td className="td py-1.5 font-mono text-xs">{e.admissionNumber}</td>
-                      <td className="td py-1.5 text-xs">{e.component}</td>
-                      <td className="td py-1.5 text-xs text-rose-500">{e.reason}</td>
+            <div>
+              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-rose-600 dark:text-rose-400">
+                <Icon name="warning" size={15} /> Rejected cells — how to fix
+              </h3>
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-rose-200 dark:border-rose-500/30">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-rose-50 dark:bg-rose-950/40">
+                    <tr>
+                      <th className="th py-2">Row</th>
+                      <th className="th py-2">Student</th>
+                      <th className="th py-2">Component</th>
+                      <th className="th py-2">What to fix</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {result.errors.map((e, i) => (
+                      <tr key={i} className="border-t border-rose-100 dark:border-rose-900/40">
+                        <td className="td py-1.5 font-mono text-xs font-semibold">{e.row}</td>
+                        <td className="td py-1.5 font-mono text-xs">{e.admissionNumber || '—'}</td>
+                        <td className="td py-1.5 text-xs">{e.component || '—'}</td>
+                        <td className="td py-1.5 text-xs text-rose-600 dark:text-rose-400">{e.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-xs text-slate-400">
+                Tip: scores must be numbers within each component&apos;s max. Blank cells keep existing marks. Use the pre-filled template so admission numbers match the roster.
+              </p>
             </div>
           )}
           <div className="flex justify-end gap-2">

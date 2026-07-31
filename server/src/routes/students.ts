@@ -219,6 +219,190 @@ const importRowSchema = z.object({
 /** Random initial password that always satisfies the policy (letters + digits). */
 const generatedPassword = () => `Stu${crypto.randomInt(100000, 999999)}x`;
 
+type ClassLookup = {
+  byPair: Map<string, string>;
+  byName: Map<string, string[]>;
+  norm: (s: string) => string;
+};
+
+async function buildClassLookup(): Promise<ClassLookup> {
+  const classes = await prisma.classRoom.findMany({ select: { id: true, name: true, stream: true } });
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+  const byPair = new Map(classes.map((c) => [`${norm(c.name)}|${norm(c.stream)}`, c.id]));
+  const byName = new Map<string, string[]>();
+  for (const c of classes) byName.set(norm(c.name), [...(byName.get(norm(c.name)) ?? []), c.id]);
+  return { byPair, byName, norm };
+}
+
+function resolveClassId(row: { class: string; stream: string }, lookup: ClassLookup): string | null {
+  if (!row.class) return null;
+  if (row.stream) return lookup.byPair.get(`${lookup.norm(row.class)}|${lookup.norm(row.stream)}`) ?? null;
+  const ids = lookup.byName.get(lookup.norm(row.class));
+  return ids?.length === 1 ? ids[0]! : null;
+}
+
+/** Friendly, actionable validation messages for import rows. */
+function friendlyImportError(path: string, message: string, raw: Record<string, string>): string {
+  const field = path || 'row';
+  const value = raw[field as keyof typeof raw] ?? '';
+  if (field === 'name') return 'Name is required (at least 2 characters).';
+  if (field === 'email') {
+    if (!value) return 'Email is required — this becomes the student login.';
+    return `Invalid email “${value}”. Use a full address like student@school.rw.`;
+  }
+  if (field === 'dateOfBirth') {
+    if (!value) return 'Date of birth is required. Use YYYY-MM-DD (e.g. 2010-05-14).';
+    return `Date of birth “${value}” is not valid. Use YYYY-MM-DD (e.g. 2010-05-14).`;
+  }
+  if (field === 'gender') {
+    if (!value) return 'Gender is required. Use MALE, FEMALE or OTHER.';
+    return `Gender “${value}” is not recognised. Use MALE, FEMALE or OTHER.`;
+  }
+  return `${field}: ${message}`;
+}
+
+interface ValidatedImportRow {
+  row: number;
+  name: string;
+  email: string;
+  gender: string;
+  dateOfBirth: string;
+  classLabel: string;
+  classId: string | null;
+  parentEmail: string;
+  passwordMode: 'provided' | 'generated';
+  ok: true;
+}
+
+interface FailedImportRow {
+  row: number;
+  email: string;
+  name: string;
+  reason: string;
+  ok: false;
+}
+
+async function validateImportRows(rawRows: Record<string, string>[]): Promise<{
+  valid: ValidatedImportRow[];
+  failed: FailedImportRow[];
+  summary: { total: number; ready: number; problems: number };
+}> {
+  const rows = rawRows.map(mapRow);
+  const lookup = await buildClassLookup();
+  const existingEmails = new Set(
+    (await prisma.user.findMany({
+      where: { email: { in: rows.map((r) => r.email.toLowerCase()).filter(Boolean) } },
+      select: { email: true },
+    })).map((u) => u.email),
+  );
+  const parentEmails = [...new Set(rows.map((r) => r.parentEmail.toLowerCase()).filter(Boolean))];
+  const parents = parentEmails.length
+    ? await prisma.parentProfile.findMany({
+      where: { user: { email: { in: parentEmails } } },
+      select: { id: true, user: { select: { email: true } } },
+    })
+    : [];
+  const parentByEmail = new Map(parents.map((p) => [p.user.email, p.id]));
+
+  const valid: ValidatedImportRow[] = [];
+  const failed: FailedImportRow[] = [];
+  const seenEmails = new Set<string>();
+
+  for (let i = 0; i < rows.length; i++) {
+    const rowNo = i + 2;
+    const raw = rows[i]!;
+    const fail = (reason: string) => {
+      failed.push({ row: rowNo, email: raw.email || '—', name: raw.name || '—', reason, ok: false });
+    };
+
+    // Skip completely empty rows
+    if (!raw.name && !raw.email && !raw.dateOfBirth && !raw.gender) continue;
+
+    const parsed = importRowSchema.safeParse(raw);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0]!;
+      fail(friendlyImportError(String(issue.path[0] ?? ''), issue.message, raw));
+      continue;
+    }
+    const row = parsed.data;
+
+    if (row.password) {
+      const pwCheck = passwordSchema.safeParse(row.password);
+      if (!pwCheck.success) {
+        fail('Password must be at least 8 characters and include both a letter and a number. Leave blank to auto-generate.');
+        continue;
+      }
+    }
+    if (seenEmails.has(row.email)) {
+      fail(`Duplicate email “${row.email}” appears earlier in this file. Each student needs a unique email.`);
+      continue;
+    }
+    seenEmails.add(row.email);
+
+    if (existingEmails.has(row.email)) {
+      fail(`Email “${row.email}” is already registered. Skip this row or use a different email.`);
+      continue;
+    }
+
+    let classId: string | null = null;
+    if (row.class) {
+      classId = resolveClassId(row, lookup);
+      if (!classId) {
+        fail(
+          row.stream
+            ? `Class “${row.class} ${row.stream}” was not found. Open the template’s Classes sheet and copy the exact name + stream.`
+            : `Class “${row.class}” was not found or matches more than one stream. Add the stream column (e.g. A) from the Classes sheet.`,
+        );
+        continue;
+      }
+    }
+
+    if (row.parentEmail && !parentByEmail.has(row.parentEmail)) {
+      fail(`No parent account exists for “${row.parentEmail}”. Create the parent first, or leave parentEmail blank.`);
+      continue;
+    }
+
+    valid.push({
+      row: rowNo,
+      name: row.name,
+      email: row.email,
+      gender: row.gender,
+      dateOfBirth: row.dateOfBirth,
+      classLabel: row.class ? `${row.class}${row.stream ? ` ${row.stream}` : ''}` : '— Unassigned —',
+      classId,
+      parentEmail: row.parentEmail || '',
+      passwordMode: row.password ? 'provided' : 'generated',
+      ok: true,
+    });
+  }
+
+  return {
+    valid,
+    failed,
+    summary: { total: valid.length + failed.length, ready: valid.length, problems: failed.length },
+  };
+}
+
+/**
+ * POST /api/students/import/preview — validate a spreadsheet without writing anything.
+ * Returns a row-by-row preview so admins can fix problems before committing.
+ */
+studentsRouter.post('/import/preview', authorize(Role.ADMIN), spreadsheetUpload.single('file'), ah(async (req, res) => {
+  if (!req.file) throw AppError.badRequest('Attach an .xlsx or .csv file (max 5 MB)');
+  const rawRows = await parseSpreadsheetFile(req.file);
+  if (rawRows.length === 0) throw AppError.badRequest('The file contains no data rows below the header. Add students starting at row 2.');
+  if (rawRows.length > 500) throw AppError.badRequest('Too many rows — split the file into batches of 500 students or fewer.');
+
+  const validated = await validateImportRows(rawRows);
+  res.json({
+    file: req.file.originalname,
+    ...validated.summary,
+    preview: validated.valid.slice(0, 50),
+    previewTotal: validated.valid.length,
+    errors: validated.failed.map((f) => ({ row: f.row, email: f.email, name: f.name, reason: f.reason })),
+  });
+}));
+
 /**
  * POST /api/students/import — multipart { file: .xlsx | .csv } (max 5 MB, 500 rows).
  * Processes row by row: valid rows are created (auto admission number +
@@ -227,10 +411,11 @@ const generatedPassword = () => `Stu${crypto.randomInt(100000, 999999)}x`;
 studentsRouter.post('/import', authorize(Role.ADMIN), spreadsheetUpload.single('file'), ah(async (req, res) => {
   if (!req.file) throw AppError.badRequest('Attach an .xlsx or .csv file (max 5 MB)');
   const rawRows = await parseSpreadsheetFile(req.file);
-  if (rawRows.length === 0) throw AppError.badRequest('The file contains no data rows below the header');
-  if (rawRows.length > 500) throw AppError.badRequest('Too many rows — split the file into batches of 500 students');
+  if (rawRows.length === 0) throw AppError.badRequest('The file contains no data rows below the header. Add students starting at row 2.');
+  if (rawRows.length > 500) throw AppError.badRequest('Too many rows — split the file into batches of 500 students or fewer.');
 
   const rows = rawRows.map(mapRow);
+  const validated = await validateImportRows(rawRows);
 
   const school = await getSchoolContext();
   let year = new Date().getFullYear();
@@ -239,59 +424,27 @@ studentsRouter.post('/import', authorize(Role.ADMIN), spreadsheetUpload.single('
   let activeSemesterId: string | null = null;
   try { activeSemesterId = (await getActiveSemester()).id; } catch { /* no active term — skip enrolment */ }
 
-  const classes = await prisma.classRoom.findMany({ select: { id: true, name: true, stream: true } });
-  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
-  const byPair = new Map(classes.map((c) => [`${norm(c.name)}|${norm(c.stream)}`, c.id]));
-  const byName = new Map<string, string[]>();
-  for (const c of classes) byName.set(norm(c.name), [...(byName.get(norm(c.name)) ?? []), c.id]);
+  // Map original row data by row number for password / address fields
+  const rawByRow = new Map<number, Record<(typeof IMPORT_HEADERS)[number], string>>();
+  for (let i = 0; i < rows.length; i++) rawByRow.set(i + 2, rows[i]!);
+
+  const parents = await prisma.parentProfile.findMany({
+    where: { user: { email: { in: validated.valid.map((v) => v.parentEmail).filter(Boolean) } } },
+    select: { id: true, user: { select: { email: true } } },
+  });
+  const parentByEmail = new Map(parents.map((p) => [p.user.email, p.id]));
 
   const result = {
     created: 0,
-    failed: 0,
-    errors: [] as { row: number; email: string; reason: string }[],
+    failed: validated.failed.length,
+    errors: validated.failed.map((f) => ({ row: f.row, email: f.email, reason: f.reason })),
     credentials: [] as { name: string; email: string; password: string }[],
   };
-  const seenEmails = new Set<string>();
 
-  for (let i = 0; i < rows.length; i++) {
-    const rowNo = i + 2; // header is row 1 in the spreadsheet
-    const raw = rows[i];
-    const fail = (reason: string) => {
-      result.failed += 1;
-      result.errors.push({ row: rowNo, email: raw.email || '—', reason });
-    };
-
-    const parsed = importRowSchema.safeParse(raw);
-    if (!parsed.success) {
-      const issue = parsed.error.issues[0];
-      fail(`${issue.path.join('.')}: ${issue.message}`);
-      continue;
-    }
-    const row = parsed.data;
-
-    if (row.password) {
-      const pwCheck = passwordSchema.safeParse(row.password);
-      if (!pwCheck.success) { fail('password must be 8+ characters with a letter and a number'); continue; }
-    }
-    if (seenEmails.has(row.email)) { fail('duplicate email within the file'); continue; }
-    seenEmails.add(row.email);
-
-    let classId: string | null = null;
-    if (row.class) {
-      classId = row.stream
-        ? byPair.get(`${norm(row.class)}|${norm(row.stream)}`) ?? null
-        : (byName.get(norm(row.class))?.length === 1 ? byName.get(norm(row.class))![0] : null);
-      if (!classId) { fail(`class "${row.class}${row.stream ? ` ${row.stream}` : ''}" not found — see the Classes sheet in the template`); continue; }
-    }
-
-    let parentId: string | null = null;
-    if (row.parentEmail) {
-      const parent = await prisma.parentProfile.findFirst({ where: { user: { email: row.parentEmail } }, select: { id: true } });
-      if (!parent) { fail(`no parent account with email ${row.parentEmail}`); continue; }
-      parentId = parent.id;
-    }
-
-    const effectivePassword = row.password || generatedPassword();
+  for (const row of validated.valid) {
+    const raw = rawByRow.get(row.row)!;
+    const effectivePassword = raw.password || generatedPassword();
+    const parentId = row.parentEmail ? parentByEmail.get(row.parentEmail) ?? null : null;
     try {
       await withIdRetry(() => prisma.$transaction(async (tx) => {
         const admissionNumber = await generateAdmissionNumber(tx, school.studentIdPrefix, year);
@@ -301,23 +454,29 @@ studentsRouter.post('/import', authorize(Role.ADMIN), spreadsheetUpload.single('
         const profile = await tx.studentProfile.create({
           data: {
             userId: user.id, admissionNumber, dateOfBirth: new Date(row.dateOfBirth),
-            gender: row.gender, classId, parentId,
+            gender: row.gender as Gender, classId: row.classId, parentId,
             address: raw.address || undefined, guardianPhone: raw.guardianPhone || undefined,
           },
         });
-        if (classId && activeSemesterId) {
+        if (row.classId && activeSemesterId) {
           await tx.enrollment.upsert({
             where: { studentId_semesterId: { studentId: profile.id, semesterId: activeSemesterId } },
-            create: { studentId: profile.id, classId, semesterId: activeSemesterId },
-            update: { classId },
+            create: { studentId: profile.id, classId: row.classId, semesterId: activeSemesterId },
+            update: { classId: row.classId },
           });
         }
       }));
       result.created += 1;
-      result.credentials.push({ name: row.name, email: row.email, password: row.password ? '(set in file)' : effectivePassword });
+      result.credentials.push({
+        name: row.name,
+        email: row.email,
+        password: raw.password ? '(set in file)' : effectivePassword,
+      });
     } catch (err) {
-      if ((err as { code?: string })?.code === 'P2002') fail('email already registered in the system');
-      else throw err;
+      if ((err as { code?: string })?.code === 'P2002') {
+        result.failed += 1;
+        result.errors.push({ row: row.row, email: row.email, reason: `Email “${row.email}” is already registered. Skip this row or use a different email.` });
+      } else throw err;
     }
   }
 
@@ -327,13 +486,32 @@ studentsRouter.post('/import', authorize(Role.ADMIN), spreadsheetUpload.single('
   res.json({ ...result, file: req.file.originalname });
 }));
 
-studentsRouter.get('/:id', ah(async (req, res) => {
+studentsRouter.get('/:id', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res) => {
   const student = await prisma.studentProfile.findUnique({
     where: { id: req.params.id },
     include: {
       ...STUDENT_INCLUDE,
       enrollments: {
-        include: { classRoom: { select: { name: true, stream: true } }, semester: { select: { name: true } } },
+        include: {
+          classRoom: { select: { id: true, name: true, stream: true } },
+          semester: { select: { id: true, name: true, academicYear: { select: { name: true } } } },
+        },
+        orderBy: { semester: { startDate: 'desc' } },
+      },
+      gpaRecords: {
+        include: {
+          semester: { select: { id: true, name: true, academicYear: { select: { name: true } } } },
+        },
+        orderBy: { semester: { startDate: 'desc' } },
+        take: 12,
+      },
+      reportCards: {
+        select: {
+          id: true, status: true, verificationCode: true, publishedAt: true,
+          semester: { select: { name: true, academicYear: { select: { name: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 8,
       },
     },
   });
