@@ -11,6 +11,32 @@ Target architecture: **Vercel** (frontend) · **Railway/Render** (API) · **Supa
 
 ---
 
+## 0. Root build — one command for the whole repo
+
+The repository ships a root `package.json` so Render/Railway services can be
+configured with the **repo root as the Root Directory** and the default
+commands:
+
+```
+Build:  npm install && npm run build
+Start:  npm start
+```
+
+`npm run build` installs and builds **both** the React client (`client/`) and
+the Express API (`server/`), then `npm start` launches the API. The scripts
+pass `--include=dev` to `npm install` on purpose: Render sets
+`NODE_ENV=production`, which would otherwise skip the dev dependencies
+(TypeScript, Vite, the Prisma CLI) that the build needs.
+
+> **Symptom this fixes** — a deploy failing with
+> `npm error enoent Could not read package.json ... /opt/render/project/src/package.json`
+> means the service runs `npm install` at the repo root while no root
+> `package.json` existed. After this change, redeploy as-is; no dashboard
+> settings need to change. (Pointing Root Directory at `server` also still
+> works for an API-only service.)
+
+---
+
 ## 1. Database — Supabase
 
 1. Create a project at [supabase.com](https://supabase.com) → wait for provisioning.
@@ -53,7 +79,11 @@ Target architecture: **Vercel** (frontend) · **Railway/Render** (API) · **Supa
  Build: npm install && npm run build
  Start: npm start
  ```
- (`npm run build` runs `prisma generate` + `tsc`.)
+ (`npm run build` runs `prisma generate` + `tsc`.) With Root Directory set to
+ `server`, these commands are picked up from `server/package.json`. You may
+ instead leave Root Directory at the repo root — the root `package.json`
+ (see [section 0](#0-root-build--one-command-for-the-whole-repo)) builds both
+ client and server and `npm start` still launches the API.
 5. Add a one-off deploy command (or run from your machine): `npx prisma migrate deploy`.
 6. Copy the public domain, e.g. `https://sgs-api.up.railway.app` and verify:
  `curl https://sgs-api.up.railway.app/api/health` → `{"status":"ok"}`.
@@ -66,6 +96,9 @@ Target architecture: **Vercel** (frontend) · **Railway/Render** (API) · **Supa
  ```
  VITE_API_URL=https://sgs-api.up.railway.app/api
  ```
+> Hosting the frontend on **Render** instead? Set Root Directory to `client`,
+> Build `npm install && npm run build`, Start `npm run preview`, and set the
+> same `VITE_API_URL` variable.
 4. SPA deep links (`/verify/ABC123`, `/grades`, …) need a rewrite — add `client/vercel.json`:
  ```json
  { "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }

@@ -510,7 +510,7 @@ studentsRouter.get('/:id', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, r
           id: true, status: true, verificationCode: true, publishedAt: true,
           semester: { select: { name: true, academicYear: { select: { name: true } } } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { generatedAt: 'desc' },
         take: 8,
       },
     },
