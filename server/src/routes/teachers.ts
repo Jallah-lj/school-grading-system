@@ -28,11 +28,17 @@ const TEACHER_INCLUDE = {
   },
 } as const;
 
-// GET /api/teachers/me — the signed-in teacher's profile + assignments
+// GET /api/teachers/me — the signed-in teacher's profile + assignments + homeroom classes
 teachersRouter.get('/me', authorize(Role.TEACHER, Role.ADMIN), ah(async (req, res) => {
   const teacher = await prisma.teacherProfile.findFirst({
     where: { userId: req.user!.id },
-    include: TEACHER_INCLUDE,
+    include: {
+      ...TEACHER_INCLUDE,
+      homeroomClasses: {
+        select: { id: true, name: true, stream: true, _count: { select: { students: true } } },
+        orderBy: { name: 'asc' },
+      },
+    },
   });
   if (!teacher) throw AppError.notFound('Teacher profile');
   res.json(teacher);
