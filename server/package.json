@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "test": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts"
+    "test": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/services/pdf-layout.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

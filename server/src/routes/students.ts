@@ -48,7 +48,7 @@ const STUDENT_DETAIL_INCLUDE = {
       id: true, status: true, verificationCode: true, publishedAt: true,
       semester: { select: { name: true, academicYear: { select: { name: true } } } },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { generatedAt: 'desc' },
     take: 8,
   },
 } as const;
