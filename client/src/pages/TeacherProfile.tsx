@@ -33,14 +33,29 @@ interface TeacherDetail {
   }[];
 }
 
-export default function TeacherProfile() {
-  const { id } = useParams<{ id: string }>();
+interface TeacherProfileProps {
+  /** Optional id override — used when rendering a teacher's own profile. */
+  profileId?: string;
+  /** When true, shows the page as a read-only self-profile. */
+  self?: boolean;
+}
+
+export default function TeacherProfile({ profileId, self = false }: TeacherProfileProps = {}) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = profileId ?? paramId;
   const navigate = useNavigate();
 
   const { data: teacher, loading, error } = useQuery(
-    () => api.get<TeacherDetail>(`/teachers/${id}`).then((r) => r.data),
-    [id],
+    () => {
+      if (!id) return Promise.resolve(undefined);
+      // Self-profile uses the /me endpoint; otherwise the detail page by id.
+      const url = self ? '/teachers/me' : `/teachers/${id}`;
+      return api.get<TeacherDetail>(url).then((r) => r.data);
+    },
+    [id, self],
   );
+
+  if (!id) return null;
 
   if (loading) {
     return (
@@ -55,7 +70,9 @@ export default function TeacherProfile() {
       <div className="card">
         <EmptyState title="Teacher not found" hint={error ?? 'This teacher may have been removed.'} icon="users" />
         <div className="pb-6 text-center">
-          <button className="btn-secondary" onClick={() => navigate('/teachers')}>Back to teachers</button>
+          <button className="btn-secondary" onClick={() => navigate(self ? '/' : '/teachers')}>
+            {self ? 'Back to dashboard' : 'Back to teachers'}
+          </button>
         </div>
       </div>
     );
@@ -67,8 +84,8 @@ export default function TeacherProfile() {
 
   return (
     <div>
-      <button className="btn-ghost mb-4 px-2 py-1.5 text-sm" onClick={() => navigate('/teachers')}>
-        <Icon name="arrow-left" size={15} /> Back to teachers
+      <button className="btn-ghost mb-4 px-2 py-1.5 text-sm" onClick={() => navigate(self ? '/' : '/teachers')}>
+        <Icon name="arrow-left" size={15} /> {self ? 'Back to dashboard' : 'Back to teachers'}
       </button>
 
       {/* Hero */}
@@ -102,11 +119,13 @@ export default function TeacherProfile() {
                 )}
               </div>
             </div>
-            <div className="pt-2">
-              <Link to="/teachers" className="btn-secondary">
-                <Icon name="edit" size={14} /> Manage on Teachers page
-              </Link>
-            </div>
+            {!self && (
+              <div className="pt-2">
+                <Link to="/teachers" className="btn-secondary">
+                  <Icon name="edit" size={14} /> Manage on Teachers page
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

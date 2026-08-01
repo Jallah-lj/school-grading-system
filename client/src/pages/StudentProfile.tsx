@@ -43,21 +43,37 @@ interface StudentDetail {
   }[];
 }
 
-export default function StudentProfile() {
-  const { id } = useParams<{ id: string }>();
+interface StudentProfileProps {
+  /** Optional id override — used when rendering a student's own profile. */
+  profileId?: string;
+  /** When true, shows the page as a read-only self-profile. */
+  self?: boolean;
+}
+
+export default function StudentProfile({ profileId, self = false }: StudentProfileProps = {}) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = profileId ?? paramId;
   const navigate = useNavigate();
   const toast = useToast();
   const { hasRole } = useAuth();
 
   const { data: student, loading, error } = useQuery(
-    () => api.get<StudentDetail>(`/students/${id}`).then((r) => r.data),
-    [id],
+    () => {
+      if (!id) return Promise.resolve(undefined);
+      // Self-profile uses the /me endpoint (a student can't fetch by id);
+      // otherwise the detail page by id.
+      const url = self ? '/students/me' : `/students/${id}`;
+      return api.get<StudentDetail>(url).then((r) => r.data);
+    },
+    [id, self],
   );
 
   const { data: results, loading: resultsLoading } = useQuery(
     () => (id ? api.get<StudentResultsResponse>(`/students/${id}/results?all=true`).then((r) => r.data) : Promise.resolve(undefined)),
     [id],
   );
+
+  if (!id) return null;
 
   const downloadTranscript = async () => {
     if (!student) return;
@@ -82,7 +98,9 @@ export default function StudentProfile() {
       <div className="card">
         <EmptyState title="Student not found" hint={error ?? 'This student may have been removed.'} icon="users" />
         <div className="pb-6 text-center">
-          <button className="btn-secondary" onClick={() => navigate('/students')}>Back to students</button>
+          <button className="btn-secondary" onClick={() => navigate(self ? '/' : '/students')}>
+            {self ? 'Back to dashboard' : 'Back to students'}
+          </button>
         </div>
       </div>
     );
@@ -92,8 +110,8 @@ export default function StudentProfile() {
 
   return (
     <div>
-      <button className="btn-ghost mb-4 px-2 py-1.5 text-sm" onClick={() => navigate('/students')}>
-        <Icon name="arrow-left" size={15} /> Back to students
+      <button className="btn-ghost mb-4 px-2 py-1.5 text-sm" onClick={() => navigate(self ? '/' : '/students')}>
+        <Icon name="arrow-left" size={15} /> {self ? 'Back to dashboard' : 'Back to students'}
       </button>
 
       {/* Hero */}

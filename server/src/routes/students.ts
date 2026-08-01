@@ -26,6 +26,33 @@ const STUDENT_INCLUDE = {
   parent: { select: { id: true, user: { select: { name: true, email: true, phone: true } } } },
 } as const;
 
+// Full detail shape used by the profile page (and the "my profile" self-view).
+const STUDENT_DETAIL_INCLUDE = {
+  ...STUDENT_INCLUDE,
+  enrollments: {
+    include: {
+      classRoom: { select: { id: true, name: true, stream: true } },
+      semester: { select: { id: true, name: true, academicYear: { select: { name: true } } } },
+    },
+    orderBy: { semester: { startDate: 'desc' } },
+  },
+  gpaRecords: {
+    include: {
+      semester: { select: { id: true, name: true, academicYear: { select: { name: true } } } },
+    },
+    orderBy: { semester: { startDate: 'desc' } },
+    take: 12,
+  },
+  reportCards: {
+    select: {
+      id: true, status: true, verificationCode: true, publishedAt: true,
+      semester: { select: { name: true, academicYear: { select: { name: true } } } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 8,
+  },
+} as const;
+
 // GET /api/students — search, filter, sort, paginate
 studentsRouter.get('/', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res) => {
   const query = parseQuery(z.object({
@@ -486,34 +513,21 @@ studentsRouter.post('/import', authorize(Role.ADMIN), spreadsheetUpload.single('
   res.json({ ...result, file: req.file.originalname });
 }));
 
+// GET /api/students/me — the signed-in student's own full profile.
+// Kept before /:id so "me" isn't treated as an id.
+studentsRouter.get('/me', authorize(Role.STUDENT), ah(async (req, res) => {
+  const student = await prisma.studentProfile.findFirst({
+    where: { userId: req.user!.id },
+    include: STUDENT_DETAIL_INCLUDE,
+  });
+  if (!student) throw AppError.notFound('Student profile');
+  res.json(student);
+}));
+
 studentsRouter.get('/:id', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res) => {
   const student = await prisma.studentProfile.findUnique({
     where: { id: req.params.id },
-    include: {
-      ...STUDENT_INCLUDE,
-      enrollments: {
-        include: {
-          classRoom: { select: { id: true, name: true, stream: true } },
-          semester: { select: { id: true, name: true, academicYear: { select: { name: true } } } },
-        },
-        orderBy: { semester: { startDate: 'desc' } },
-      },
-      gpaRecords: {
-        include: {
-          semester: { select: { id: true, name: true, academicYear: { select: { name: true } } } },
-        },
-        orderBy: { semester: { startDate: 'desc' } },
-        take: 12,
-      },
-      reportCards: {
-        select: {
-          id: true, status: true, verificationCode: true, publishedAt: true,
-          semester: { select: { name: true, academicYear: { select: { name: true } } } },
-        },
-        orderBy: { generatedAt: 'desc' },
-        take: 8,
-      },
-    },
+    include: STUDENT_DETAIL_INCLUDE,
   });
   if (!student) throw AppError.notFound('Student');
   res.json(student);

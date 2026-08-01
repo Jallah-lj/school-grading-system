@@ -8,6 +8,7 @@ import Students from './pages/Students';
 import StudentProfile from './pages/StudentProfile';
 import Teachers from './pages/Teachers';
 import TeacherProfile from './pages/TeacherProfile';
+import MyProfile from './pages/MyProfile';
 import GradeEntry from './pages/GradeEntry';
 import Approvals from './pages/Approvals';
 import MyGrades from './pages/MyGrades';
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/students/:id" element={<RequireRole roles={['ADMIN', 'TEACHER']}><StudentProfile /></RequireRole>} />
         <Route path="/teachers" element={<RequireRole roles={['ADMIN']}><Teachers /></RequireRole>} />
         <Route path="/teachers/:id" element={<RequireRole roles={['ADMIN']}><TeacherProfile /></RequireRole>} />
+        <Route path="/my-profile" element={<RequireRole roles={['TEACHER', 'STUDENT']}><MyProfile /></RequireRole>} />
         <Route path="/grade-entry" element={<RequireRole roles={['TEACHER', 'ADMIN']}><GradeEntry /></RequireRole>} />
         <Route path="/approvals" element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
         <Route path="/grades" element={<RequireRole roles={['STUDENT', 'PARENT']}><MyGrades /></RequireRole>} />

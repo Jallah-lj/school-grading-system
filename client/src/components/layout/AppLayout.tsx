@@ -23,6 +23,7 @@ const NAV: { to: string; label: string; iconPath: string; roles: Role[] }[] = [
   { to: '/students', label: 'Students', iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', roles: ['ADMIN', 'TEACHER'] },
   { to: '/teachers', label: 'Teachers', iconPath: 'M22 10L12 5 2 10l10 5 10-5zM6 12v5c3 3 9 3 12 0v-5', roles: ['ADMIN'] },
   { to: '/grades', label: 'My Grades', iconPath: 'M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z', roles: ['STUDENT', 'PARENT'] },
+  { to: '/my-profile', label: 'My Profile', iconPath: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z', roles: ['TEACHER', 'STUDENT'] },
   { to: '/report-cards', label: 'Report Cards', iconPath: 'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M16 13H8M16 17H8M10 9H8', roles: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'] },
   { to: '/analytics', label: 'Analytics', iconPath: 'M18 20V10M12 20V4M6 20v-6', roles: ['ADMIN', 'TEACHER'] },
   { to: '/audit-logs', label: 'Audit Logs', iconPath: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', roles: ['ADMIN'] },
