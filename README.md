@@ -57,6 +57,7 @@ Modern dashboard · responsive layout · **dark & light mode** · sidebar naviga
 
 ```
 school-grading-system/
+├── package.json                # root orchestrator: build/start both client & server (used by Render/Railway)
 ├── docker-compose.yml          # one-command local PostgreSQL
 ├── docs/
 │   ├── API.md                  # full REST API reference
@@ -179,7 +180,7 @@ bcrypt password hashing (12 rounds) · short-lived JWT access tokens (15 min) + 
 | Piece | Platform | Notes |
 |---|---|---|
 | Database | **Supabase** PostgreSQL | copy pooled connection string into `DATABASE_URL` |
-| API | **Railway** / Render | build `npm run build`, start `npm start`, set env vars |
+| API | **Railway** / Render | root `package.json` orchestrates the build — works with Root Directory = repo root **or** `server`; start `npm start`, set env vars |
 | Frontend | **Vercel** | root dir `client`, set `VITE_API_URL`, SPA rewrites |
 
 Full walkthrough in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).

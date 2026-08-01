@@ -238,10 +238,10 @@ export function AppLayout() {
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-800">
-        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-3 py-3 ring-1 ring-indigo-100 dark:from-indigo-500/15 dark:via-slate-900 dark:to-violet-500/10 dark:ring-indigo-500/25">
+        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-3 py-3 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-200 dark:from-indigo-500/20 dark:via-slate-900 dark:to-violet-500/10 dark:ring-indigo-500/30">
           {school?.hasBadge
             ? (
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-md shadow-indigo-500/15 ring-2 ring-white dark:bg-slate-800 dark:ring-slate-700">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-md shadow-indigo-500/20 ring-2 ring-white dark:bg-slate-800 dark:ring-slate-700">
                 <img src={apiUrl('/school/badge')} alt="School badge" className="h-full w-full object-contain" />
               </div>
             )
@@ -251,6 +251,7 @@ export function AppLayout() {
               </div>
             )}
           <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-500/80 dark:text-indigo-300/70">Current school</div>
             <div className="truncate text-[15px] font-extrabold leading-snug tracking-tight text-slate-900 dark:text-white" title={school?.name ?? 'Grading System'}>
               {school?.name ?? 'Grading System'}
             </div>
