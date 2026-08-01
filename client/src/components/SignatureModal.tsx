@@ -3,6 +3,7 @@ import { Icon } from './Icon';
 import SignaturePad from 'signature_pad';
 import { api, apiError } from '../lib/api';
 import { useToast } from './toast';
+import { ConfirmDialog } from './ConfirmDialog';
 import { Modal } from './ui';
 import { cx } from '../lib/utils';
 
@@ -22,6 +23,7 @@ export function SignatureModal({ open, onClose }: { open: boolean; onClose: () =
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const padRef = useRef<SignaturePad | null>(null);
@@ -107,10 +109,12 @@ export function SignatureModal({ open, onClose }: { open: boolean; onClose: () =
       toast('success', 'Signature removed');
       setExisting(null);
       setMeta(null);
+      setConfirmRemove(false);
     } catch (err) { toast('error', apiError(err)); } finally { setBusy(false); }
   };
 
   return (
+    <>
     <Modal open={open} onClose={onClose} title="My Digital Signature">
       <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
         Your signature is stored securely and stamped automatically on report cards you are responsible for.
@@ -121,7 +125,7 @@ export function SignatureModal({ open, onClose }: { open: boolean; onClose: () =
         <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/40">
           <div className="mb-1 flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-400">
             <span className="inline-flex items-center gap-1"><Icon name="check-circle" size={13} /> Current signature {meta ? `(saved ${new Date(meta.updatedAt).toLocaleDateString()})` : ''}</span>
-            <button className="text-rose-500 hover:underline" onClick={() => void remove()} disabled={busy}>Remove</button>
+            <button className="text-rose-500 hover:underline" onClick={() => setConfirmRemove(true)} disabled={busy}>Remove</button>
           </div>
           <img src={existing} alt="Current signature" className="h-16 rounded bg-white object-contain px-3 py-1 dark:bg-slate-200" />
         </div>
@@ -181,5 +185,16 @@ export function SignatureModal({ open, onClose }: { open: boolean; onClose: () =
         </div>
       )}
     </Modal>
+    <ConfirmDialog
+      open={confirmRemove}
+      danger
+      busy={busy}
+      title="Remove signature"
+      message="Remove your digital signature? It will no longer appear on report cards until you save a new one."
+      confirmText="Remove Signature"
+      onConfirm={() => void remove()}
+      onCancel={() => setConfirmRemove(false)}
+    />
+    </>
   );
 }

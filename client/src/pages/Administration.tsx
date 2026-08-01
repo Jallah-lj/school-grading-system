@@ -17,24 +17,33 @@ function UsersTab() {
   const [role, setRole] = useState('');
   const [resetTarget, setResetTarget] = useState<ManagedUser | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmToggle, setConfirmToggle] = useState<ManagedUser | null>(null);
+  const [confirmRole, setConfirmRole] = useState<{ user: ManagedUser; role: Role } | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
 
   const { data, loading, refetch } = useQuery(() =>
     api.get<{ data: ManagedUser[] }>(`/users?pageSize=100${role ? `&role=${role}` : ''}`).then((r) => r.data), [role]);
 
-  const toggleActive = async (u: ManagedUser) => {
+  const toggleActive = async () => {
+    if (!confirmToggle) return;
+    setActionBusy(true);
     try {
-      await api.patch(`/users/${u.id}`, { isActive: !u.isActive });
-      toast('success', `${u.name} ${u.isActive ? 'deactivated' : 'activated'}`);
+      await api.patch(`/users/${confirmToggle.id}`, { isActive: !confirmToggle.isActive });
+      toast('success', `${confirmToggle.name} ${confirmToggle.isActive ? 'deactivated' : 'activated'}`);
+      setConfirmToggle(null);
       void refetch();
-    } catch (err) { toast('error', apiError(err)); }
+    } catch (err) { toast('error', apiError(err)); } finally { setActionBusy(false); }
   };
 
-  const changeRole = async (u: ManagedUser, next: Role) => {
+  const changeRole = async () => {
+    if (!confirmRole) return;
+    setActionBusy(true);
     try {
-      await api.patch(`/users/${u.id}`, { role: next });
+      await api.patch(`/users/${confirmRole.user.id}`, { role: confirmRole.role });
       toast('success', 'Role updated');
+      setConfirmRole(null);
       void refetch();
-    } catch (err) { toast('error', apiError(err)); }
+    } catch (err) { toast('error', apiError(err)); } finally { setActionBusy(false); }
   };
 
   const doReset = async () => {
@@ -81,7 +90,11 @@ function UsersTab() {
                       <div className="text-xs text-slate-400">{u.email}</div>
                     </td>
                     <td className="td">
-                      <select className="input w-28 px-2 py-1 text-xs" value={u.role} onChange={(e) => void changeRole(u, e.target.value as Role)}>
+                      <select className="input w-28 px-2 py-1 text-xs" value={u.role} onChange={(e) => {
+                        const next = e.target.value as Role;
+                        if (next === u.role) return;
+                        setConfirmRole({ user: u, role: next });
+                      }}>
                         {(['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'] as Role[]).map((r) => <option key={r} value={r}>{r}</option>)}
                       </select>{' '}
                       <Badge className={roleBadge(u.role)}>{u.role}</Badge>
@@ -94,7 +107,7 @@ function UsersTab() {
                     </td>
                     <td className="td text-right">
                       <button className="btn-ghost px-2 py-1 text-xs" onClick={() => { setResetTarget(u); setNewPassword(''); }}>Reset password</button>
-                      <button className={cx('btn-ghost px-2 py-1 text-xs', u.isActive && 'text-rose-500')} onClick={() => void toggleActive(u)}>
+                      <button className={cx('btn-ghost px-2 py-1 text-xs', u.isActive && 'text-rose-500')} onClick={() => setConfirmToggle(u)}>
                         {u.isActive ? 'Deactivate' : 'Activate'}
                       </button>
                     </td>
@@ -117,6 +130,32 @@ function UsersTab() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmToggle}
+        danger={!!confirmToggle?.isActive}
+        busy={actionBusy}
+        title={confirmToggle?.isActive ? 'Deactivate user' : 'Activate user'}
+        message={confirmToggle
+          ? (confirmToggle.isActive
+            ? `Deactivate ${confirmToggle.name}? They will no longer be able to sign in until reactivated.`
+            : `Reactivate ${confirmToggle.name}? They will regain access to the system.`)
+          : ''}
+        confirmText={confirmToggle?.isActive ? 'Deactivate' : 'Activate'}
+        onConfirm={() => void toggleActive()}
+        onCancel={() => setConfirmToggle(null)}
+      />
+      <ConfirmDialog
+        open={!!confirmRole}
+        busy={actionBusy}
+        title="Change user role"
+        message={confirmRole
+          ? `Change ${confirmRole.user.name}'s role from ${confirmRole.user.role} to ${confirmRole.role}? This immediately affects their permissions.`
+          : ''}
+        confirmText="Change Role"
+        onConfirm={() => void changeRole()}
+        onCancel={() => setConfirmRole(null)}
+      />
     </div>
   );
 }
@@ -543,6 +582,7 @@ function SchoolTab() {
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [badgeVersion, setBadgeVersion] = useState(0);
+  const [confirmRemoveBadge, setConfirmRemoveBadge] = useState(false);
 
   const { data, loading, refetch } = useQuery(() => api.get<SchoolSettings>('/school/settings').then((r) => r.data), []);
 
@@ -572,6 +612,7 @@ function SchoolTab() {
       setPreview((p) => { if (p) URL.revokeObjectURL(p); return null; });
       setBadgeVersion((v) => v + 1);
       void refetch();
+      window.dispatchEvent(new Event('school-updated'));
     } catch (err) { toast('error', apiError(err)); } finally { setBusy(false); }
   };
 
@@ -580,73 +621,88 @@ function SchoolTab() {
     try {
       await api.delete('/school/badge');
       toast('success', 'Badge removed');
+      setConfirmRemoveBadge(false);
       setBadgeVersion((v) => v + 1);
       void refetch();
+      window.dispatchEvent(new Event('school-updated'));
     } catch (err) { toast('error', apiError(err)); } finally { setBusy(false); }
   };
 
   if (loading || !data) return <div className="card"><TableSkeleton /></div>;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="card p-5">
-        <h3 className="mb-1 font-semibold">School Identity</h3>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Shown on report cards, transcripts, the login page and the sidebar.</p>
-        <div className="space-y-4">
-          <div>
-            <label className="label">School name</label>
-            <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+    <>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="card p-5">
+          <h3 className="mb-1 font-semibold">School Identity</h3>
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Shown on report cards, transcripts, the login page and the sidebar.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="label">School name</label>
+              <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">Motto</label>
+              <input className="input" value={form.motto} onChange={(e) => setForm({ ...form, motto: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">Admission number prefix</label>
+              <input className="input w-32 font-mono uppercase" maxLength={6} value={form.studentIdPrefix}
+                onChange={(e) => setForm({ ...form, studentIdPrefix: e.target.value.toUpperCase() })} />
+              <p className="mt-1 text-xs text-slate-400">
+                New students get <span className="font-mono">{form.studentIdPrefix || 'SGS'}-2026-0001</span>, new teachers <span className="font-mono">{form.studentIdPrefix || 'SGS'}-STF-001</span>.
+              </p>
+            </div>
+            <button className="btn-primary" onClick={() => void saveSettings()} disabled={busy || !form.name.trim()}>
+              {busy ? 'Saving…' : 'Save Settings'}
+            </button>
           </div>
-          <div>
-            <label className="label">Motto</label>
-            <input className="input" value={form.motto} onChange={(e) => setForm({ ...form, motto: e.target.value })} />
+        </div>
+
+        <div className="card p-5">
+          <h3 className="mb-1 font-semibold">School Badge / Crest</h3>
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Stamped in the header of every report card and transcript PDF.</p>
+          <div className="flex items-start gap-4">
+            <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 dark:border-slate-700">
+              {preview ? (
+                <img src={preview} alt="New badge preview" className="h-full w-full object-contain" />
+              ) : data.hasBadge ? (
+                <img src={`${apiUrl('/school/badge')}?v=${badgeVersion}`} alt="Current badge" className="h-full w-full object-contain" />
+              ) : (
+                <Icon name="home" size={30} className="text-slate-300 dark:text-slate-600" />
+              )}
+            </div>
+            <div className="flex-1 space-y-3">
+              <input id="badge-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setFile(f);
+                  setPreview((p) => { if (p) URL.revokeObjectURL(p); return f ? URL.createObjectURL(f) : null; });
+                }} />
+              <label htmlFor="badge-upload" className="btn-secondary w-full cursor-pointer">Choose image…</label>
+              <button className="btn-primary w-full" onClick={() => void uploadBadge()} disabled={busy || !file}>
+                {busy ? 'Uploading…' : 'Upload Badge'}
+              </button>
+              {data.hasBadge && (
+                <button className="btn-secondary w-full text-rose-500" onClick={() => setConfirmRemoveBadge(true)} disabled={busy}>Remove Badge</button>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="label">Admission number prefix</label>
-            <input className="input w-32 font-mono uppercase" maxLength={6} value={form.studentIdPrefix}
-              onChange={(e) => setForm({ ...form, studentIdPrefix: e.target.value.toUpperCase() })} />
-            <p className="mt-1 text-xs text-slate-400">
-              New students get <span className="font-mono">{form.studentIdPrefix || 'SGS'}-2026-0001</span>, new teachers <span className="font-mono">{form.studentIdPrefix || 'SGS'}-STF-001</span>.
-            </p>
-          </div>
-          <button className="btn-primary" onClick={() => void saveSettings()} disabled={busy || !form.name.trim()}>
-            {busy ? 'Saving…' : 'Save Settings'}
-          </button>
+          <p className="mt-4 text-xs text-slate-400">PNG with transparency recommended. Images are auto-resized to fit 512×512 and stored in the database.</p>
         </div>
       </div>
 
-      <div className="card p-5">
-        <h3 className="mb-1 font-semibold">School Badge / Crest</h3>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">Stamped in the header of every report card and transcript PDF.</p>
-        <div className="flex items-start gap-4">
-          <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 dark:border-slate-700">
-            {preview ? (
-              <img src={preview} alt="New badge preview" className="h-full w-full object-contain" />
-            ) : data.hasBadge ? (
-              <img src={`${apiUrl('/school/badge')}?v=${badgeVersion}`} alt="Current badge" className="h-full w-full object-contain" />
-            ) : (
-              <Icon name="home" size={30} className="text-slate-300 dark:text-slate-600" />
-            )}
-          </div>
-          <div className="flex-1 space-y-3">
-            <input id="badge-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                setFile(f);
-                setPreview((p) => { if (p) URL.revokeObjectURL(p); return f ? URL.createObjectURL(f) : null; });
-              }} />
-            <label htmlFor="badge-upload" className="btn-secondary w-full cursor-pointer">Choose image…</label>
-            <button className="btn-primary w-full" onClick={() => void uploadBadge()} disabled={busy || !file}>
-              {busy ? 'Uploading…' : 'Upload Badge'}
-            </button>
-            {data.hasBadge && (
-              <button className="btn-secondary w-full text-rose-500" onClick={() => void removeBadge()} disabled={busy}>Remove Badge</button>
-            )}
-          </div>
-        </div>
-        <p className="mt-4 text-xs text-slate-400">PNG with transparency recommended. Images are auto-resized to fit 512×512 and stored in the database.</p>
-      </div>
-    </div>
+      <ConfirmDialog
+        open={confirmRemoveBadge}
+        danger
+        busy={busy}
+        title="Remove school badge"
+        message="Remove the school badge/crest? It will no longer appear on the login page, sidebar, or report cards until a new one is uploaded."
+        confirmText="Remove Badge"
+        onConfirm={() => void removeBadge()}
+        onCancel={() => setConfirmRemoveBadge(false)}
+      />
+    </>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,8 +7,10 @@ import { api, apiError } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
 import { useToast } from '../components/toast';
 import { PasswordConfirmDialog } from '../components/PasswordConfirmDialog';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Icon } from '../components/Icon';
 import { Badge, EmptyState, Modal, PageHeader, TableSkeleton } from '../components/ui';
+import { initials } from '../lib/utils';
 import type { ClassRoom, Paged, Subject, TeacherRow } from '../lib/types';
 
 const teacherSchema = z.object({
@@ -28,6 +31,8 @@ export default function Teachers() {
   const [assignClass, setAssignClass] = useState('');
   const [deleting, setDeleting] = useState<TeacherRow | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [removingAssignment, setRemovingAssignment] = useState<{ teacherId: string; assignmentId: string; label: string } | null>(null);
+  const [removeAssignBusy, setRemoveAssignBusy] = useState(false);
 
   const { data, loading, refetch } = useQuery(() =>
     api.get<Paged<TeacherRow>>(`/teachers?pageSize=50${search ? `&search=${encodeURIComponent(search)}` : ''}`).then((r) => r.data), [search]);
@@ -58,13 +63,15 @@ export default function Teachers() {
     } catch (err) { toast('error', apiError(err)); }
   };
 
-  const removeAssignment = async (teacherId: string, assignmentId?: string) => {
-    if (!assignmentId) return;
+  const removeAssignment = async () => {
+    if (!removingAssignment) return;
+    setRemoveAssignBusy(true);
     try {
-      await api.delete(`/teachers/${teacherId}/assignments/${assignmentId}`);
+      await api.delete(`/teachers/${removingAssignment.teacherId}/assignments/${removingAssignment.assignmentId}`);
       toast('success', 'Assignment removed');
+      setRemovingAssignment(null);
       void refetch();
-    } catch (err) { toast('error', apiError(err)); }
+    } catch (err) { toast('error', apiError(err)); } finally { setRemoveAssignBusy(false); }
   };
 
   const doDelete = async (password: string) => {
@@ -94,13 +101,19 @@ export default function Teachers() {
         <div className="grid gap-4 lg:grid-cols-2">
           {data.data.map((t) => (
             <div key={t.id} className="card p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="font-semibold text-slate-900 dark:text-white">{t.user.name}</div>
-                  <div className="text-xs text-slate-400">{t.user.email} · {t.staffNumber}</div>
-                  {t.qualification && <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.qualification}</div>}
-                </div>
-                <div className="flex gap-2">
+              <div className="flex items-start justify-between gap-3">
+                <Link to={`/teachers/${t.id}`} className="group flex min-w-0 items-start gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sm font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">
+                    {initials(t.user.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-indigo-700 group-hover:underline dark:text-indigo-300">{t.user.name}</div>
+                    <div className="text-xs text-slate-400">{t.user.email} · {t.staffNumber}</div>
+                    {t.qualification && <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.qualification}</div>}
+                  </div>
+                </Link>
+                <div className="flex shrink-0 gap-2">
+                  <Link to={`/teachers/${t.id}`} className="btn-ghost px-3 py-1.5 text-xs">View</Link>
                   <button className="btn-secondary px-3 py-1.5 text-xs" onClick={() => setAssigning(t)}>Assign</button>
                   <button className="btn-ghost px-3 py-1.5 text-xs text-rose-500" title="Delete teacher"
                     onClick={() => setDeleting(t)}>Delete</button>
@@ -113,7 +126,11 @@ export default function Teachers() {
                     {a.subject.code} · {a.classRoom.name} {a.classRoom.stream}
                     {a.id && (
                       <button className="ml-1.5 opacity-60 hover:opacity-100" title="Remove"
-                        onClick={() => void removeAssignment(t.id, a.id)}><Icon name="x" size={11} /></button>
+                        onClick={() => setRemovingAssignment({
+                          teacherId: t.id,
+                          assignmentId: a.id!,
+                          label: `${a.subject.code} · ${a.classRoom.name} ${a.classRoom.stream}`,
+                        })}><Icon name="x" size={11} /></button>
                     )}
                   </Badge>
                 ))}
@@ -168,6 +185,19 @@ export default function Teachers() {
       <PasswordConfirmDialog open={!!deleting} busy={deleteBusy} title="Delete teacher — security check"
         message={`You are about to permanently delete ${deleting?.user.name} (${deleting?.staffNumber}). Their account, assignments and linked records will be removed. This cannot be undone.`}
         confirmText="Delete permanently" onConfirm={(pw) => void doDelete(pw)} onCancel={() => setDeleting(null)} />
+
+      <ConfirmDialog
+        open={!!removingAssignment}
+        danger
+        busy={removeAssignBusy}
+        title="Remove assignment"
+        message={removingAssignment
+          ? `Remove assignment “${removingAssignment.label}”? The teacher will no longer be able to enter grades for this subject/class.`
+          : ''}
+        confirmText="Remove"
+        onConfirm={() => void removeAssignment()}
+        onCancel={() => setRemovingAssignment(null)}
+      />
     </div>
   );
 }

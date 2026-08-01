@@ -173,6 +173,24 @@ function canAccessCard(user: Express.Request['user'], cardStudent: { userId: str
   return cardStudent.userId === user!.id || cardStudent.parent?.userId === user!.id;
 }
 
+// GET /api/report-cards/transcript/:studentId/pdf — cumulative transcript
+reportCardsRouter.get('/transcript/:studentId/pdf', authenticate, ah(async (req, res) => {
+  const student = await prisma.studentProfile.findUnique({
+    where: { id: req.params.studentId },
+    select: { userId: true, parent: { select: { userId: true } } },
+  });
+  if (!student) throw AppError.notFound('Student');
+  const me = req.user!;
+  const allowed = me.role === Role.ADMIN || me.role === Role.TEACHER
+    || student.userId === me.id || student.parent?.userId === me.id;
+  if (!allowed) throw AppError.forbidden();
+
+  const pdf = await buildTranscriptPdf(req.params.studentId);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="transcript.pdf"`);
+  res.send(pdf);
+}));
+
 // GET /api/report-cards/:id — JSON detail (admin any; student/parent when published)
 reportCardsRouter.get('/:id', authenticate, ah(async (req, res) => {
   const card = await prisma.reportCard.findUnique({
@@ -198,23 +216,6 @@ reportCardsRouter.get('/:id/pdf', authenticate, ah(async (req, res) => {
   const pdf = await buildReportCardPdf(data!);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="report_card_${data!.student.admissionNumber}.pdf"`);
-  res.send(pdf);
-}));
-
-// GET /api/report-cards/transcript/:studentId/pdf — cumulative transcript
-reportCardsRouter.get('/transcript/:studentId/pdf', authenticate, ah(async (req, res) => {
-  const student = await prisma.studentProfile.findUnique({
-    where: { id: req.params.studentId },
-    select: { userId: true, parent: { select: { userId: true } } },
-  });
-  if (!student) throw AppError.notFound('Student');
-  const me = req.user!;
-  const allowed = me.role === Role.ADMIN || student.userId === me.id || student.parent?.userId === me.id;
-  if (!allowed) throw AppError.forbidden();
-
-  const pdf = await buildTranscriptPdf(req.params.studentId);
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="transcript.pdf"`);
   res.send(pdf);
 }));
 
