@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
 import { studentsRouter } from './routes/students';
 import { teachersRouter } from './routes/teachers';
+import { parentsRouter } from './routes/parents';
 import { subjectsRouter } from './routes/subjects';
 import { classesRouter } from './routes/classes';
 import { academicYearsRouter } from './routes/academicYears';
@@ -45,6 +46,7 @@ export function createApp() {
         auth: 'POST /api/auth/login · POST /api/auth/refresh · GET /api/auth/me',
         students: '/api/students',
         teachers: '/api/teachers',
+        parents: '/api/parents',
         subjects: '/api/subjects',
         classes: '/api/classes',
         academicYears: '/api/academic-years',
@@ -63,6 +65,7 @@ export function createApp() {
   app.use('/api/users', usersRouter);
   app.use('/api/students', studentsRouter);
   app.use('/api/teachers', teachersRouter);
+  app.use('/api/parents', parentsRouter);
   app.use('/api/subjects', subjectsRouter);
   app.use('/api/classes', classesRouter);
   app.use('/api/academic-years', academicYearsRouter);

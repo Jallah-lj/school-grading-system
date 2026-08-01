@@ -50,10 +50,10 @@ Error envelope: `{ "error": { "code": "STRING", "message": "…", "details?": �
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| GET | `/students?search=&classId=&gender=&sortBy=name&sortDir=&page=&pageSize=` | ADMIN, TEACHER | Search by name/email/admission no. Server-side sort + pagination |
-| POST | `/students` | ADMIN | `{ name, email, password, dateOfBirth, gender, classId?, parentEmail?, … }` — admission number **auto-assigned** (override optional); creates login + profile + enrollment |
+| GET | `/students?search=&classId=&gender=&parentStatus=linked\|unlinked&sortBy=name&sortDir=&page=&pageSize=` | ADMIN, TEACHER | Search by name/email/admission no. `parentStatus` filters by parent link. Server-side sort + pagination |
+| POST | `/students` | ADMIN | `{ name, email, password, dateOfBirth, gender, classId?, parentEmail?, … }` — admission number **auto-assigned** (override optional); creates login + profile + enrollment; `parentEmail` must match an existing parent account |
 | GET | `/students/:id` | auth | Profile with enrollments |
-| PUT | `/students/:id` | ADMIN | Partial update (class change re-enrolls) |
+| PUT | `/students/:id` | ADMIN | Partial update (class change re-enrolls). **`parentEmail` is honored**: a value (re)links the student to that parent, `null` unlinks, omitted keeps the current link |
 | DELETE | `/students/:id` | ADMIN | **Requires step-up password** — body `{ password }` (the admin's own). Wrong/missing → 403/400 and a `DELETE_STUDENT_DENIED` audit event. Cascades user + records |
 | GET | `/students/import/template` | ADMIN | Downloads `.xlsx` template — headers sheet, valid class list, usage notes |
 | POST | `/students/import` | ADMIN | **Bulk import from Excel/CSV** — multipart `{ file }` (.xlsx/.csv, ≤5 MB, ≤500 rows). Row-wise: valid rows created (auto admission no., active-term enrolment, blank passwords auto-generated) and invalid rows reported. Returns `{ created, failed, errors[{row,email,reason}], credentials[] }`. Audit-logged as `BULK_IMPORT_STUDENTS` |
@@ -72,6 +72,21 @@ Error envelope: `{ "error": { "code": "STRING", "message": "…", "details?": �
 | DELETE | `/teachers/:id` | ADMIN | **Requires step-up password** — body `{ password }`; failures audit-logged as `DELETE_TEACHER_DENIED` |
 | POST | `/teachers/:id/assignments` | ADMIN | `{ subjectId, classId }` |
 | DELETE | `/teachers/:id/assignments/:assignmentId` | ADMIN | Unassign |
+
+## Parents
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/parents?search=&page=&pageSize=` | ADMIN | List parent accounts with their linked children |
+| GET | `/parents/:id` | ADMIN | Detail (user + children) |
+| POST | `/parents` | ADMIN | `{ name, email, password, phone? }` — creates the parent login account + profile |
+| PUT | `/parents/:id` | ADMIN | `{ name?, email?, phone? }` — update profile details |
+| POST | `/parents/:id/reset-password` | ADMIN | `{ password }` — sets a new password and revokes all of the parent's sessions |
+| POST | `/parents/:id/children` | ADMIN | `{ studentId }` — link a student to this parent (409 if already linked elsewhere) |
+| DELETE | `/parents/:id/children/:studentId` | ADMIN | Unlink a student (the student record is kept) |
+| DELETE | `/parents/:id` | ADMIN | **Requires step-up password** — body `{ password }` (the admin's own). Deletes the account + parent profile; linked students are unlinked but kept. Failures audit-logged as `DELETE_PARENT_DENIED` |
+
+Audit actions: `CREATE_PARENT`, `UPDATE_PARENT`, `DELETE_PARENT`, `RESET_PARENT_PASSWORD`, `LINK_PARENT_CHILD`, `UNLINK_PARENT_CHILD`.
 
 ## Subjects & components
 

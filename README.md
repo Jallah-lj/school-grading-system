@@ -17,13 +17,14 @@ React 18 · TypeScript · Tailwind CSS · Chart.js · Express · Prisma · Postg
 | Capability | Admin | Teacher | Student | Parent |
 |---|:-:|:-:|:-:|:-:|
 | Manage users, students, teachers, classes, subjects | Yes | — | — | — |
+| **Manage parent accounts** — create parents, link/unlink children, reset passwords (dedicated Parents page + `parentEmail` on student forms/bulk import) | Yes | — | — | — |
 | **Bulk import students from Excel/CSV** — template download, per-row validation, auto admission numbers & passwords, credentials export | Yes | — | — | — |
 | Configure grading scales, academic years & terms | Yes | — | — | — |
 | Enter / edit marks **before approval** | Yes | Yes | — | — |
 | **Fast mark entry** — Excel template/import, paste-from-Excel, keyboard navigation, column fill, auto-save drafts | Yes | Yes | — | — |
 | Submit → Approve → **Publish** workflow | Yes | submit | — | — |
 | **Approval inbox** — one-click approve / return with note, sidebar badge, deep-link notifications | Yes | notified | — | — |
-| Delete students/teachers **with password step-up verification** (failures audit-logged) | Yes | — | — | — |
+| Delete students/teachers/parents **with password step-up verification** (failures audit-logged) | Yes | — | — | — |
 | **Audit log page** — filter by action/entity/date/user, inspect event payloads | Yes | — | — | — |
 | View grades, GPA, class ranking, progress | Yes | Yes | Yes | Yes (child) |
 | Report cards, transcripts, PDF downloads | Yes | class | own | child |
@@ -47,6 +48,9 @@ Upload the **school badge/crest** and edit the **school name, motto and ID prefi
 
 ### Digital signatures
 Teachers and admins capture their signature two ways — **draw it on screen** (mouse/touch/stylus pad) or **photograph a paper signature** and upload it. The server auto-cleans uploads (EXIF rotation → paper background made transparent → ink auto-crop → compression), stores the PNG in PostgreSQL, and stamps it automatically on every report card: the class-teacher slot uses the class's homeroom teacher; the principal slot uses the admin who published the card. Signatures also appear on the public QR-verification page and transcripts.
+
+### Parent accounts & academic progress
+Admins create parent accounts on the dedicated **Parents** page (sidebar) — name, email, password — then link each parent to their children: either from the parent record (pick any unlinked student), or via the *Parent email* field when registering or editing students and in bulk imports. One parent can have many children. A parent signs in with their own account and sees every linked child in **Academic Progress** (child selector, GPA/average/position, subject results, GPA trend, transcript PDF), plus report cards and grade-published notifications. Deleting a parent removes the login account and unlinks the children — the student records themselves are kept.
 
 ### UI/UX
 Modern dashboard · responsive layout · **dark & light mode** · sidebar navigation · interactive sortable/paginated tables · validated forms (React Hook Form + Zod) · Chart.js visualizations · loading skeletons · toast notifications · confirmation dialogs.
