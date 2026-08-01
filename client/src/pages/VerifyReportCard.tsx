@@ -3,10 +3,19 @@ import { Icon } from '../components/Icon';
 import { api, apiUrl } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
 import { Badge, Spinner } from '../components/ui';
-import { gradeBadgeClass, ordinal } from '../lib/utils';
+import { ordinal } from '../lib/utils';
 import type { ReportCardDetail } from '../lib/types';
 
-/** Public report-card verification / printable view (linked from the QR code). */
+/** Classic official-document palette, mirroring the PDF report card. */
+const NAVY = '#1c3557';
+const GOLD = '#b8933d';
+const HAIRLINE = '#d9dee4';
+const ZEBRA = '#f5f6f8';
+const MUTED = '#5f6b78';
+
+/** Public report-card verification / printable view (linked from the QR code).
+ *  Styled like a printed certificate: white paper, serif headings, navy + gold
+ *  rules. The paper stays light even in dark mode so it prints correctly. */
 export default function VerifyReportCard() {
   const { code } = useParams<{ code: string }>();
   const { data, loading, error } = useQuery(
@@ -29,6 +38,22 @@ export default function VerifyReportCard() {
     );
   }
 
+  const details: [string, string][] = [
+    ['Student Name', data.student.name],
+    ['Admission No.', data.student.admissionNumber],
+    ['Class', data.student.className],
+    ['Term', data.semester.name],
+    ['Year', data.semester.academicYear],
+    ['Class Size', data.gpa?.classSize ? String(data.gpa.classSize) : '—'],
+    ['Credits', data.gpa ? String(data.gpa.totalCredits) : '—'],
+    ['Date Issued', data.publishedAt ? data.publishedAt.slice(0, 10) : '—'],
+  ];
+  const summary = [
+    { label: 'Term GPA', value: data.gpa ? data.gpa.gpa.toFixed(2) : '—' },
+    { label: 'Average', value: data.gpa ? `${data.gpa.average.toFixed(1)}%` : '—' },
+    { label: 'Class Position', value: data.gpa?.position ? `${ordinal(data.gpa.position)} of ${data.gpa.classSize ?? '—'}` : '—' },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-100 py-8 dark:bg-slate-950">
       <div className="no-print mx-auto mb-4 flex max-w-3xl items-center justify-between px-4">
@@ -36,115 +61,106 @@ export default function VerifyReportCard() {
         <button className="btn-primary" onClick={() => window.print()}><Icon name="printer" size={15} /> Print / Save PDF</button>
       </div>
 
-      <div className="print-area card mx-auto max-w-3xl overflow-hidden shadow-lg">
-        {/* Top accent */}
-        <div className="h-1.5 bg-gradient-to-r from-indigo-600 via-violet-500 to-indigo-600" />
+      {/* White paper document — stays light in dark mode for printing */}
+      <div className="print-area mx-auto max-w-3xl bg-white text-slate-900 shadow-lg">
+        {/* Top band: navy with a thin gold rule */}
+        <div className="h-2.5" style={{ backgroundColor: NAVY }} />
+        <div className="h-0.5" style={{ backgroundColor: GOLD }} />
 
-        {/* Brand header */}
-        <div className="relative bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 px-8 py-8 text-white">
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-5">
-            {data.school.hasBadge ? (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/95 p-2 shadow-lg">
-                <img src={apiUrl('/school/badge')} alt={`${data.school.name} badge`} className="h-full w-full object-contain" />
-              </div>
-            ) : (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl font-extrabold">
-                {data.school.name[0]}
-              </div>
-            )}
-            <div className="min-w-0 text-center sm:text-left">
-              <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{data.school.name}</h1>
-              {data.school.motto && (
-                <p className="mt-1 text-sm italic text-indigo-100/90">“{data.school.motto}”</p>
-              )}
-              <p className="mt-3 inline-block rounded-full bg-white/15 px-4 py-1 text-[11px] font-semibold uppercase tracking-widest backdrop-blur">
-                Official Student Report Card
-              </p>
-              <p className="mt-2 text-sm text-indigo-100">
-                {data.semester.name} · Academic Year {data.semester.academicYear}
-              </p>
+        {/* Certificate header */}
+        <header className="px-8 pb-6 pt-8 text-center">
+          {data.school.hasBadge && (
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white p-1.5" style={{ border: `2px solid ${GOLD}`, boxShadow: `0 0 0 1.5px ${NAVY} inset` }}>
+              <img src={apiUrl('/school/badge')} alt={`${data.school.name} badge`} className="h-full w-full rounded-full object-contain" />
             </div>
+          )}
+          <h1 className="font-doc mt-3 text-[26px] font-bold tracking-wide sm:text-[30px]" style={{ color: NAVY }}>{data.school.name}</h1>
+          {data.school.motto && (
+            <p className="font-doc mt-1 text-sm italic" style={{ color: GOLD }}>“{data.school.motto}”</p>
+          )}
+          {/* Navy + gold double rule */}
+          <div className="mt-4 h-[3px]" style={{ backgroundColor: NAVY }} />
+          <div className="mt-[3px] h-px" style={{ backgroundColor: GOLD }} />
+          <p className="font-doc mt-4 text-[13px] font-bold tracking-[0.3em]" style={{ color: NAVY }}>
+            OFFICIAL STUDENT REPORT CARD
+          </p>
+          <p className="font-doc mt-1.5 text-sm italic" style={{ color: MUTED }}>
+            {data.semester.name} &nbsp;·&nbsp; Academic Year {data.semester.academicYear}
+          </p>
+        </header>
+
+        {/* Formal details grid */}
+        <div className="px-8">
+          <div className="grid grid-cols-2 gap-px border sm:grid-cols-4" style={{ borderColor: NAVY, backgroundColor: HAIRLINE }}>
+            {details.map(([label, value]) => (
+              <div key={label} className="bg-white px-3 py-2.5">
+                <div className="text-[9px] font-bold uppercase tracking-widest" style={{ color: NAVY }}>{label}</div>
+                <div className="font-doc mt-0.5 truncate text-[15px] font-bold" style={{ color: '#232a33' }} title={value}>{value}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Summary KPIs */}
-        <div className="grid grid-cols-3 gap-px border-b border-slate-200 bg-slate-200 dark:border-slate-700 dark:bg-slate-700">
-          {[
-            { label: 'Term GPA', value: data.gpa ? data.gpa.gpa.toFixed(2) : '—', accent: 'text-indigo-600 dark:text-indigo-400' },
-            { label: 'Average', value: data.gpa ? `${data.gpa.average.toFixed(1)}%` : '—', accent: 'text-sky-600 dark:text-sky-400' },
-            { label: 'Position', value: data.gpa?.position ? `${ordinal(data.gpa.position)} of ${data.gpa.classSize ?? '—'}` : '—', accent: 'text-emerald-600 dark:text-emerald-400' },
-          ].map((k) => (
-            <div key={k.label} className="bg-white px-4 py-4 text-center dark:bg-slate-900">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{k.label}</div>
-              <div className={`mt-0.5 text-xl font-extrabold ${k.accent}`}>{k.value}</div>
-            </div>
-          ))}
+        {/* Navy summary band with gold dividers */}
+        <div className="px-8 pt-4">
+          <div className="grid grid-cols-3" style={{ backgroundColor: NAVY }}>
+            {summary.map((k, i) => (
+              <div key={k.label} className="px-4 py-3 text-center" style={i > 0 ? { borderLeft: `1px solid ${GOLD}66` } : undefined}>
+                <div className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: '#c9d4e6' }}>{k.label}</div>
+                <div className="font-doc mt-0.5 text-xl font-bold text-white">{k.value}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Student info */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 border-b border-slate-200 px-8 py-5 text-sm dark:border-slate-700 sm:grid-cols-4">
-          {[
-            ['Student', data.student.name],
-            ['Admission No.', data.student.admissionNumber],
-            ['Class', data.student.className],
-            ['Credits', data.gpa ? String(data.gpa.totalCredits) : '—'],
-            ['Term', data.semester.name],
-            ['Academic Year', data.semester.academicYear],
-            ['Status', data.status],
-            ['Verification', data.verificationCode],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">{label}</div>
-              <div className="font-semibold text-slate-900 dark:text-white">{value}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Results table */}
-        <div className="px-4 py-2 sm:px-6">
+        {/* Ruled results table */}
+        <div className="px-8 pt-5">
+          <div className="font-doc text-[11px] font-bold tracking-[0.22em]" style={{ color: NAVY }}>SUBJECT PERFORMANCE</div>
+          <div className="mb-2 mt-1 h-[2px] w-10" style={{ backgroundColor: GOLD }} />
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-indigo-100 dark:border-indigo-900/40">
-                <th className="th">Code</th>
-                <th className="th">Subject</th>
-                <th className="th text-right">Score</th>
-                <th className="th text-center">Grade</th>
-                <th className="th text-center">Point</th>
-                <th className="th text-center">Rank</th>
-                <th className="th">Remark</th>
+              <tr style={{ backgroundColor: NAVY, boxShadow: `inset 0 -2px 0 ${GOLD}` }}>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">Code</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">Subject</th>
+                <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-white">Score</th>
+                <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">Grade</th>
+                <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">Point</th>
+                <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">Rank</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">Remark</th>
               </tr>
             </thead>
             <tbody>
               {data.results.map((r, i) => (
-                <tr key={r.code} className={`border-b border-slate-100 last:border-0 dark:border-slate-800 ${i % 2 === 0 ? 'bg-slate-50/60 dark:bg-slate-800/30' : ''}`}>
-                  <td className="td font-mono text-xs font-semibold">{r.code}</td>
-                  <td className="td font-medium">{r.name}</td>
-                  <td className="td text-right font-semibold">{r.percentage.toFixed(1)}%</td>
-                  <td className="td text-center"><Badge className={gradeBadgeClass(r.letterGrade)}>{r.letterGrade}</Badge></td>
-                  <td className="td text-center">{r.gradePoint.toFixed(1)}</td>
-                  <td className="td text-center">{ordinal(r.position)}</td>
-                  <td className="td text-slate-500 dark:text-slate-400">{r.remark}</td>
+                <tr key={r.code} className="border-b" style={{ borderColor: HAIRLINE, backgroundColor: i % 2 === 0 ? ZEBRA : '#ffffff' }}>
+                  <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.code}</td>
+                  <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.name}</td>
+                  <td className="font-doc px-3 py-1.5 text-right text-[13px]">{r.percentage.toFixed(1)}%</td>
+                  <td className="font-doc px-3 py-1.5 text-center text-[13px] font-bold" style={{ color: NAVY }}>{r.letterGrade}</td>
+                  <td className="font-doc px-3 py-1.5 text-center text-[13px]">{r.gradePoint.toFixed(1)}</td>
+                  <td className="font-doc px-3 py-1.5 text-center text-[13px]">{ordinal(r.position)}</td>
+                  <td className="font-doc px-3 py-1.5 text-[13px]" style={{ color: MUTED }}>{r.remark}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* Remarks */}
-        <div className="space-y-3 px-8 py-6 text-sm">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500">Class Teacher&apos;s Remarks</div>
-            <p className="mt-1.5 text-slate-700 dark:text-slate-200">{data.teacherRemarks ?? '—'}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500">Principal&apos;s Remarks</div>
-            <p className="mt-1.5 text-slate-700 dark:text-slate-200">{data.principalRemarks ?? '—'}</p>
-          </div>
+        {/* Bordered remarks */}
+        <div className="space-y-3 px-8 pt-5">
+          {([
+            ["Class Teacher's Remarks", data.teacherRemarks],
+            ["Principal's Remarks", data.principalRemarks],
+          ] as const).map(([title, body]) => (
+            <div key={title} className="border px-4 py-3" style={{ borderColor: HAIRLINE }}>
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: NAVY }}>{title}</div>
+              <p className="font-doc mt-1 text-[15px]" style={{ color: '#232a33' }}>{body ?? '—'}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Signatures + QR */}
-        <div className="flex flex-wrap items-end justify-between gap-6 border-t border-slate-200 px-8 py-6 dark:border-slate-700">
-          <div className="flex flex-wrap gap-10 text-xs text-slate-500">
+        {/* Signatures + QR verification panel */}
+        <div className="flex flex-wrap items-end justify-between gap-6 px-8 pb-7 pt-6">
+          <div className="flex flex-wrap gap-10 text-xs" style={{ color: MUTED }}>
             {([
               { label: 'Class Teacher', sig: data.signatures?.classTeacher ?? null },
               { label: 'Principal / Head of School', sig: data.signatures?.principal ?? null },
@@ -153,23 +169,25 @@ export default function VerifyReportCard() {
                 {sig?.dataUrl
                   ? <img src={sig.dataUrl} alt={`${sig.name}'s signature`} className="h-10 object-contain" />
                   : <div className="h-10" />}
-                <div className="w-44 border-b border-slate-300 dark:border-slate-600" />
-                <div className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{sig?.title ?? label}</div>
-                {sig?.name && <div className="text-slate-400">{sig.name}</div>}
+                <div className="w-44 border-b" style={{ borderColor: '#8a94a0' }} />
+                <div className="font-doc mt-1 text-sm font-semibold" style={{ color: '#232a33' }}>{sig?.title ?? label}</div>
+                {sig?.name && <div className="font-doc italic" style={{ color: MUTED }}>{sig.name}</div>}
               </div>
             ))}
           </div>
           {data.qr && (
-            <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <img src={data.qr} alt="Verification QR code" className="mx-auto h-24 w-24" />
-              <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Scan to verify</div>
-              <div className="mt-0.5 font-mono text-[10px] text-slate-500">{data.verificationCode}</div>
+            <div className="border p-2.5 text-center" style={{ borderColor: HAIRLINE }}>
+              <img src={data.qr} alt="Verification QR code" className="mx-auto h-20 w-20" />
+              <div className="mt-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: MUTED }}>Scan to verify</div>
+              <div className="mt-0.5 font-mono text-[10px]" style={{ color: MUTED }}>{data.verificationCode}</div>
             </div>
           )}
         </div>
 
-        <div className="bg-indigo-950 px-6 py-2.5 text-center text-[11px] text-indigo-200">
-          {data.school.name} · Verified via School Grading System · {data.verificationCode}
+        {/* Navy footer band with gold hairline */}
+        <div className="h-0.5" style={{ backgroundColor: GOLD }} />
+        <div className="px-6 py-2.5 text-center text-[11px]" style={{ backgroundColor: NAVY, color: '#c9d4e6' }}>
+          {data.school.name} &nbsp;·&nbsp; Verified via School Grading System &nbsp;·&nbsp; {data.verificationCode}
         </div>
       </div>
 

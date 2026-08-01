@@ -6,6 +6,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        doc: ['"Times New Roman"', 'Times', 'ui-serif', 'serif'],
       },
     },
   },
