@@ -59,6 +59,7 @@ studentsRouter.get('/', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res)
     search: z.string().optional(),
     classId: z.string().optional(),
     gender: z.nativeEnum(Gender).optional(),
+    parentStatus: z.enum(['linked', 'unlinked']).optional(),
     sortBy: z.enum(['name', 'admissionNumber', 'createdAt']).optional(),
     sortDir: z.enum(['asc', 'desc']).optional(),
     page: z.coerce.number().optional(),
@@ -69,6 +70,8 @@ studentsRouter.get('/', authorize(Role.ADMIN, Role.TEACHER), ah(async (req, res)
   const where = {
     ...(query.classId ? { classId: query.classId } : {}),
     ...(query.gender ? { gender: query.gender } : {}),
+    ...(query.parentStatus === 'linked' ? { parentId: { not: null } } : {}),
+    ...(query.parentStatus === 'unlinked' ? { parentId: null } : {}),
     ...(query.search
       ? { OR: [
           { admissionNumber: { contains: query.search, mode: 'insensitive' as const } },
@@ -539,6 +542,20 @@ studentsRouter.put('/:id', authorize(Role.ADMIN), ah(async (req, res) => {
   const existing = await prisma.studentProfile.findUnique({ where: { id: req.params.id } });
   if (!existing) throw AppError.notFound('Student');
 
+  // `parentEmail` is honored on update as well: a value (re)links the student to
+  // that parent account, `null` unlinks. When omitted the current link is kept.
+  let parentId: string | null | undefined;
+  if (body.parentEmail !== undefined) {
+    parentId = null;
+    if (body.parentEmail) {
+      const parent = await prisma.parentProfile.findFirst({
+        where: { user: { email: body.parentEmail.toLowerCase() } },
+      });
+      if (!parent) throw AppError.badRequest(`No parent account found with email ${body.parentEmail}`);
+      parentId = parent.id;
+    }
+  }
+
   const student = await prisma.$transaction(async (tx) => {
     if (body.name || body.email) {
       await tx.user.update({
@@ -558,6 +575,7 @@ studentsRouter.put('/:id', authorize(Role.ADMIN), ah(async (req, res) => {
         address: body.address,
         guardianPhone: body.guardianPhone,
         photoUrl: body.photoUrl,
+        ...(parentId !== undefined ? { parentId } : {}),
       },
       include: STUDENT_INCLUDE,
     });
@@ -574,7 +592,8 @@ studentsRouter.put('/:id', authorize(Role.ADMIN), ah(async (req, res) => {
     return updated;
   });
 
-  await logAudit(req, 'UPDATE_STUDENT', 'StudentProfile', student.id);
+  await logAudit(req, 'UPDATE_STUDENT', 'StudentProfile', student.id,
+    body.parentEmail !== undefined ? { parentEmail: body.parentEmail } : undefined);
   res.json(student);
 }));
 

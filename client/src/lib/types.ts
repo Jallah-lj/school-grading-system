@@ -190,6 +190,19 @@ export interface MarksImportResult {
   errors: MarksImportError[]; file?: string;
 }
 
+export interface ParentChildRow {
+  id: string;
+  admissionNumber: string;
+  user: { id: string; name: string; email: string };
+  classRoom?: { id: string; name: string; stream: string } | null;
+}
+
+export interface ParentRow {
+  id: string;
+  user: { id: string; name: string; email: string; phone?: string | null; isActive: boolean };
+  children: ParentChildRow[];
+}
+
 export interface Paged<T> { data: T[]; total: number; page: number; pageSize: number; }
 
 export interface ManagedUser {
