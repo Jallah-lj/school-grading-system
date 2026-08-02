@@ -5,8 +5,17 @@ import { AppError } from '../lib/errors';
 
 import type { NextFunction, Request, Response } from 'express';
 
-export function notFoundHandler(_req: Request, res: Response): void {
-  res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
+export function notFoundHandler(req: Request, res: Response): void {
+  // Include the method + path that missed so a 404 is self-explanatory in the
+  // browser console / network tab instead of a bare "Route not found".
+  const path = req.originalUrl.split('?')[0];
+  res.status(404).json({
+    error: {
+      code: 'NOT_FOUND',
+      message: `No API route matches ${req.method} ${path}. If this endpoint exists in the source, the deployed API is likely running an older build — redeploy the server.`,
+      details: { method: req.method, path, index: '/api', documentation: '/api/docs' },
+    },
+  });
 }
 
 export function errorHandler(

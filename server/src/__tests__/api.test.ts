@@ -11,6 +11,7 @@
  */
 import assert from 'node:assert/strict';
 import http from 'node:http';
+
 import jwt from 'jsonwebtoken';
 
 import { createApp } from '../app';
@@ -364,12 +365,53 @@ export async function runApiTests() {
     assert.equal((res.body as { success: boolean }).success, true);
   });
 
+  // ── Announcements ────────────────────────────────────────────────────────
+  console.log('\n── Announcements ──');
+
+  await t('POST /api/announcements/broadcast → mounted (not 404)', async () => {
+    const res = await api
+      .post('/api/announcements/broadcast')
+      .auth(adminToken)
+      .send({ title: 'Hi', message: 'Everyone', audience: 'ALL' });
+    assert.notEqual(res.status, 404);
+  });
+  await t('POST /api/announcements/broadcast → 200 for ADMIN', async () => {
+    stub('notification', 'createMany', async () => ({ count: 3 }));
+    const res = await api
+      .post('/api/announcements/broadcast')
+      .auth(adminToken)
+      .send({ title: 'Hi', message: 'Everyone', audience: 'ALL' })
+      .expect(200);
+    assert.equal((res.body as { success: boolean }).success, true);
+  });
+  await t('POST /api/announcements/broadcast → 401 without token', async () => {
+    await api.post('/api/announcements/broadcast').send({ title: 'a', message: 'b' }).expect(401);
+  });
+  await t('POST /api/announcements/broadcast → 403 for TEACHER', async () => {
+    await api
+      .post('/api/announcements/broadcast')
+      .auth(teacherToken)
+      .send({ title: 'a', message: 'b' })
+      .expect(403);
+  });
+  await t('POST /api/announcements/broadcast → 422 for empty title/message', async () => {
+    await api.post('/api/announcements/broadcast').auth(adminToken).send({ title: '', message: '' }).expect(422);
+  });
+  await t('GET /api/announcements → 200 for ADMIN', async () => {
+    const res = await api.get('/api/announcements').auth(adminToken).expect(200);
+    assert.ok(Array.isArray((res.body as { data: unknown[] }).data));
+  });
+
   // ── Error handling ───────────────────────────────────────────────────────
   console.log('\n── Error Handling ──');
 
   await t('Unknown route → 404 with envelope', async () => {
     const res = await api.get('/api/nonexistent').expect(404);
-    assert.equal((res.body as { error: { code: string } }).error.code, 'NOT_FOUND');
+    const body = res.body as { error: { code: string; message: string; details?: { path?: string } } };
+    assert.equal(body.error.code, 'NOT_FOUND');
+    // The 404 must name the method + path that missed so it is debuggable.
+    assert.match(body.error.message, /GET \/api\/nonexistent/);
+    assert.equal(body.error.details?.path, '/api/nonexistent');
   });
 
   await t('Validation error → 422 with VALIDATION_ERROR', async () => {

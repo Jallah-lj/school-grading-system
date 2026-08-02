@@ -8,8 +8,10 @@ import { apiLimiter, authLimiter } from './middleware/rateLimit';
 import { academicYearsRouter } from './routes/academicYears';
 import { adminRouter } from './routes/admin';
 import { analyticsRouter } from './routes/analytics';
+import { announcementsRouter } from './routes/announcements';
 import { authRouter } from './routes/auth';
 import { classesRouter } from './routes/classes';
+import { docsRouter } from './routes/docs';
 import { gradesRouter } from './routes/grades';
 import { gradeScalesRouter } from './routes/gradeScales';
 import { notificationsRouter } from './routes/notifications';
@@ -21,8 +23,6 @@ import { signaturesRouter } from './routes/signatures';
 import { studentsRouter } from './routes/students';
 import { subjectsRouter } from './routes/subjects';
 import { teachersRouter } from './routes/teachers';
-import { docsRouter } from './routes/docs';
-import { announcementsRouter } from './routes/announcements';
 import { usersRouter } from './routes/users';
 
 export function createApp() {
@@ -62,6 +62,10 @@ export function createApp() {
         analytics: '/api/analytics',
         reportCards: '/api/report-cards',
         notifications: '/api/notifications',
+        announcements: 'GET /api/announcements · POST /api/announcements/broadcast',
+        signatures: '/api/signatures',
+        school: '/api/school',
+        users: '/api/users',
         reports: '/api/reports',
         admin: '/api/admin',
       },

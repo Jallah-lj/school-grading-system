@@ -72,8 +72,26 @@ api.interceptors.response.use(
 /** Extract a human-readable message from our API error envelope. */
 export function apiError(err: unknown): string {
   if (axios.isAxiosError(err)) {
-    const data = err.response?.data as { error?: { message?: string } } | undefined;
-    return data?.error?.message ?? err.message;
+    const res = err.response;
+    const data = res?.data as { error?: { message?: string } } | string | undefined;
+
+    if (typeof data === 'object' && data?.error?.message) return data.error.message;
+
+    // The request reached a server, but not *our* API: a proxy/rewrite returned
+    // the SPA's index.html (or another HTML page) instead of the JSON envelope.
+    if (typeof data === 'string' && data.trimStart().startsWith('<')) {
+      return `The API did not respond to ${err.config?.method?.toUpperCase() ?? 'this request'} ${err.config?.url ?? ''} (got an HTML page instead of JSON). Check that VITE_API_URL points at the running API.`;
+    }
+
+    if (res?.status === 404) {
+      return `Endpoint not found: ${err.config?.method?.toUpperCase() ?? 'GET'} ${err.config?.url ?? ''}. The API may be running an older build — redeploy the server.`;
+    }
+
+    if (!res) {
+      return `Cannot reach the API${err.config?.url ? ` (${err.config.url})` : ''}. Check that the server is running and CORS allows this origin.`;
+    }
+
+    return err.message;
   }
   return err instanceof Error ? err.message : 'Unexpected error';
 }
