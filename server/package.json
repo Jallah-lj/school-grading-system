@@ -11,7 +11,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "test": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/services/pdf-layout.test.ts"
+    "test": "tsx src/__tests__/run-tests.ts",
+    "test:unit": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/services/pdf-layout.test.ts",
+    "test:api": "tsx src/__tests__/run-tests.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -41,7 +43,9 @@
     "@types/node": "^20.16.0",
     "@types/pdfkit": "^0.13.5",
     "@types/qrcode": "^1.5.5",
+    "@types/supertest": "^7.2.1",
     "prisma": "^5.22.0",
+    "supertest": "^7.2.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
   }

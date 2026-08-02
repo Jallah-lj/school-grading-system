@@ -1,5 +1,8 @@
 # API Reference — School Grading System
 
+> **Interactive docs:** Open [`/api/docs`](http://localhost:4000/api/docs) in your browser for the Swagger UI — try out every endpoint directly from the browser.
+> The raw OpenAPI 3.0.3 spec is at [`/api/docs/openapi.json`](http://localhost:4000/api/docs/openapi.json).
+
 Base URL (dev): `http://localhost:4000/api` · All bodies are JSON.
 Authenticated requests need `Authorization: Bearer <accessToken>`.
 Error envelope: `{ "error": { "code": "STRING", "message": "…", "details?": … } }`.

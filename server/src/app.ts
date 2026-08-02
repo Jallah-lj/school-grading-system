@@ -21,6 +21,7 @@ import { signaturesRouter } from './routes/signatures';
 import { studentsRouter } from './routes/students';
 import { subjectsRouter } from './routes/subjects';
 import { teachersRouter } from './routes/teachers';
+import { docsRouter } from './routes/docs';
 import { usersRouter } from './routes/users';
 
 export function createApp() {
@@ -45,6 +46,8 @@ export function createApp() {
       hint: 'The web app runs on the Vite dev server (http://localhost:5173 in dev). This URL is the REST API — call it from the frontend or an API client.',
       health: '/api/health',
       documentation: 'docs/API.md',
+      swaggerDocs: '/api/docs',
+      openapiSpec: '/api/docs/openapi.json',
       endpoints: {
         auth: 'POST /api/auth/login · POST /api/auth/refresh · GET /api/auth/me',
         students: '/api/students',
@@ -65,6 +68,7 @@ export function createApp() {
   });
 
   app.use('/api/auth', authLimiter, authRouter);
+  app.use('/api/docs', docsRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/students', studentsRouter);
   app.use('/api/teachers', teachersRouter);
