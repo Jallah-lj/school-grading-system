@@ -1,4 +1,7 @@
 import { prisma } from '../lib/prisma';
+import { EmailNotificationProvider } from './emailService';
+import { createSMSProvider } from './smsService';
+import { emailTemplates } from '../templates/emailTemplates';
 
 import type { NotificationType } from '@prisma/client';
 
@@ -29,4 +32,99 @@ export async function studentAudienceUserIds(studentIds: string[]): Promise<stri
     if (s.parent?.userId) ids.push(s.parent.userId);
   }
   return [...new Set(ids)];
+}
+
+/**
+ * Extended notification service: creates in-app notifications AND optionally
+ * sends external notifications (email / SMS / WhatsApp-style) based on the
+ * event type and user preferences.
+ */
+export class ExtendedNotificationService {
+  private emailProvider = new EmailNotificationProvider();
+  private smsProvider = createSMSProvider();
+
+  async notifyInApp(
+    userIds: string[],
+    type: NotificationType,
+    title: string,
+    message: string,
+    link?: string,
+  ): Promise<number> {
+    return notifyUsers(userIds, type, title, message, link);
+  }
+
+  async notifyEmail(userIds: string[], type: NotificationType, title: string, message: string, link?: string): Promise<number> {
+    if (!userIds.length) return 0;
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds }, isActive: true, email: { not: null } },
+      select: { id: true, email: true, name: true },
+    });
+    if (!users.length) return 0;
+
+    let sentCount = 0;
+    for (const user of users) {
+      const to = user.email!;
+
+      try {
+        if (type === 'GRADES_PUBLISHED') {
+          const tpl = emailTemplates.gradesPublished(user.name, title, message, link ?? '/grades');
+          await this.emailProvider.sendEmail({ to, subject: tpl.subject, html: tpl.html, text: tpl.text });
+          sentCount++;
+        } else if (type === 'REPORT_CARD_AVAILABLE') {
+          const tpl = emailTemplates.reportCardReady(user.name, message, link ?? '/report-cards');
+          await this.emailProvider.sendEmail({ to, subject: tpl.subject, html: tpl.html, text: tpl.text });
+          sentCount++;
+        } else if (type === 'ANNOUNCEMENT') {
+          const tpl = emailTemplates.announcementBroadcast(title, message, link);
+          await this.emailProvider.sendEmail({ to, subject: tpl.subject, html: tpl.html, text: tpl.text });
+          sentCount++;
+        }
+      } catch {
+        // Silently continue on individual failures so one bad email doesn't break the batch
+      }
+    }
+    return sentCount;
+  }
+
+  async notifySMS(userIds: string[], message: string, link?: string): Promise<number> {
+    if (!userIds.length) return 0;
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds }, isActive: true, phone: { not: null } },
+      select: { id: true, phone: true, name: true },
+    });
+    if (!users.length) return 0;
+
+    let sentCount = 0;
+    for (const user of users) {
+      try {
+        await this.smsProvider.sendSMS({
+          to: user.phone!,
+          message: `${message}${link ? ` \n${link}` : ''}`,
+          channel: 'whatsapp',
+        });
+        sentCount++;
+      } catch {
+        // Continue silently
+      }
+    }
+    return sentCount;
+  }
+
+  /**
+   * Combined external notification (email + optional SMS/WhatsApp) for a batch of users.
+   */
+  async notifyExternal(
+    userIds: string[],
+    type: NotificationType,
+    title: string,
+    message: string,
+    link?: string,
+    includeEmail = true,
+    includeSMS = false,
+  ): Promise<{ emailSent: number; smsSent: number }> {
+    const uniqueIds = [...new Set(userIds)];
+    const emailSent = includeEmail ? await this.notifyEmail(uniqueIds, type, title, message, link) : 0;
+    const smsSent = includeSMS ? await this.notifySMS(uniqueIds, message, link) : 0;
+    return { emailSent, smsSent };
+  }
 }

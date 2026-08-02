@@ -1,11 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 import { logAudit } from '../lib/audit';
 import { AppError } from '../lib/errors';
 import { ah, parseBody, passwordSchema, USER_SAFE_SELECT } from '../lib/helpers';
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../lib/jwt';
 import { hashPassword, verifyPassword } from '../lib/password';
+import { EmailNotificationProvider } from '../services/emailService';
+import { emailTemplates } from '../templates/emailTemplates';
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 
@@ -172,5 +175,79 @@ authRouter.post(
     });
     await logAudit(req, 'CHANGE_PASSWORD', 'User', user.id);
     res.json({ success: true });
+  }),
+);
+
+// ─── Password reset (email-based, no database storage needed) ────────────
+
+import jwt from 'jsonwebtoken';
+
+function signResetToken(userId: string): string {
+  const secret = (process.env.JWT_ACCESS_SECRET || 'default-secret-change-me') + '-reset';
+  return jwt.sign({ sub: userId, purpose: 'password-reset' }, secret, { expiresIn: '15m' });
+}
+
+function verifyResetToken(token: string): { sub: string } {
+  const secret = (process.env.JWT_ACCESS_SECRET || 'default-secret-change-me') + '-reset';
+  return jwt.verify(token, secret) as { sub: string };
+}
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(10),
+  newPassword: passwordSchema,
+});
+
+authRouter.post(
+  '/forgot-password',
+  ah(async (req, res) => {
+    const { email } = parseBody(forgotPasswordSchema, req);
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+    // Always return success so attackers cannot enumerate accounts.
+    if (!user || !user.isActive) {
+      return res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+    }
+
+    const resetToken = signResetToken(user.id);
+    const resetLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${encodeURIComponent(resetToken)}`;
+    const tpl = emailTemplates.passwordReset(user.name, resetLink);
+
+    const provider = new EmailNotificationProvider();
+    await provider.sendEmail({ to: user.email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+
+    await logAudit(req, 'FORGOT_PASSWORD', 'User', user.id);
+    res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+  }),
+);
+
+authRouter.post(
+  '/reset-password',
+  ah(async (req, res) => {
+    const { token, newPassword } = parseBody(resetPasswordSchema, req);
+    let payload: { sub: string };
+    try {
+      payload = verifyResetToken(token);
+    } catch {
+      throw new AppError(400, 'Invalid or expired reset token', 'INVALID_RESET_TOKEN');
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: payload.sub, isActive: true } });
+    if (!user) throw new AppError(404, 'User not found', 'USER_NOT_FOUND');
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(newPassword) },
+    });
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await logAudit(req, 'RESET_PASSWORD', 'User', user.id);
+    res.json({ success: true, message: 'Password reset successfully. You can now log in with your new password.' });
   }),
 );
