@@ -7,6 +7,7 @@
  * Run via:  npx tsx src/__tests__/run-tests.ts
  */
 import assert from 'node:assert/strict';
+
 import jwt from 'jsonwebtoken';
 
 import { authenticate, authorize } from '../middleware/auth';

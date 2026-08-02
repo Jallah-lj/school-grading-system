@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { Icon } from '../components/Icon';
 import { Spinner } from '../components/ui';
-import { api, apiError, apiUrl } from '../lib/api';
+import { api, apiError } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
 
 import type { SchoolPublicInfo } from '../lib/types';

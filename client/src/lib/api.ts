@@ -75,7 +75,14 @@ export function apiError(err: unknown): string {
     const res = err.response;
     const data = res?.data as { error?: { message?: string } } | string | undefined;
 
-    if (typeof data === 'object' && data?.error?.message) return data.error.message;
+    const serverMessage = typeof data === 'object' ? data?.error?.message : undefined;
+
+    // A bare "Route not found" comes from an older server build whose 404 handler
+    // had no diagnostics. Replace it with the actionable message below rather
+    // than showing the user a dead end.
+    const isGeneric404 = res?.status === 404 && (!serverMessage || /^route not found\.?$/i.test(serverMessage));
+
+    if (serverMessage && !isGeneric404) return serverMessage;
 
     // The request reached a server, but not *our* API: a proxy/rewrite returned
     // the SPA's index.html (or another HTML page) instead of the JSON envelope.

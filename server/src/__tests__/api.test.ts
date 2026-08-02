@@ -20,7 +20,8 @@ import { prisma } from '../lib/prisma';
 // ── Prisma mock helpers ──────────────────────────────────────────────────────
 // We override methods on the real prisma singleton so routes that import it
 // receive our stubs. Each test sets up the stubs it needs.
-type AsyncFn = (...args: unknown[]) => Promise<unknown>;
+type PrismaArgs = Record<string, unknown>;
+type AsyncFn = (...args: PrismaArgs[]) => Promise<unknown>;
 
 function stub(model: string, method: string, fn: AsyncFn) {
   (prisma as unknown as Record<string, Record<string, AsyncFn>>)[model][method] = fn;
@@ -31,15 +32,15 @@ function resetStubs() {
     findUnique: async () => null,
     findFirst: async () => null,
     findMany: async () => [],
-    create: async ({ data }: { data: unknown }) => ({ id: 'mock-id', ...(data as Record<string, unknown>) }),
-    update: async ({ data }: { data: unknown }) => ({ id: 'mock-id', ...(data as Record<string, unknown>) }),
+    create: async (args: PrismaArgs) => ({ id: 'mock-id', ...(args.data as Record<string, unknown>) }),
+    update: async (args: PrismaArgs) => ({ id: 'mock-id', ...(args.data as Record<string, unknown>) }),
     updateMany: async () => ({ count: 0 }),
     delete: async () => ({ id: 'mock-id' }),
     deleteMany: async () => ({ count: 0 }),
     count: async () => 0,
     aggregate: async () => ({ _avg: {} }),
     groupBy: async () => [],
-    upsert: async ({ create: c }: { create: unknown }) => ({ id: 'mock-id', ...(c as Record<string, unknown>) }),
+    upsert: async (args: PrismaArgs) => ({ id: 'mock-id', ...(args.create as Record<string, unknown>) }),
   };
   const models = Object.keys(prisma).filter((k) => typeof (prisma as Record<string, unknown>)[k] === 'object' && (prisma as Record<string, Record<string, unknown>>)[k]?.findMany);
   for (const m of models) {
@@ -62,6 +63,8 @@ interface TestRequest {
   auth(token: string): TestRequest;
   send(data: unknown): TestRequest;
   expect(status: number): Promise<TestResponse>;
+  /** Perform the request without asserting a status — for tests that inspect it. */
+  raw(): Promise<TestResponse>;
 }
 
 function request(app: ReturnType<typeof createApp>) {
@@ -72,7 +75,7 @@ function request(app: ReturnType<typeof createApp>) {
       set(name: string, value: string) { headers[name] = value; return chain; },
       auth(token: string) { headers['Authorization'] = `Bearer ${token}`; return chain; },
       send(data: unknown) { body = data; headers['Content-Type'] = 'application/json'; return chain; },
-      async expect(status: number): Promise<TestResponse> {
+      async raw(): Promise<TestResponse> {
         return new Promise((resolve, reject) => {
           const server = app.listen(0);
           const addr = server.address() as { port: number };
@@ -86,17 +89,18 @@ function request(app: ReturnType<typeof createApp>) {
               const text = Buffer.concat(chunks).toString();
               let parsed: unknown;
               try { parsed = JSON.parse(text); } catch { parsed = text; }
-              const result: TestResponse = { status: res.statusCode!, headers: res.headers as Record<string, string | string[]>, body: parsed, text };
-              try {
-                assert.equal(res.statusCode, status, `Expected ${status} got ${res.statusCode}: ${text.slice(0, 200)}`);
-              } catch (e) { reject(e); return; }
-              resolve(result);
+              resolve({ status: res.statusCode!, headers: res.headers as Record<string, string | string[]>, body: parsed, text });
             });
           });
           req.on('error', (e) => { server.close(); reject(e); });
           if (body !== undefined) req.write(typeof body === 'string' ? body : JSON.stringify(body));
           req.end();
         });
+      },
+      async expect(status: number): Promise<TestResponse> {
+        const result = await chain.raw();
+        assert.equal(result.status, status, `Expected ${status} got ${result.status}: ${result.text.slice(0, 200)}`);
+        return result;
       },
     };
     return chain;
@@ -372,7 +376,8 @@ export async function runApiTests() {
     const res = await api
       .post('/api/announcements/broadcast')
       .auth(adminToken)
-      .send({ title: 'Hi', message: 'Everyone', audience: 'ALL' });
+      .send({ title: 'Hi', message: 'Everyone', audience: 'ALL' })
+      .raw();
     assert.notEqual(res.status, 404);
   });
   await t('POST /api/announcements/broadcast → 200 for ADMIN', async () => {

@@ -25,6 +25,45 @@ import { subjectsRouter } from './routes/subjects';
 import { teachersRouter } from './routes/teachers';
 import { usersRouter } from './routes/users';
 
+/**
+ * Build identity. Render/Railway/Vercel all expose the deployed commit via an
+ * environment variable; surfacing it on /api/health makes a stale deploy
+ * (the running build being older than the repo) immediately obvious.
+ */
+const BUILD_INFO = {
+  version: process.env.npm_package_version ?? '1.0.0',
+  commit:
+    process.env.RENDER_GIT_COMMIT ??
+    process.env.RAILWAY_GIT_COMMIT_SHA ??
+    process.env.VERCEL_GIT_COMMIT_SHA ??
+    process.env.SOURCE_COMMIT ??
+    'unknown',
+  builtAt: process.env.BUILD_TIME ?? 'unknown',
+};
+
+/** Every API namespace this build mounts — compare against /api/health to spot stale deploys. */
+const MOUNTED_ROUTES = [
+  'auth',
+  'docs',
+  'users',
+  'students',
+  'teachers',
+  'parents',
+  'subjects',
+  'classes',
+  'academic-years',
+  'grade-scales',
+  'grades',
+  'analytics',
+  'report-cards',
+  'notifications',
+  'reports',
+  'signatures',
+  'school',
+  'admin',
+  'announcements',
+];
+
 export function createApp() {
   const app = express();
 
@@ -36,7 +75,17 @@ export function createApp() {
 
   app.use('/api', apiLimiter);
   app.get('/api/health', (_req, res) =>
-    res.json({ status: 'ok', service: 'school-grading-api', time: new Date().toISOString() }),
+    res.json({
+      status: 'ok',
+      service: 'school-grading-api',
+      time: new Date().toISOString(),
+      // Build identity — lets you tell at a glance whether the running instance
+      // is the latest deploy or a stale one still serving an older build.
+      version: BUILD_INFO.version,
+      commit: BUILD_INFO.commit,
+      builtAt: BUILD_INFO.builtAt,
+      routes: MOUNTED_ROUTES,
+    }),
   );
 
   // Friendly index for anyone who opens the API root in a browser.

@@ -95,8 +95,9 @@ const prismaInstance = {
 // (prisma.ts checks globalForPrisma.prisma first, and uses it if present)
 (globalThis as unknown as Record<string, unknown>).prisma = prismaInstance;
 
-const origRequire = (Module.prototype as unknown as Record<string, Function>).require;
-(Module.prototype as unknown as Record<string, Function>).require = function (this: unknown, id: string) {
+type RequireFn = (this: unknown, id: string) => unknown;
+const origRequire = (Module.prototype as unknown as Record<string, RequireFn>).require;
+(Module.prototype as unknown as Record<string, RequireFn>).require = function (this: unknown, id: string) {
   // Mock @prisma/client
   if (id === '@prisma/client') return PrismaMock;
   return origRequire.call(this, id);

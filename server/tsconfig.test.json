@@ -1,0 +1,10 @@
+{
+  // Type-checks the whole source tree *including* tests. Used by
+  // `npm run typecheck`; never used to emit the production build.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

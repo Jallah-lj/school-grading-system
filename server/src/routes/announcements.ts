@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { logAudit } from '../lib/audit';
-import { AppError } from '../lib/errors';
 import { ah, parseBody, parseQuery } from '../lib/helpers';
 import { prisma } from '../lib/prisma';
 import { authenticate, authorize } from '../middleware/auth';

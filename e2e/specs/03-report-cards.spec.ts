@@ -2,7 +2,8 @@
  * E2E tests: Report card generation, PDF download, and QR verification.
  */
 import { test, expect } from '@playwright/test';
-import { loginViaUI, loginViaApi } from '../fixtures/auth';
+
+import { loginViaUI } from '../fixtures/auth';
 
 test.describe('Report cards', () => {
   test.describe('Admin generates report cards', () => {

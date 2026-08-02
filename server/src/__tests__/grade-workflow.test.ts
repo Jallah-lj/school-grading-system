@@ -18,12 +18,14 @@
  */
 import assert from 'node:assert/strict';
 import http from 'node:http';
+
 import jwt from 'jsonwebtoken';
 
 import { createApp } from '../app';
 import { prisma } from '../lib/prisma';
 
-type AsyncFn = (...args: unknown[]) => Promise<unknown>;
+type PrismaArgs = Record<string, unknown>;
+type AsyncFn = (...args: PrismaArgs[]) => Promise<unknown>;
 
 function stub(model: string, method: string, fn: AsyncFn) {
   (prisma as unknown as Record<string, Record<string, AsyncFn>>)[model][method] = fn;
@@ -32,11 +34,11 @@ function stub(model: string, method: string, fn: AsyncFn) {
 function resetStubs() {
   const defaults: Record<string, AsyncFn> = {
     findUnique: async () => null, findFirst: async () => null, findMany: async () => [],
-    create: async ({ data }: { data: unknown }) => ({ id: 'x', ...(data as object) }),
+    create: async (args: PrismaArgs) => ({ id: 'x', ...(args.data as object) }),
     update: async () => ({}), updateMany: async () => ({ count: 0 }),
     delete: async () => ({}), deleteMany: async () => ({ count: 0 }),
     count: async () => 0, aggregate: async () => ({ _avg: {} }), groupBy: async () => [],
-    upsert: async ({ create: c }: { create: unknown }) => ({ id: 'x', ...(c as object) }),
+    upsert: async (args: PrismaArgs) => ({ id: 'x', ...(args.create as object) }),
   };
   const models = Object.keys(prisma).filter((k) => typeof (prisma as Record<string, unknown>)[k] === 'object' && (prisma as Record<string, Record<string, unknown>>)[k]?.findMany);
   for (const m of models) for (const [method, fn] of Object.entries(defaults)) stub(m, method, fn);

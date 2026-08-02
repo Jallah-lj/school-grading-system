@@ -126,16 +126,40 @@ VITE_API_URL=https://sgs-api.up.railway.app/api
 - [ ] Teacher can only see assigned classes; publishing notifies a test student/parent
 - [ ] Set up Supabase **scheduled backups** (or use `GET /api/admin/backup` regularly)
 - [ ] Newer endpoints answer (not 404), e.g. `curl -i -X POST $API/api/announcements/broadcast` should return **401**, not 404
+- [ ] `GET /api/health` reports the **commit you just deployed** and lists `announcements` in `routes` (proves the build is not stale)
 
 ### Troubleshooting: “Route not found” / “No API route matches …”
 
 That JSON comes from the API's catch-all 404 handler, so the server is up but
 the path didn't match a mounted router. In order of likelihood:
 
-1. **The deployed API is running an older build.** The route exists in the repo
-   but not in the running container. Redeploy the API service (Railway/Render
-   caches the previous build when only the frontend was redeployed). Compare
-   `GET /api` — its `endpoints` object lists every mounted router group.
+1. **The deployed API is running an older build.** This is by far the most
+   common cause, and it is easy to miss: **when a deploy's build step fails, the
+   host keeps the previous deploy running.** The service stays healthy and
+   `GET /api/health` returns ok, so nothing looks broken — but every endpoint
+   added since the last *successful* build 404s.
+
+   Diagnose it in one call:
+
+   ```bash
+   curl -s $API/api/health   # → { "commit": "...", "routes": [...] }
+   ```
+
+   `routes` lists every namespace the **running** build mounts and `commit` is
+   the deployed git SHA. If `announcements` is absent from `routes`, or `commit`
+   is behind `git rev-parse HEAD`, you are on a stale build. Open the host's
+   **deploy/build logs** (not the runtime logs) and look for the last red build,
+   then fix the build error and redeploy.
+
+   > A real occurrence: `tsc` started failing because of a type error in a
+   > `src/__tests__/` file that the production build was compiling. Every deploy
+   > after that silently no-op'd. `server/tsconfig.json` now excludes test files
+   > from the emitted build (they are still type-checked via
+   > `npm run typecheck`), and `npm run verify` runs lint + typecheck + tests +
+   > the real production build + `scripts/verify-routes.mjs` so a broken build
+   > is caught before it silently freezes the deploy. Run it before every
+   > release, or enable it in CI by moving `docs/ci-workflow.yml` to
+   > `.github/workflows/ci.yml`.
 2. **`VITE_API_URL` is wrong or missing.** If the frontend calls a path that the
    host rewrites to `index.html`, you get HTML (or a Vercel 404) instead of the
    API. Set it to the full API base including `/api`.

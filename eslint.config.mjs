@@ -25,10 +25,23 @@ export default tseslint.config(
     },
   },
   {
-    // Node.js environments (server sources, Prisma seed, config files).
-    files: ['server/**/*.{js,ts}', 'client/*.config.{js,ts}', '*.config.{js,mjs}'],
+    // Node.js environments (server sources, Prisma seed, build/CI scripts, config files).
+    files: [
+      'server/**/*.{js,ts}',
+      'scripts/**/*.{js,mjs,ts}',
+      'e2e/**/*.{js,ts}',
+      'client/*.config.{js,ts}',
+      '*.config.{js,mjs}',
+    ],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    // Service worker runs in a ServiceWorkerGlobalScope, not a window.
+    files: ['client/public/sw.js', 'client/**/*.sw.js'],
+    languageOptions: {
+      globals: { ...globals.serviceworker, ...globals.browser },
     },
   },
   {

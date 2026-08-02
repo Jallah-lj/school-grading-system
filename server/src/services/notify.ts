@@ -1,7 +1,8 @@
 import { prisma } from '../lib/prisma';
+import { emailTemplates } from '../templates/emailTemplates';
+
 import { EmailNotificationProvider } from './emailService';
 import { createSMSProvider } from './smsService';
-import { emailTemplates } from '../templates/emailTemplates';
 
 import type { NotificationType } from '@prisma/client';
 

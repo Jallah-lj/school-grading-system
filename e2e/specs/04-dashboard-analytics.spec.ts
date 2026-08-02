@@ -2,7 +2,8 @@
  * E2E tests: Dashboard and analytics.
  */
 import { test, expect } from '@playwright/test';
-import { loginViaUI, testUsers } from '../fixtures/auth';
+
+import { loginViaUI } from '../fixtures/auth';
 
 test.describe('Dashboard', () => {
   test('admin sees dashboard with key metrics', async ({ page }) => {
