@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: sgs
       POSTGRES_DB: school_grading
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - sgs_pgdata:/var/lib/postgresql/data
 volumes:

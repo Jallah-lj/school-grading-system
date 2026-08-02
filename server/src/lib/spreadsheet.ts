@@ -1,20 +1,23 @@
-import multer from 'multer';
 import ExcelJS from 'exceljs';
+import multer from 'multer';
 
 /** Shared upload config for spreadsheet imports (.xlsx / .csv, ≤ 5 MB, memory). */
 export const spreadsheetUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const ok = /\.(xlsx|csv)$/i.test(file.originalname)
-      || /spreadsheet|excel|csv/.test(file.mimetype);
+    const ok =
+      /\.(xlsx|csv)$/i.test(file.originalname) || /spreadsheet|excel|csv/.test(file.mimetype);
     cb(null, ok);
   },
 });
 
 /** Minimal RFC-4180-ish CSV parser (quotes, escaped quotes, BOM, CRLF). */
 function parseCsvRows(text: string): Record<string, string>[] {
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim() !== '');
+  const lines = text
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .filter((l) => l.trim() !== '');
   if (lines.length < 2) return [];
   const parseLine = (line: string): string[] => {
     const out: string[] = [];
@@ -23,10 +26,17 @@ function parseCsvRows(text: string): Record<string, string>[] {
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
       if (inQuotes) {
-        if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else inQuotes = false; } else cur += ch;
+        if (ch === '"') {
+          if (line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else inQuotes = false;
+        } else cur += ch;
       } else if (ch === '"') inQuotes = true;
-      else if (ch === ',') { out.push(cur); cur = ''; }
-      else cur += ch;
+      else if (ch === ',') {
+        out.push(cur);
+        cur = '';
+      } else cur += ch;
     }
     out.push(cur);
     return out.map((s) => s.trim());
@@ -42,7 +52,9 @@ function parseCsvRows(text: string): Record<string, string>[] {
  * Parse an uploaded .xlsx (first worksheet) or .csv into records keyed by the
  * header row (row 1). Excel dates become YYYY-MM-DD strings. Empty rows skipped.
  */
-export async function parseSpreadsheetFile(file: Express.Multer.File): Promise<Record<string, string>[]> {
+export async function parseSpreadsheetFile(
+  file: Express.Multer.File,
+): Promise<Record<string, string>[]> {
   if (/\.csv$/i.test(file.originalname) || file.mimetype === 'text/csv') {
     return parseCsvRows(file.buffer.toString('utf8'));
   }
@@ -62,7 +74,8 @@ export async function parseSpreadsheetFile(file: Express.Multer.File): Promise<R
       const v = cell.value;
       let text: string;
       if (v instanceof Date) text = v.toISOString().slice(0, 10);
-      else if (v && typeof v === 'object' && 'result' in (v as object)) text = String((v as ExcelJS.CellFormulaValue).result ?? '');
+      else if (v && typeof v === 'object' && 'result' in (v as object))
+        text = String((v as ExcelJS.CellFormulaValue).result ?? '');
       else text = cell.text;
       text = String(text).trim();
       if (text) empty = false;

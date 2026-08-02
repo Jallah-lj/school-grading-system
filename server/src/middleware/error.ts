@@ -1,14 +1,20 @@
-import type { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
+
 import { AppError } from '../lib/errors';
+
+import type { NextFunction, Request, Response } from 'express';
 
 export function notFoundHandler(_req: Request, res: Response): void {
   res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction): void {
+export function errorHandler(
+  err: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+): void {
   if (err instanceof ZodError) {
     res.status(422).json({
       error: {
@@ -30,7 +36,11 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
       res.status(409).json({
-        error: { code: 'UNIQUE_CONSTRAINT', message: 'A record with these unique fields already exists', details: err.meta },
+        error: {
+          code: 'UNIQUE_CONSTRAINT',
+          message: 'A record with these unique fields already exists',
+          details: err.meta,
+        },
       });
       return;
     }
@@ -39,7 +49,9 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
       return;
     }
     if (err.code === 'P2003') {
-      res.status(409).json({ error: { code: 'FK_CONSTRAINT', message: 'Related record constraint failed' } });
+      res
+        .status(409)
+        .json({ error: { code: 'FK_CONSTRAINT', message: 'Related record constraint failed' } });
       return;
     }
     if (err.code === 'P2024' || err.code === 'P2028') {
@@ -54,5 +66,7 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
   }
 
   console.error('Unhandled error:', err);
-  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } });
+  res
+    .status(500)
+    .json({ error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } });
 }

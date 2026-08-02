@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+
 import { parseAccessTokenTtl } from './tokenTtl';
 
 assert.equal(parseAccessTokenTtl(undefined), '15m');

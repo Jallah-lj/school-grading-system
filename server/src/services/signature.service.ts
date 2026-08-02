@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+
 import { prisma } from '../lib/prisma';
 
 /**
@@ -15,9 +16,9 @@ import { prisma } from '../lib/prisma';
  * Ink color (blue/black/red) is preserved — only lightness becomes alpha.
  */
 
-const INK_THRESHOLD = 200;   // luminance below this = solid ink
-const FADE_RANGE = 35;       // luminance 200–235 fades out → paper & shadows vanish
-const PADDING = 10;          // px kept around the ink bounding box
+const INK_THRESHOLD = 200; // luminance below this = solid ink
+const FADE_RANGE = 35; // luminance 200–235 fades out → paper & shadows vanish
+const PADDING = 10; // px kept around the ink bounding box
 
 export interface ProcessedSignature {
   png: Buffer;
@@ -36,12 +37,18 @@ export async function processSignatureImage(input: Buffer): Promise<ProcessedSig
 
   const px = data;
   const { width, height } = info;
-  let minX = width, minY = height, maxX = -1, maxY = -1;
+  let minX = width,
+    minY = height,
+    maxX = -1,
+    maxY = -1;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4;
-      const r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
+      const r = px[i],
+        g = px[i + 1],
+        b = px[i + 2],
+        a = px[i + 3];
       if (a === 0) continue;
 
       const luma = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -63,7 +70,9 @@ export async function processSignatureImage(input: Buffer): Promise<ProcessedSig
   }
 
   if (maxX < 0) {
-    throw new Error('No ink detected. Use a well-lit close-up photo, or draw your signature instead.');
+    throw new Error(
+      'No ink detected. Use a well-lit close-up photo, or draw your signature instead.',
+    );
   }
 
   const left = Math.max(0, minX - PADDING);

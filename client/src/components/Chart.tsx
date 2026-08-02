@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { Chart as ChartJS, registerables, type ChartConfiguration } from 'chart.js';
+import { useEffect, useRef } from 'react';
 
 ChartJS.register(...registerables);
 ChartJS.defaults.font.family = 'Inter, ui-sans-serif, system-ui, sans-serif';
@@ -16,7 +16,10 @@ export function Chart({ config, height = 260 }: { config: ChartConfiguration; he
     if (!canvasRef.current) return;
     chartRef.current?.destroy();
     chartRef.current = new ChartJS(canvasRef.current, JSON.parse(configJson) as ChartConfiguration);
-    return () => { chartRef.current?.destroy(); chartRef.current = null; };
+    return () => {
+      chartRef.current?.destroy();
+      chartRef.current = null;
+    };
   }, [configJson]);
 
   return (

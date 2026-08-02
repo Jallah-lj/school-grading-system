@@ -1,14 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
+
 import { Icon } from '../components/Icon';
 import { api, apiUrl } from '../lib/api';
 import { useQuery } from '../lib/useQuery';
+
 import type { SchoolPublicInfo } from '../lib/types';
 
 const SECTIONS = {
   terms: {
     title: 'Terms of Service',
     updated: '1 August 2026',
-    intro: 'These Terms of Service govern access to and use of the School Grading System. By signing in, you agree to these terms on behalf of yourself and, where applicable, the school that issued your account.',
+    intro:
+      'These Terms of Service govern access to and use of the School Grading System. By signing in, you agree to these terms on behalf of yourself and, where applicable, the school that issued your account.',
     blocks: [
       {
         h: '1. Purpose of the platform',
@@ -51,7 +54,8 @@ const SECTIONS = {
   privacy: {
     title: 'Privacy Policy',
     updated: '1 August 2026',
-    intro: 'This Privacy Policy explains what personal data the School Grading System processes, why it is processed, and the rights of students, parents, teachers and administrators.',
+    intro:
+      'This Privacy Policy explains what personal data the School Grading System processes, why it is processed, and the rights of students, parents, teachers and administrators.',
     blocks: [
       {
         h: '1. Who is responsible',
@@ -101,7 +105,10 @@ export default function Legal() {
   const { pathname } = useLocation();
   const kind = pathname.includes('privacy') ? 'privacy' : 'terms';
   const doc = SECTIONS[kind];
-  const { data: school } = useQuery(() => api.get<SchoolPublicInfo>('/school/public').then((r) => r.data), []);
+  const { data: school } = useQuery(
+    () => api.get<SchoolPublicInfo>('/school/public').then((r) => r.data),
+    [],
+  );
   const year = new Date().getFullYear();
 
   return (
@@ -109,9 +116,13 @@ export default function Legal() {
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-4">
           <Link to="/login" className="flex items-center gap-2.5 text-slate-900 dark:text-white">
-            {school?.hasBadge
-              ? <img src={apiUrl('/school/badge')} alt="" className="h-8 w-8 object-contain" />
-              : <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">{(school?.name ?? 'S')[0]}</div>}
+            {school?.hasBadge ? (
+              <img src={apiUrl('/school/badge')} alt="" className="h-8 w-8 object-contain" />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
+                {(school?.name ?? 'S')[0]}
+              </div>
+            )}
             <span className="font-semibold">{school?.name ?? 'School Grading System'}</span>
           </Link>
           <Link to="/login" className="btn-secondary px-3 py-1.5 text-xs">
@@ -138,15 +149,21 @@ export default function Legal() {
 
         <article className="card p-8 sm:p-10">
           <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">Legal</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{doc.title}</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {doc.title}
+          </h1>
           <p className="mt-2 text-sm text-slate-400">Last updated {doc.updated}</p>
-          <p className="mt-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{doc.intro}</p>
+          <p className="mt-6 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            {doc.intro}
+          </p>
 
           <div className="mt-8 space-y-7">
             {doc.blocks.map((b) => (
               <section key={b.h}>
                 <h2 className="text-base font-semibold text-slate-900 dark:text-white">{b.h}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{b.p}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {b.p}
+                </p>
               </section>
             ))}
           </div>
@@ -155,9 +172,13 @@ export default function Legal() {
         <footer className="mt-8 text-center text-xs text-slate-400">
           © {year} {school?.name ?? 'School Grading System'}. All rights reserved.
           {' · '}
-          <Link to="/terms" className="hover:text-indigo-500 hover:underline">Terms</Link>
+          <Link to="/terms" className="hover:text-indigo-500 hover:underline">
+            Terms
+          </Link>
           {' · '}
-          <Link to="/privacy" className="hover:text-indigo-500 hover:underline">Privacy</Link>
+          <Link to="/privacy" className="hover:text-indigo-500 hover:underline">
+            Privacy
+          </Link>
         </footer>
       </main>
     </div>

@@ -1,10 +1,12 @@
-import type { NextFunction, Request, Response } from 'express';
-import type { Role } from '@prisma/client';
 import { z } from 'zod';
-import { verifyAccessToken } from '../lib/jwt';
+
 import { AppError } from '../lib/errors';
-import { prisma } from '../lib/prisma';
+import { verifyAccessToken } from '../lib/jwt';
 import { verifyPassword } from '../lib/password';
+import { prisma } from '../lib/prisma';
+
+import type { Role } from '@prisma/client';
+import type { NextFunction, Request, Response } from 'express';
 
 /** Require a valid Bearer access token. Attaches `req.user`. */
 export function authenticate(req: Request, _res: Response, next: NextFunction): void {
@@ -12,7 +14,12 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
   if (!header?.startsWith('Bearer ')) return next(AppError.unauthorized());
   try {
     const payload = verifyAccessToken(header.slice(7));
-    req.user = { id: payload.sub, email: payload.email, name: payload.name, role: payload.role as Role };
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      role: payload.role as Role,
+    };
     next();
   } catch {
     next(new AppError(401, 'Invalid or expired access token', 'INVALID_TOKEN'));
@@ -43,6 +50,10 @@ export async function assertPasswordConfirmed(req: Request): Promise<void> {
     select: { passwordHash: true },
   });
   if (!me || !(await verifyPassword(parsed.data.password, me.passwordHash))) {
-    throw new AppError(403, 'Incorrect password — the action was denied to protect school records', 'PASSWORD_CONFIRMATION_FAILED');
+    throw new AppError(
+      403,
+      'Incorrect password — the action was denied to protect school records',
+      'PASSWORD_CONFIRMATION_FAILED',
+    );
   }
 }

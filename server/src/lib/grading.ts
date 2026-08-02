@@ -23,8 +23,8 @@ export interface WeightedScore {
 }
 
 export interface GradedSubjectResult {
-  totalScore: number;   // normalised to /100
-  percentage: number;   // 0–100, 2dp
+  totalScore: number; // normalised to /100
+  percentage: number; // 0–100, 2dp
   letterGrade: string;
   gradePoint: number;
   remark: string;
@@ -58,7 +58,10 @@ export function gradeFor(percentage: number, bands: GradeBand[]): GradeBand | un
 }
 
 /** Full computation for one subject: weighted % → letter grade + points. */
-export function computeSubjectResult(scores: WeightedScore[], bands: GradeBand[]): GradedSubjectResult {
+export function computeSubjectResult(
+  scores: WeightedScore[],
+  bands: GradeBand[],
+): GradedSubjectResult {
   const percentage = computeWeightedPercentage(scores);
   const band = gradeFor(percentage, bands);
   return {
@@ -97,7 +100,10 @@ export function rankIds<T extends { id: string; value: number }>(rows: T[]): Map
   const positions = new Map<string, number>();
   sorted.forEach((row, index) => {
     const prev = sorted[index - 1];
-    positions.set(row.id, prev && prev.value === row.value ? (positions.get(prev.id) as number) : index + 1);
+    positions.set(
+      row.id,
+      prev && prev.value === row.value ? (positions.get(prev.id) as number) : index + 1,
+    );
   });
   return positions;
 }

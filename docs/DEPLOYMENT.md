@@ -40,16 +40,19 @@ pass `--include=dev` to `npm install` on purpose: Render sets
 ## 1. Database — Supabase
 
 1. Create a project at [supabase.com](https://supabase.com) → wait for provisioning.
-2. **Settings → Database → Connection string → URI** and copy it. Prefer the *Session/Transaction pooler* host for serverless-style workloads:
- ```
- postgresql://postgres.<project>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
- ```
+2. **Settings → Database → Connection string → URI** and copy it. Prefer the _Session/Transaction pooler_ host for serverless-style workloads:
+
+```
+postgresql://postgres.<project>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
 3. Locally, apply schema + seed:
- ```bash
- cd server
- DATABASE_URL="<supabase-uri>" npx prisma migrate deploy
- DATABASE_URL="<supabase-uri>" npm run db:seed
- ```
+
+```bash
+cd server
+DATABASE_URL="<supabase-uri>" npx prisma migrate deploy
+DATABASE_URL="<supabase-uri>" npm run db:seed
+```
 
 > Tip: keep a direct (non-pooled) URI for `prisma migrate deploy`. For this persistent Express API, use Supabase's **session pooler** URI at runtime and allow a small pool, for example `?connection_limit=5&pool_timeout=30`. Do not use `connection_limit=1`: concurrent page queries and grade auto-saves will exhaust a single connection. If you use a transaction-mode PgBouncer endpoint, also add `pgbouncer=true`.
 
@@ -58,53 +61,59 @@ pass `--include=dev` to `npm install` on purpose: Render sets
 1. Push the repo to GitHub, then **Railway → New Project → Deploy from GitHub**.
 2. Set **Root Directory** to `server`.
 3. Variables (Service → Variables):
- | Key | Value |
- |---|---|
- | `DATABASE_URL` | Supabase URI |
- | `JWT_ACCESS_SECRET` | 32+ char random string |
- | `JWT_REFRESH_SECRET` | different 32+ char random string |
- | `ACCESS_TOKEN_TTL` | `15m` (raw value, without quotes or `ACCESS_TOKEN_TTL=`) |
- | `CLIENT_URL` | `https://<your-app>.vercel.app` |
- | `SCHOOL_NAME` / `SCHOOL_MOTTO` | your school's branding |
- | `PORT` | `4000` (Railway injects `PORT` automatically — the app respects it) |
+   | Key                            | Value                                                               |
+   | ------------------------------ | ------------------------------------------------------------------- |
+   | `DATABASE_URL`                 | Supabase URI                                                        |
+   | `JWT_ACCESS_SECRET`            | 32+ char random string                                              |
+   | `JWT_REFRESH_SECRET`           | different 32+ char random string                                    |
+   | `ACCESS_TOKEN_TTL`             | `15m` (raw value, without quotes or `ACCESS_TOKEN_TTL=`)            |
+   | `CLIENT_URL`                   | `https://<your-app>.vercel.app`                                     |
+   | `SCHOOL_NAME` / `SCHOOL_MOTTO` | your school's branding                                              |
+   | `PORT`                         | `4000` (Railway injects `PORT` automatically — the app respects it) |
 
- The `DATABASE_URL` value must be the URI itself and start with `postgresql://` (or `postgres://`). In a hosting dashboard, do **not** paste `DATABASE_URL=...`, `<supabase-uri>`, or surrounding quotes. For Supabase runtime connections, use `connection_limit=5&pool_timeout=30` rather than a single connection. If the database is another Railway service, use Railway's reference syntax (replace `Postgres` with the exact service name):
- ```
- ${{Postgres.DATABASE_URL}}
- ```
- Railway should resolve that reference to the actual URI before starting the API. An unresolved reference or placeholder is not a database URL.
+The `DATABASE_URL` value must be the URI itself and start with `postgresql://` (or `postgres://`). In a hosting dashboard, do **not** paste `DATABASE_URL=...`, `<supabase-uri>`, or surrounding quotes. For Supabase runtime connections, use `connection_limit=5&pool_timeout=30` rather than a single connection. If the database is another Railway service, use Railway's reference syntax (replace `Postgres` with the exact service name):
+
+```
+${{Postgres.DATABASE_URL}}
+```
+
+Railway should resolve that reference to the actual URI before starting the API. An unresolved reference or placeholder is not a database URL.
 
 4. Build & start commands:
- ```
- Build: npm install && npm run build
- Start: npm start
- ```
- (`npm run build` runs `prisma generate` + `tsc`.) With Root Directory set to
- `server`, these commands are picked up from `server/package.json`. You may
- instead leave Root Directory at the repo root — the root `package.json`
- (see [section 0](#0-root-build--one-command-for-the-whole-repo)) builds both
- client and server and `npm start` still launches the API.
-5. Add a one-off deploy command (or run from your machine): `npx prisma migrate deploy`.
-6. Copy the public domain, e.g. `https://sgs-api.up.railway.app` and verify:
- `curl https://sgs-api.up.railway.app/api/health` → `{"status":"ok"}`.
+
+```
+Build: npm install && npm run build
+Start: npm start
+```
+
+(`npm run build` runs `prisma generate` + `tsc`.) With Root Directory set to
+`server`, these commands are picked up from `server/package.json`. You may
+instead leave Root Directory at the repo root — the root `package.json`
+(see [section 0](#0-root-build--one-command-for-the-whole-repo)) builds both
+client and server and `npm start` still launches the API. 5. Add a one-off deploy command (or run from your machine): `npx prisma migrate deploy`. 6. Copy the public domain, e.g. `https://sgs-api.up.railway.app` and verify:
+`curl https://sgs-api.up.railway.app/api/health` → `{"status":"ok"}`.
 
 ## 3. Frontend — Vercel
 
 1. **Vercel → New Project → Import repo**; set **Root Directory** to `client`.
 2. Framework preset: **Vite** (build `npm run build`, output `dist`).
 3. Environment variable:
- ```
- VITE_API_URL=https://sgs-api.up.railway.app/api
- ```
+
+```
+VITE_API_URL=https://sgs-api.up.railway.app/api
+```
+
 > Hosting the frontend on **Render** instead? Set Root Directory to `client`,
 > Build `npm install && npm run build`, Start `npm run preview`, and set the
 > same `VITE_API_URL` variable.
+
 4. SPA deep links (`/verify/ABC123`, `/grades`, …) need a rewrite — add `client/vercel.json`:
- ```json
- { "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
- ```
- (Already safe to commit; Vercel only reads it from the client root.)
-5. Back in Railway, update `CLIENT_URL` to the Vercel domain so CORS and QR-verification URLs are correct (the QR on PDF report cards points at `${CLIENT_URL}/verify/<code>`).
+
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
+
+(Already safe to commit; Vercel only reads it from the client root.) 5. Back in Railway, update `CLIENT_URL` to the Vercel domain so CORS and QR-verification URLs are correct (the QR on PDF report cards points at `${CLIENT_URL}/verify/<code>`).
 
 > **Native deps:** `sharp` (signature image processing) ships prebuilt Linux binaries — Railway/Render install it automatically; no extra buildpack needed. Signature PNGs live **in Postgres**, so no file-storage volume is required.
 
@@ -126,6 +135,7 @@ cd ../client && npm ci && npm run build # serve dist/ with nginx, proxy /api →
 ```
 
 Suggested nginx snippet:
+
 ```nginx
 location /api/ { proxy_pass http://127.0.0.1:4000; proxy_set_header Host $host; }
 location / { root /var/www/sgs/dist; try_files $uri /index.html; }

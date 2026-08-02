@@ -1,12 +1,24 @@
-import type { ReactNode } from 'react';
 import { cx } from '../lib/utils';
+
 import { Icon, type IconName } from './Icon';
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+import type { ReactNode } from 'react';
+
+export function PageHeader({
+  title,
+  subtitle,
+  actions,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          {title}
+        </h1>
         {subtitle && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -14,8 +26,17 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function StatCard({ label, value, icon, hint, tone = 'indigo' }: {
-  label: string; value: ReactNode; icon: ReactNode; hint?: string;
+export function StatCard({
+  label,
+  value,
+  icon,
+  hint,
+  tone = 'indigo',
+}: {
+  label: string;
+  value: ReactNode;
+  icon: ReactNode;
+  hint?: string;
   tone?: 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky';
 }) {
   const tones: Record<string, string> = {
@@ -27,7 +48,14 @@ export function StatCard({ label, value, icon, hint, tone = 'indigo' }: {
   };
   return (
     <div className="card flex items-center gap-4 p-5">
-      <div className={cx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', tones[tone])}>{icon}</div>
+      <div
+        className={cx(
+          'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+          tones[tone],
+        )}
+      >
+        {icon}
+      </div>
       <div className="min-w-0">
         <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
         <div className="truncate text-2xl font-bold text-slate-900 dark:text-white">{value}</div>
@@ -41,7 +69,15 @@ export function Badge({ className, children }: { className?: string; children: R
   return <span className={cx('badge', className)}>{children}</span>;
 }
 
-export function EmptyState({ title, hint, icon = 'archive' }: { title: string; hint?: string; icon?: IconName }) {
+export function EmptyState({
+  title,
+  hint,
+  icon = 'archive',
+}: {
+  title: string;
+  hint?: string;
+  icon?: IconName;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800">
@@ -67,17 +103,34 @@ export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
   );
 }
 
-export function Modal({ open, onClose, title, children, wide }: {
-  open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean;
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  wide,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  wide?: boolean;
 }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={cx('card relative max-h-[90vh] w-full overflow-y-auto p-6', wide ? 'max-w-3xl' : 'max-w-lg')}>
+      <div
+        className={cx(
+          'card relative max-h-[90vh] w-full overflow-y-auto p-6',
+          wide ? 'max-w-3xl' : 'max-w-lg',
+        )}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
-          <button className="btn-ghost px-2 py-1" onClick={onClose} aria-label="Close"><Icon name="x" size={16} /></button>
+          <button className="btn-ghost px-2 py-1" onClick={onClose} aria-label="Close">
+            <Icon name="x" size={16} />
+          </button>
         </div>
         {children}
       </div>

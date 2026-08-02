@@ -1,13 +1,15 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+
 import { Icon } from '../components/Icon';
 import { Spinner } from '../components/ui';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '../lib/auth';
 import { api, apiError, apiUrl } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { useQuery } from '../lib/useQuery';
+
 import type { SchoolPublicInfo } from '../lib/types';
 
 const schema = z.object({
@@ -27,10 +29,17 @@ export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
-  const { data: school } = useQuery(() => api.get<SchoolPublicInfo>('/school/public').then((r) => r.data), []);
+  const { data: school } = useQuery(
+    () => api.get<SchoolPublicInfo>('/school/public').then((r) => r.data),
+    [],
+  );
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
@@ -43,9 +52,7 @@ export default function Login() {
   };
 
   const copyrightYear = new Date().getFullYear();
-  const schoolYearLabel = school?.academicYear
-    ? `Academic Year ${school.academicYear}`
-    : null;
+  const schoolYearLabel = school?.academicYear ? `Academic Year ${school.academicYear}` : null;
   const schoolName = school?.name ?? 'School Grading System';
 
   return (
@@ -65,23 +72,23 @@ export default function Login() {
 
         {/* Header */}
         <div className="relative z-10 flex items-center gap-3">
-          {school?.hasBadge
-            ? (
-              <img
-                src={apiUrl('/school/badge')}
-                alt="School badge"
-                className="h-12 w-12 rounded-xl object-contain shadow-lg shadow-black/20 ring-1 ring-white/25"
-              />
-            )
-            : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl font-extrabold backdrop-blur">
-                {schoolName[0]}
-              </div>
-            )}
+          {school?.hasBadge ? (
+            <img
+              src={apiUrl('/school/badge')}
+              alt="School badge"
+              className="h-12 w-12 rounded-xl object-contain shadow-lg shadow-black/20 ring-1 ring-white/25"
+            />
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl font-extrabold backdrop-blur">
+              {schoolName[0]}
+            </div>
+          )}
           <div className="min-w-0">
             <span className="block truncate text-lg font-semibold leading-tight">{schoolName}</span>
             {school?.motto && (
-              <span className="mt-0.5 block truncate text-xs italic text-indigo-200/90">“{school.motto}”</span>
+              <span className="mt-0.5 block truncate text-xs italic text-indigo-200/90">
+                “{school.motto}”
+              </span>
             )}
           </div>
         </div>
@@ -122,11 +129,17 @@ export default function Login() {
               <span>Secure · Role-based · Audited</span>
             </div>
             <div className="flex flex-col items-end gap-1 text-indigo-200/80">
-              <span>© {copyrightYear} {schoolName}. All rights reserved.</span>
+              <span>
+                © {copyrightYear} {schoolName}. All rights reserved.
+              </span>
               <span className="flex gap-2">
-                <Link to="/terms" className="hover:text-white hover:underline">Terms</Link>
+                <Link to="/terms" className="hover:text-white hover:underline">
+                  Terms
+                </Link>
                 <span>·</span>
-                <Link to="/privacy" className="hover:text-white hover:underline">Privacy</Link>
+                <Link to="/privacy" className="hover:text-white hover:underline">
+                  Privacy
+                </Link>
               </span>
             </div>
           </div>
@@ -139,11 +152,21 @@ export default function Login() {
           <div className="w-full max-w-md">
             {/* Mobile / narrow header */}
             <div className="mb-6 flex items-center gap-3 lg:hidden">
-              {school?.hasBadge && <img src={apiUrl('/school/badge')} alt="" className="h-9 w-9 rounded-lg object-contain ring-1 ring-slate-200 dark:ring-slate-700" />}
+              {school?.hasBadge && (
+                <img
+                  src={apiUrl('/school/badge')}
+                  alt=""
+                  className="h-9 w-9 rounded-lg object-contain ring-1 ring-slate-200 dark:ring-slate-700"
+                />
+              )}
               <div className="min-w-0">
-                <div className="truncate text-xl font-bold tracking-tight text-slate-900 dark:text-white">{schoolName}</div>
+                <div className="truncate text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {schoolName}
+                </div>
                 {school?.motto && (
-                  <div className="mt-0.5 truncate text-xs italic text-slate-500 dark:text-slate-400">“{school.motto}”</div>
+                  <div className="mt-0.5 truncate text-xs italic text-slate-500 dark:text-slate-400">
+                    “{school.motto}”
+                  </div>
                 )}
               </div>
             </div>
@@ -154,7 +177,9 @@ export default function Login() {
                 <Icon name="shield-check" size={12} />
                 Secure sign in
               </span>
-              <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome back</h2>
+              <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Welcome back
+              </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Sign in with your account credentials to continue.
               </p>
@@ -171,7 +196,9 @@ export default function Login() {
 
               <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5" noValidate>
                 <div>
-                  <label className="label" htmlFor="email">Email address</label>
+                  <label className="label" htmlFor="email">
+                    Email address
+                  </label>
                   <div className="relative">
                     <Icon
                       name="mail"
@@ -196,7 +223,9 @@ export default function Login() {
                 </div>
 
                 <div>
-                  <label className="label" htmlFor="password">Password</label>
+                  <label className="label" htmlFor="password">
+                    Password
+                  </label>
                   <div className="relative">
                     <Icon
                       name="lock"
@@ -260,13 +289,23 @@ export default function Login() {
         {/* Mobile / narrow footer */}
         <footer className="border-t border-slate-200 px-6 py-4 text-center text-xs text-slate-400 dark:border-slate-800 lg:hidden">
           <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-3">
-            {schoolYearLabel && <span className="font-medium text-slate-500 dark:text-slate-400">{schoolYearLabel}</span>}
-            <span>© {copyrightYear} {schoolName}. All rights reserved.</span>
+            {schoolYearLabel && (
+              <span className="font-medium text-slate-500 dark:text-slate-400">
+                {schoolYearLabel}
+              </span>
+            )}
+            <span>
+              © {copyrightYear} {schoolName}. All rights reserved.
+            </span>
           </div>
           <div className="mt-1.5 flex justify-center gap-2">
-            <Link to="/terms" className="hover:text-indigo-500 hover:underline">Terms</Link>
+            <Link to="/terms" className="hover:text-indigo-500 hover:underline">
+              Terms
+            </Link>
             <span>·</span>
-            <Link to="/privacy" className="hover:text-indigo-500 hover:underline">Privacy</Link>
+            <Link to="/privacy" className="hover:text-indigo-500 hover:underline">
+              Privacy
+            </Link>
           </div>
         </footer>
       </div>

@@ -20,20 +20,18 @@ function removeWrappingQuotes(value: string): string {
 }
 
 export const databaseUrlSchema = z.preprocess(
-  (value) => typeof value === 'string' ? removeWrappingQuotes(value) : value,
-  z.string()
+  (value) => (typeof value === 'string' ? removeWrappingQuotes(value) : value),
+  z
+    .string()
     .min(1, 'DATABASE_URL is required')
     .refine(
       (value) => POSTGRES_PROTOCOLS.some((protocol) => value.startsWith(protocol)),
       'DATABASE_URL must be the connection URI itself and begin with postgresql:// or postgres:// (do not use DATABASE_URL=, a placeholder, or an unresolved variable reference)',
     )
-    .refine(
-      (value) => {
-        const configuredLimit = value.match(/[?&]connection_limit=(\d+)(?:&|$)/)?.[1];
-        return configuredLimit === undefined || Number(configuredLimit) >= 2;
-      },
-      'DATABASE_URL connection_limit is too low for this API; use connection_limit=5 or greater',
-    ),
+    .refine((value) => {
+      const configuredLimit = value.match(/[?&]connection_limit=(\d+)(?:&|$)/)?.[1];
+      return configuredLimit === undefined || Number(configuredLimit) >= 2;
+    }, 'DATABASE_URL connection_limit is too low for this API; use connection_limit=5 or greater'),
 );
 
 export function parseDatabaseUrl(value: unknown): string {

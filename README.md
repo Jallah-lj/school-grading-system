@@ -6,6 +6,8 @@
 
 React 18 · TypeScript · Tailwind CSS · Chart.js · Express · Prisma · PostgreSQL · JWT + RBAC
 
+[![CI](https://github.com/Jallah-lj/school-grading-system/actions/workflows/ci.yml/badge.svg)](https://github.com/Jallah-lj/school-grading-system/actions/workflows/ci.yml)
+
 </div>
 
 ---
@@ -14,45 +16,52 @@ React 18 · TypeScript · Tailwind CSS · Chart.js · Express · Prisma · Postg
 
 ### Roles & access control (RBAC)
 
-| Capability | Admin | Teacher | Student | Parent |
-|---|:-:|:-:|:-:|:-:|
-| Manage users, students, teachers, classes, subjects | Yes | — | — | — |
-| **Manage parent accounts** — create parents, link/unlink children, reset passwords (dedicated Parents page + `parentEmail` on student forms/bulk import) | Yes | — | — | — |
-| **Bulk import students from Excel/CSV** — template download, per-row validation, auto admission numbers & passwords, credentials export | Yes | — | — | — |
-| Configure grading scales, academic years & terms | Yes | — | — | — |
-| Enter / edit marks **before approval** | Yes | Yes | — | — |
-| **Fast mark entry** — Excel template/import, paste-from-Excel, keyboard navigation, column fill, auto-save drafts | Yes | Yes | — | — |
-| Submit → Approve → **Publish** workflow | Yes | submit | — | — |
-| **Approval inbox** — one-click approve / return with note, sidebar badge, deep-link notifications | Yes | notified | — | — |
-| Delete students/teachers/parents **with password step-up verification** (failures audit-logged) | Yes | — | — | — |
-| **Audit log page** — filter by action/entity/date/user, inspect event payloads | Yes | — | — | — |
-| View grades, GPA, class ranking, progress | Yes | Yes | Yes | Yes (child) |
-| Report cards, transcripts, PDF downloads | Yes | class | own | child |
-| Upload digital signature (draw / photo) | Yes | Yes | — | — |
-| Configure school name, badge & ID prefix | Yes | — | — | — |
-| Analytics dashboards (distribution, trends, comparisons) | Yes | Yes | — | — |
-| Notifications — read, **delete individually or clear all**, deep links | Yes | Yes | Yes | Yes |
-| Audit trail, JSON backup | Yes | — | — | — |
+| Capability                                                                                                                                               | Admin | Teacher  | Student |   Parent    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | :---: | :------: | :-----: | :---------: |
+| Manage users, students, teachers, classes, subjects                                                                                                      |  Yes  |    —     |    —    |      —      |
+| **Manage parent accounts** — create parents, link/unlink children, reset passwords (dedicated Parents page + `parentEmail` on student forms/bulk import) |  Yes  |    —     |    —    |      —      |
+| **Bulk import students from Excel/CSV** — template download, per-row validation, auto admission numbers & passwords, credentials export                  |  Yes  |    —     |    —    |      —      |
+| Configure grading scales, academic years & terms                                                                                                         |  Yes  |    —     |    —    |      —      |
+| Enter / edit marks **before approval**                                                                                                                   |  Yes  |   Yes    |    —    |      —      |
+| **Fast mark entry** — Excel template/import, paste-from-Excel, keyboard navigation, column fill, auto-save drafts                                        |  Yes  |   Yes    |    —    |      —      |
+| Submit → Approve → **Publish** workflow                                                                                                                  |  Yes  |  submit  |    —    |      —      |
+| **Approval inbox** — one-click approve / return with note, sidebar badge, deep-link notifications                                                        |  Yes  | notified |    —    |      —      |
+| Delete students/teachers/parents **with password step-up verification** (failures audit-logged)                                                          |  Yes  |    —     |    —    |      —      |
+| **Audit log page** — filter by action/entity/date/user, inspect event payloads                                                                           |  Yes  |    —     |    —    |      —      |
+| View grades, GPA, class ranking, progress                                                                                                                |  Yes  |   Yes    |   Yes   | Yes (child) |
+| Report cards, transcripts, PDF downloads                                                                                                                 |  Yes  |  class   |   own   |    child    |
+| Upload digital signature (draw / photo)                                                                                                                  |  Yes  |   Yes    |    —    |      —      |
+| Configure school name, badge & ID prefix                                                                                                                 |  Yes  |    —     |    —    |      —      |
+| Analytics dashboards (distribution, trends, comparisons)                                                                                                 |  Yes  |   Yes    |    —    |      —      |
+| Notifications — read, **delete individually or clear all**, deep links                                                                                   |  Yes  |   Yes    |   Yes   |     Yes     |
+| Audit trail, JSON backup                                                                                                                                 |  Yes  |    —     |    —    |      —      |
 
-### Automatic calculations — *no manual math ever*
+### Automatic calculations — _no manual math ever_
+
 Weighted totals · percentages · letter grades & grade points (configurable scale) · credit-weighted **GPA** · **CGPA** across terms · **subject ranking**, **class position** and overall ranking (competition ranking with tie handling).
 
 ### Report cards
+
 School branding, student info, per-subject marks & remarks, GPA & position, teacher/principal remarks, **digital signatures**, **QR code** pointing to a public verification page, **PDF export**, plus CSV grade sheets and class reports (Excel-compatible).
 
 ### Auto-generated identification numbers
+
 Registration never asks admins to type admission or staff numbers — the system **assigns them automatically** (students: `SGS-2025-0013`, teachers: `SGS-STF-004`). Atomic database sequences guarantee uniqueness even under concurrent registrations; numbers bootstrap above any existing data and are **immutable** afterwards, so conflicts are impossible. The prefix is configurable.
 
 ### School branding (badge + name)
-Upload the **school badge/crest** and edit the **school name, motto and ID prefix** from *Administration → School*. Branding appears instantly on report-card PDFs, transcripts, the public QR-verification page, the login screen and the sidebar. Badges are auto-resized (≤512px PNG) and stored in PostgreSQL — no file storage needed.
+
+Upload the **school badge/crest** and edit the **school name, motto and ID prefix** from _Administration → School_. Branding appears instantly on report-card PDFs, transcripts, the public QR-verification page, the login screen and the sidebar. Badges are auto-resized (≤512px PNG) and stored in PostgreSQL — no file storage needed.
 
 ### Digital signatures
+
 Teachers and admins capture their signature two ways — **draw it on screen** (mouse/touch/stylus pad) or **photograph a paper signature** and upload it. The server auto-cleans uploads (EXIF rotation → paper background made transparent → ink auto-crop → compression), stores the PNG in PostgreSQL, and stamps it automatically on every report card: the class-teacher slot uses the class's homeroom teacher; the principal slot uses the admin who published the card. Signatures also appear on the public QR-verification page and transcripts.
 
 ### Parent accounts & academic progress
-Admins create parent accounts on the dedicated **Parents** page (sidebar) — name, email, password — then link each parent to their children: either from the parent record (pick any unlinked student), or via the *Parent email* field when registering or editing students and in bulk imports. One parent can have many children. A parent signs in with their own account and sees every linked child in **Academic Progress** (child selector, GPA/average/position, subject results, GPA trend, transcript PDF), plus report cards and grade-published notifications. Deleting a parent removes the login account and unlinks the children — the student records themselves are kept.
+
+Admins create parent accounts on the dedicated **Parents** page (sidebar) — name, email, password — then link each parent to their children: either from the parent record (pick any unlinked student), or via the _Parent email_ field when registering or editing students and in bulk imports. One parent can have many children. A parent signs in with their own account and sees every linked child in **Academic Progress** (child selector, GPA/average/position, subject results, GPA trend, transcript PDF), plus report cards and grade-published notifications. Deleting a parent removes the login account and unlinks the children — the student records themselves are kept.
 
 ### UI/UX
+
 Modern dashboard · responsive layout · **dark & light mode** · sidebar navigation · interactive sortable/paginated tables · validated forms (React Hook Form + Zod) · Chart.js visualizations · loading skeletons · toast notifications · confirmation dialogs.
 
 ---
@@ -118,18 +127,32 @@ npm run dev # → http://localhost:5173
 
 ### Demo accounts (after seeding)
 
-| Role | Email | Password |
-|---|---|---|
-| **Admin** | `admin@school.rw` | `Admin@123` |
+| Role        | Email                  | Password      |
+| ----------- | ---------------------- | ------------- |
+| **Admin**   | `admin@school.rw`      | `Admin@123`   |
 | **Teacher** | `m.habimana@school.rw` | `Teacher@123` |
-| **Student** | `student@school.rw` | `Student@123` |
-| **Parent** | `parent@school.rw` | `Parent@123` |
+| **Student** | `student@school.rw`    | `Student@123` |
+| **Parent**  | `parent@school.rw`     | `Parent@123`  |
 
 ### Try the golden path
-1. Sign in as **teacher** → *Grade Entry* → pick Term 3 / Senior 1 A / Mathematics → enter marks → **Submit for Approval**.
-2. Sign in as **admin** → *Grade Entry* → **Approve & Compute** (totals/GPA/positions auto-computed) → **Publish**.
-3. Sign in as **student** → instant notification → *My Grades* (GPA 3.70, position 1) → *Report Cards* → download **PDF**; scan the **QR** to open the public verification page.
-4. Admin → *Dashboard* / *Analytics* for live charts; *Administration* to edit the grading scale, manage users & years, or download a JSON **backup**.
+
+1. Sign in as **teacher** → _Grade Entry_ → pick Term 3 / Senior 1 A / Mathematics → enter marks → **Submit for Approval**.
+2. Sign in as **admin** → _Grade Entry_ → **Approve & Compute** (totals/GPA/positions auto-computed) → **Publish**.
+3. Sign in as **student** → instant notification → _My Grades_ (GPA 3.70, position 1) → _Report Cards_ → download **PDF**; scan the **QR** to open the public verification page.
+4. Admin → _Dashboard_ / _Analytics_ for live charts; _Administration_ to edit the grading scale, manage users & years, or download a JSON **backup**.
+
+### Quality checks
+
+Every push runs **CI** (`.github/workflows/ci.yml`): server install/typecheck/tests + Prisma validation, client install/typecheck/build, and lint/format checks. The same checks run locally from the repo root:
+
+```bash
+npm run typecheck    # client + server TypeScript
+npm run test         # server unit tests
+npm run lint         # ESLint (incl. import ordering)
+npm run lint:fix     # autofix lint issues
+npm run format       # Prettier — format the whole repo
+npm run format:check # verify formatting in CI
+```
 
 ---
 
@@ -144,16 +167,16 @@ CGPA = Σ(termPoints) ÷ Σ(termCredits) (credit-weighted across terms)
 position = competition ranking ("1, 2, 2, 4")
 ```
 
-Default scale (fully editable under *Administration → Grade Scales*):
+Default scale (fully editable under _Administration → Grade Scales_):
 
-| Marks | Grade | GPA | Remark |
-|---|---|---|---|
-| 90–100 | A+ | 4.0 | Excellent |
-| 80–89 | A | 3.7 | Very Good |
-| 70–79 | B+ | 3.3 | Good |
-| 60–69 | B | 3.0 | Credit |
-| 50–59 | C | 2.0 | Pass |
-| < 50 | F | 0.0 | Fail |
+| Marks  | Grade | GPA | Remark    |
+| ------ | ----- | --- | --------- |
+| 90–100 | A+    | 4.0 | Excellent |
+| 80–89  | A     | 3.7 | Very Good |
+| 70–79  | B+    | 3.3 | Good      |
+| 60–69  | B     | 3.0 | Credit    |
+| 50–59  | C     | 2.0 | Pass      |
+| < 50   | F     | 0.0 | Fail      |
 
 Run the engine tests:
 
@@ -171,21 +194,21 @@ bcrypt password hashing (12 rounds) · short-lived JWT access tokens (15 min) + 
 
 ## Documentation
 
-| Doc | Contents |
-|---|---|
-| [`docs/API.md`](docs/API.md) | Every endpoint: method, auth, params, payloads, responses |
-| [`docs/ER-DIAGRAM.md`](docs/ER-DIAGRAM.md) | Mermaid ER diagram of all 16 tables |
+| Doc                                        | Contents                                                   |
+| ------------------------------------------ | ---------------------------------------------------------- |
+| [`docs/API.md`](docs/API.md)               | Every endpoint: method, auth, params, payloads, responses  |
+| [`docs/ER-DIAGRAM.md`](docs/ER-DIAGRAM.md) | Mermaid ER diagram of all 16 tables                        |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Supabase (DB) + Railway (API) + Vercel (SPA), step by step |
 
 ---
 
 ## Deployment (production)
 
-| Piece | Platform | Notes |
-|---|---|---|
-| Database | **Supabase** PostgreSQL | copy pooled connection string into `DATABASE_URL` |
-| API | **Railway** / Render | root `package.json` orchestrates the build — works with Root Directory = repo root **or** `server`; start `npm start`, set env vars |
-| Frontend | **Vercel** | root dir `client`, set `VITE_API_URL`, SPA rewrites |
+| Piece    | Platform                | Notes                                                                                                                               |
+| -------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Database | **Supabase** PostgreSQL | copy pooled connection string into `DATABASE_URL`                                                                                   |
+| API      | **Railway** / Render    | root `package.json` orchestrates the build — works with Root Directory = repo root **or** `server`; start `npm start`, set env vars |
+| Frontend | **Vercel**              | root dir `client`, set `VITE_API_URL`, SPA rewrites                                                                                 |
 
 Full walkthrough in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 

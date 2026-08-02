@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import { Icon } from './Icon';
 import { Modal } from './ui';
 
@@ -7,18 +8,36 @@ import { Modal } from './ui';
  * the administrator must re-enter their own password before the request is
  * even sent. The password is verified again on the server.
  */
-export function PasswordConfirmDialog({ open, title, message, confirmText = 'Confirm', onConfirm, onCancel, busy }: {
-  open: boolean; title: string; message: string; confirmText?: string;
-  busy?: boolean; onConfirm: (password: string) => void; onCancel: () => void;
+export function PasswordConfirmDialog({
+  open,
+  title,
+  message,
+  confirmText = 'Confirm',
+  onConfirm,
+  onCancel,
+  busy,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmText?: string;
+  busy?: boolean;
+  onConfirm: (password: string) => void;
+  onCancel: () => void;
 }) {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    if (open) { setPassword(''); setShow(false); }
+    if (open) {
+      setPassword('');
+      setShow(false);
+    }
   }, [open]);
 
-  const submit = () => { if (password) onConfirm(password); };
+  const submit = () => {
+    if (password) onConfirm(password);
+  };
 
   return (
     <Modal open={open} onClose={onCancel} title={title}>
@@ -36,20 +55,34 @@ export function PasswordConfirmDialog({ open, title, message, confirmText = 'Con
           autoFocus
           autoComplete="current-password"
           onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && password && !busy) submit(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && password && !busy) submit();
+          }}
         />
-        <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-500 hover:underline"
-          onClick={() => setShow((s) => !s)}>
+        <button
+          type="button"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-500 hover:underline"
+          onClick={() => setShow((s) => !s)}
+        >
           {show ? 'Hide' : 'Show'}
         </button>
       </div>
       <p className="mt-1.5 text-xs text-slate-400">
-        For your security, destructive actions require step-up verification. Failed attempts are recorded in the audit log.
+        For your security, destructive actions require step-up verification. Failed attempts are
+        recorded in the audit log.
       </p>
       <div className="mt-5 flex justify-end gap-2">
-        <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+        <button className="btn-secondary" onClick={onCancel}>
+          Cancel
+        </button>
         <button className="btn-danger" onClick={submit} disabled={!password || busy}>
-          {busy ? 'Verifying…' : <><Icon name="lock" size={14} /> {confirmText}</>}
+          {busy ? (
+            'Verifying…'
+          ) : (
+            <>
+              <Icon name="lock" size={14} /> {confirmText}
+            </>
+          )}
         </button>
       </div>
     </Modal>
