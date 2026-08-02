@@ -25,53 +25,97 @@ announcementsRouter.post(
     const body = parseBody(broadcastSchema, req);
 
     let userIds: string[] = [];
-    if (body.audience === 'ALL') {
-      const users = await prisma.user.findMany({
-        where: { isActive: true, role: { in: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'] } },
-        select: { id: true },
-      });
-      userIds = users.map((u: { id: string }) => u.id);
-    } else if (body.audience === 'STUDENTS') {
-      const profiles = await prisma.studentProfile.findMany({ select: { userId: true } });
-      userIds = profiles.map((p: { userId: string }) => p.userId);
-    } else if (body.audience === 'PARENTS') {
-      const profiles = await prisma.parentProfile.findMany({ select: { userId: true } });
-      userIds = profiles.map((p: { userId: string }) => p.userId);
-    } else if (body.audience === 'TEACHERS') {
-      const profiles = await prisma.teacherProfile.findMany({ select: { userId: true } });
-      userIds = profiles.map((p: { userId: string }) => p.userId);
-    } else if (body.audience === 'STUDENTS_AND_PARENTS') {
-      const students = await prisma.studentProfile.findMany({
-        select: { userId: true, parent: { select: { userId: true } } },
-      }) as Array<{ userId: string; parent: { userId: string | null } | null }>;
-      userIds = students.flatMap((s) => [s.userId, s.parent?.userId].filter(Boolean) as string[]);
+    try {
+      if (body.audience === 'ALL') {
+        const users = await prisma.user.findMany({
+          where: { isActive: true, role: { in: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'] } },
+          select: { id: true },
+        });
+        userIds = users.map((u: { id: string }) => u.id);
+      } else if (body.audience === 'STUDENTS') {
+        const profiles = await prisma.studentProfile.findMany({
+          where: { user: { isActive: true } },
+          select: { userId: true },
+        });
+        userIds = profiles.map((p: { userId: string }) => p.userId);
+      } else if (body.audience === 'PARENTS') {
+        const profiles = await prisma.parentProfile.findMany({
+          where: { user: { isActive: true } },
+          select: { userId: true },
+        });
+        userIds = profiles.map((p: { userId: string }) => p.userId);
+      } else if (body.audience === 'TEACHERS') {
+        const profiles = await prisma.teacherProfile.findMany({
+          where: { user: { isActive: true } },
+          select: { userId: true },
+        });
+        userIds = profiles.map((p: { userId: string }) => p.userId);
+      } else if (body.audience === 'STUDENTS_AND_PARENTS') {
+        const students = await prisma.studentProfile.findMany({
+          where: { user: { isActive: true } },
+          select: { userId: true, parent: { select: { userId: true } } },
+        }) as Array<{ userId: string; parent: { userId: string | null } | null }>;
+        userIds = students.flatMap((s) => [s.userId, s.parent?.userId].filter(Boolean) as string[]);
+      }
+    } catch (err) {
+      console.error('broadcast: audience resolution failed:', err);
+      // Continue with whatever ids we have (possibly empty) rather than 500ing.
     }
+
     const uniqueIds = [...new Set(userIds)].filter(Boolean);
 
-    const service = new ExtendedNotificationService();
-    const inAppCount = await service.notifyInApp(uniqueIds, 'ANNOUNCEMENT', body.title, body.message, body.link);
-    const { emailSent, smsSent } = await service.notifyExternal(
-      uniqueIds,
-      'ANNOUNCEMENT',
-      body.title,
-      body.message,
-      body.link,
-      body.includeEmail,
-      body.includeSMS,
-    );
+    // Log the broadcast attempt first so we always have an audit trail even
+    // if downstream notification delivery fails partway through.
+    let inAppCount = 0;
+    let emailSent = 0;
+    let smsSent = 0;
 
-    await logAudit(req, 'BROADCAST_ANNOUNCEMENT', 'Notification', undefined, {
-      audience: body.audience,
-      title: body.title,
-      notifiedInApp: inAppCount,
-      notifiedEmail: emailSent,
-      notifiedSMS: smsSent,
-      includeEmail: body.includeEmail,
-      includeSMS: body.includeSMS,
-    });
+    try {
+      const service = new ExtendedNotificationService();
+      inAppCount = uniqueIds.length
+        ? await service.notifyInApp(uniqueIds, 'ANNOUNCEMENT', body.title, body.message, body.link)
+        : 0;
+      const ext = await service.notifyExternal(
+        uniqueIds,
+        'ANNOUNCEMENT',
+        body.title,
+        body.message,
+        body.link,
+        body.includeEmail,
+        body.includeSMS,
+      ).catch((err) => {
+        // External delivery (SMTP / SMS) should never break the broadcast —
+        // in-app notifications have already been persisted.
+        console.error('broadcast: external notification delivery failed:', err);
+        return { emailSent: 0, smsSent: 0 };
+      });
+      emailSent = ext.emailSent;
+      smsSent = ext.smsSent;
+    } catch (err) {
+      console.error('broadcast: notification pipeline threw:', err);
+      // Fall through — we still return a 200 with the counts we have rather
+      // than a bare 500, because auditing should succeed.
+    }
+
+    try {
+      await logAudit(req, 'BROADCAST_ANNOUNCEMENT', 'Notification', undefined, {
+        audience: body.audience,
+        title: body.title,
+        recipientCount: uniqueIds.length,
+        notifiedInApp: inAppCount,
+        notifiedEmail: emailSent,
+        notifiedSMS: smsSent,
+        includeEmail: body.includeEmail,
+        includeSMS: body.includeSMS,
+      });
+    } catch (err) {
+      console.error('broadcast: audit log failed:', err);
+    }
+
     res.json({
       success: true,
       audience: body.audience,
+      recipientCount: uniqueIds.length,
       notifiedInApp: inAppCount,
       notifiedEmail: emailSent,
       notifiedSMS: smsSent,
