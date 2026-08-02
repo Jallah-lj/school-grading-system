@@ -51,6 +51,19 @@ function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }
   return <>{children}</>;
 }
 
+/**
+ * The sidebar calls this feature “Broadcast”, while older links and bookmarks
+ * use “Announcements”. Keep both URLs pointed at the same protected page so a
+ * deep link never falls through to the catch-all route.
+ */
+function AdminAnnouncementsRoute() {
+  return (
+    <RequireRole roles={['ADMIN']}>
+      <Announcements />
+    </RequireRole>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -165,14 +178,10 @@ export default function App() {
             </RequireRole>
           }
         />
-        <Route
-          path="/announcements"
-          element={
-            <RequireRole roles={['ADMIN']}>
-              <Announcements />
-            </RequireRole>
-          }
-        />
+        {/* /announcements is retained for existing bookmarks and notification links. */}
+        <Route path="/announcements" element={<AdminAnnouncementsRoute />} />
+        {/* Broadcast is the name shown in the navigation and the public URL. */}
+        <Route path="/broadcast" element={<AdminAnnouncementsRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

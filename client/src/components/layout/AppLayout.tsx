@@ -107,9 +107,10 @@ const NAV: { to: string; label: string; iconPath: string; roles: Role[] }[] = [
     roles: ['ADMIN'],
   },
   {
-    to: '/announcements',
+    to: '/broadcast',
     label: 'Broadcast',
-    iconPath: 'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-.54-7.54l-3-3a5 5 0 00-7.54.54l-3 3a5 5 0 00.54 7.54l3 3z',
+    iconPath:
+      'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-.54-7.54l-3-3a5 5 0 00-7.54.54l-3 3a5 5 0 00.54 7.54l3 3z',
     roles: ['ADMIN'],
   },
 ];
