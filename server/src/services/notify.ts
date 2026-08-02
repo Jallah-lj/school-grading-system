@@ -4,7 +4,9 @@ import { emailTemplates } from '../templates/emailTemplates';
 import { EmailNotificationProvider } from './emailService';
 import { createSMSProvider } from './smsService';
 
-import type { NotificationType } from '@prisma/client';
+// Use string literal union to avoid dependency on generated Prisma client types
+// (avoids "Module has no exported member" when prisma generate hasn't run)
+type NotificationType = 'GRADES_PUBLISHED' | 'REPORT_CARD_AVAILABLE' | 'GRADE_CORRECTION' | 'ANNOUNCEMENT';
 
 export async function notifyUsers(
   userIds: string[],
@@ -57,7 +59,12 @@ export class ExtendedNotificationService {
   async notifyEmail(userIds: string[], type: NotificationType, title: string, message: string, link?: string): Promise<number> {
     if (!userIds.length) return 0;
     const users = await prisma.user.findMany({
-      where: { id: { in: userIds }, isActive: true, email: { not: null } },
+      where: {
+        id: { in: userIds },
+        isActive: true,
+        // Use NOT to satisfy strict generated types when prisma client is stale
+        NOT: { email: null },
+      } as any,
       select: { id: true, email: true, name: true },
     });
     if (!users.length) return 0;
@@ -90,7 +97,11 @@ export class ExtendedNotificationService {
   async notifySMS(userIds: string[], message: string, link?: string): Promise<number> {
     if (!userIds.length) return 0;
     const users = await prisma.user.findMany({
-      where: { id: { in: userIds }, isActive: true, phone: { not: null } },
+      where: {
+        id: { in: userIds },
+        isActive: true,
+        NOT: { phone: null },
+      } as any,
       select: { id: true, phone: true, name: true },
     });
     if (!users.length) return 0;
