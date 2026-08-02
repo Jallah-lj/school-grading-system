@@ -73,6 +73,20 @@ export function createApp() {
   app.use(cors({ origin: env.CLIENT_ORIGINS, credentials: true }));
   app.use(express.json({ limit: '2mb' }));
 
+  // Friendly root — visitors/health pings that hit "/" should not get a 404
+  // (that "NOT_FOUND ... the deployed API is likely running an older build"
+  // message is only correct for unrecognised /api/* paths, not the bare root).
+  app.get('/', (_req, res) => {
+    res.json({
+      service: 'School Grading System API',
+      status: 'ok',
+      hint: 'This is the REST API root. The web client is served separately (Vercel). See /api/health for build info and /api/docs for the API reference.',
+      apiRoot: '/api',
+      health: '/api/health',
+      docs: '/api/docs',
+    });
+  });
+
   app.use('/api', apiLimiter);
   app.get('/api/health', (_req, res) =>
     res.json({
