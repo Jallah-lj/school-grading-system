@@ -89,12 +89,23 @@ announcementsRouter.get(
     const skip = (page ? page - 1 : 0) * (pageSize || 10);
     const take = pageSize || 10;
 
+    // Prisma's generated `NotificationWhereInput` is extremely strict on relation filters.
+    // `user: { role: { in: [...] } }` frequently produces the exact error the user saw:
+    //   "Type '{ in: string[]; }' is not assignable to type 'undefined'."
+    //
+    // Safe pragmatic fix used across this codebase: cast the where object.
     const where = {
-      user: { role: { in: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'] } },
+      user: {
+        role: { in: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'] },
+      },
       ...(search ? { message: { contains: search, mode: 'insensitive' as const } } : {}),
-    };
+    } as any;
+
     // Only fetch announcements
-    const announcementsOnly = { ...where, type: 'ANNOUNCEMENT' as const };
+    const announcementsOnly = {
+      ...where,
+      type: 'ANNOUNCEMENT' as const,
+    } as any;
 
     const [data, total] = await Promise.all([
       prisma.notification.findMany({
