@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { prisma } from '../lib/prisma';
+
+import { logAudit } from '../lib/audit';
 import { AppError } from '../lib/errors';
 import { ah, parseBody, passwordSchema, USER_SAFE_SELECT } from '../lib/helpers';
-import { hashPassword, verifyPassword } from '../lib/password';
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../lib/jwt';
-import { logAudit } from '../lib/audit';
+import { hashPassword, verifyPassword } from '../lib/password';
+import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
 
 export const authRouter = Router();
@@ -66,93 +67,110 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-authRouter.post('/login', ah(async (req, res) => {
-  const { email, password } = parseBody(loginSchema, req);
+authRouter.post(
+  '/login',
+  ah(async (req, res) => {
+    const { email, password } = parseBody(loginSchema, req);
 
-  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    throw new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
-  }
-  if (!user.isActive) throw new AppError(403, 'This account has been deactivated', 'ACCOUNT_DISABLED');
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
+      throw new AppError(401, 'Invalid email or password', 'INVALID_CREDENTIALS');
+    }
+    if (!user.isActive)
+      throw new AppError(403, 'This account has been deactivated', 'ACCOUNT_DISABLED');
 
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  const tokens = await issueTokens(user);
-  await logAudit(req, 'LOGIN', 'User', user.id);
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const tokens = await issueTokens(user);
+    await logAudit(req, 'LOGIN', 'User', user.id);
 
-  res.json({ user: await sessionPayload(user.id), ...tokens });
-}));
+    res.json({ user: await sessionPayload(user.id), ...tokens });
+  }),
+);
 
 const refreshSchema = z.object({ refreshToken: z.string().min(10) });
 
-authRouter.post('/refresh', ah(async (req, res) => {
-  const { refreshToken } = parseBody(refreshSchema, req);
+authRouter.post(
+  '/refresh',
+  ah(async (req, res) => {
+    const { refreshToken } = parseBody(refreshSchema, req);
 
-  let payload;
-  try {
-    payload = verifyRefreshToken(refreshToken);
-  } catch {
-    throw new AppError(401, 'Invalid or expired refresh token', 'INVALID_REFRESH');
-  }
+    try {
+      verifyRefreshToken(refreshToken); // validates the token; the payload is not needed here
+    } catch {
+      throw new AppError(401, 'Invalid or expired refresh token', 'INVALID_REFRESH');
+    }
 
-  const stored = await prisma.refreshToken.findUnique({
-    where: { tokenHash: hashToken(refreshToken) },
-    include: { user: true },
-  });
-  if (!stored || stored.expiresAt < new Date()) {
-    throw new AppError(401, 'Invalid or expired refresh token', 'INVALID_REFRESH');
-  }
+    const stored = await prisma.refreshToken.findUnique({
+      where: { tokenHash: hashToken(refreshToken) },
+      include: { user: true },
+    });
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new AppError(401, 'Invalid or expired refresh token', 'INVALID_REFRESH');
+    }
 
-  if (stored.revokedAt) {
-    // Refresh-token reuse detected → kill the whole session family.
+    if (stored.revokedAt) {
+      // Refresh-token reuse detected → kill the whole session family.
+      await prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      throw new AppError(401, 'Session invalidated', 'TOKEN_REUSE_DETECTED');
+    }
+
+    if (!stored.user.isActive) throw new AppError(403, 'Account disabled', 'ACCOUNT_DISABLED');
+
+    // Rotate: revoke the presented token and issue a fresh pair.
+    await prisma.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });
+    const tokens = await issueTokens(stored.user);
+
+    res.json({ user: await sessionPayload(stored.userId), ...tokens });
+  }),
+);
+
+authRouter.post(
+  '/logout',
+  ah(async (req, res) => {
+    const { refreshToken } = parseBody(refreshSchema, req);
     await prisma.refreshToken.updateMany({
-      where: { userId: stored.userId, revokedAt: null },
+      where: { tokenHash: hashToken(refreshToken), revokedAt: null },
       data: { revokedAt: new Date() },
     });
-    throw new AppError(401, 'Session invalidated', 'TOKEN_REUSE_DETECTED');
-  }
+    res.json({ success: true });
+  }),
+);
 
-  if (!stored.user.isActive) throw new AppError(403, 'Account disabled', 'ACCOUNT_DISABLED');
-
-  // Rotate: revoke the presented token and issue a fresh pair.
-  await prisma.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });
-  const tokens = await issueTokens(stored.user);
-
-  res.json({ user: await sessionPayload(stored.userId), ...tokens });
-}));
-
-authRouter.post('/logout', ah(async (req, res) => {
-  const { refreshToken } = parseBody(refreshSchema, req);
-  await prisma.refreshToken.updateMany({
-    where: { tokenHash: hashToken(refreshToken), revokedAt: null },
-    data: { revokedAt: new Date() },
-  });
-  res.json({ success: true });
-}));
-
-authRouter.get('/me', authenticate, ah(async (req, res) => {
-  res.json({ user: await sessionPayload(req.user!.id) });
-}));
+authRouter.get(
+  '/me',
+  authenticate,
+  ah(async (req, res) => {
+    res.json({ user: await sessionPayload(req.user!.id) });
+  }),
+);
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: passwordSchema,
 });
 
-authRouter.post('/change-password', authenticate, ah(async (req, res) => {
-  const { currentPassword, newPassword } = parseBody(changePasswordSchema, req);
-  const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
-  if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
-    throw new AppError(400, 'Current password is incorrect', 'BAD_PASSWORD');
-  }
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passwordHash: await hashPassword(newPassword) },
-  });
-  // Force re-login on all devices.
-  await prisma.refreshToken.updateMany({
-    where: { userId: user.id, revokedAt: null },
-    data: { revokedAt: new Date() },
-  });
-  await logAudit(req, 'CHANGE_PASSWORD', 'User', user.id);
-  res.json({ success: true });
-}));
+authRouter.post(
+  '/change-password',
+  authenticate,
+  ah(async (req, res) => {
+    const { currentPassword, newPassword } = parseBody(changePasswordSchema, req);
+    const user = await prisma.user.findUnique({ where: { id: req.user!.id } });
+    if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
+      throw new AppError(400, 'Current password is incorrect', 'BAD_PASSWORD');
+    }
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(newPassword) },
+    });
+    // Force re-login on all devices.
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await logAudit(req, 'CHANGE_PASSWORD', 'User', user.id);
+    res.json({ success: true });
+  }),
+);

@@ -1,13 +1,21 @@
 import QRCode from 'qrcode';
+
 import { env } from '../config/env';
-import { prisma } from '../lib/prisma';
 import { computeCgpa } from '../lib/grading';
-import { resolveCardSignatures, type CardSignature } from './signature.service';
-import { getSchoolContext } from './school.service';
+import { prisma } from '../lib/prisma';
+
 import {
-  buildReportCardPages, buildTranscriptPages, renderPagesToPdf,
-  COLOR, type LegendBand, type QrPanel, type SchoolBrand, type SignatureSlot,
+  buildReportCardPages,
+  buildTranscriptPages,
+  renderPagesToPdf,
+  COLOR,
+  type LegendBand,
+  type QrPanel,
+  type SchoolBrand,
+  type SignatureSlot,
 } from './pdf-layout';
+import { getSchoolContext } from './school.service';
+import { resolveCardSignatures, type CardSignature } from './signature.service';
 
 export interface ReportCardSignatures {
   classTeacher: CardSignature | null;
@@ -23,8 +31,22 @@ export interface ReportCardData {
   publishedAt: Date | null;
   student: { name: string; admissionNumber: string; className: string };
   semester: { name: string; academicYear: string };
-  results: { code: string; name: string; percentage: number; letterGrade: string; gradePoint: number; remark: string; position: number | null }[];
-  gpa: { gpa: number; average: number; position: number | null; classSize: number | null; totalCredits: number } | null;
+  results: {
+    code: string;
+    name: string;
+    percentage: number;
+    letterGrade: string;
+    gradePoint: number;
+    remark: string;
+    position: number | null;
+  }[];
+  gpa: {
+    gpa: number;
+    average: number;
+    position: number | null;
+    classSize: number | null;
+    totalCredits: number;
+  } | null;
 }
 
 export async function loadReportCardData(reportCardId: string): Promise<ReportCardData | null> {
@@ -57,14 +79,29 @@ export async function loadReportCardData(reportCardId: string): Promise<ReportCa
     student: {
       name: card.student.user.name,
       admissionNumber: card.student.admissionNumber,
-      className: card.student.classRoom ? `${card.student.classRoom.name} ${card.student.classRoom.stream}` : '—',
+      className: card.student.classRoom
+        ? `${card.student.classRoom.name} ${card.student.classRoom.stream}`
+        : '—',
     },
     semester: { name: card.semester.name, academicYear: card.semester.academicYear.name },
     results: results.map((r) => ({
-      code: r.subject.code, name: r.subject.name, percentage: r.percentage,
-      letterGrade: r.letterGrade, gradePoint: r.gradePoint, remark: r.remark, position: r.position,
+      code: r.subject.code,
+      name: r.subject.name,
+      percentage: r.percentage,
+      letterGrade: r.letterGrade,
+      gradePoint: r.gradePoint,
+      remark: r.remark,
+      position: r.position,
     })),
-    gpa: gpa ? { gpa: gpa.gpa, average: gpa.average, position: gpa.position, classSize: gpa.classSize, totalCredits: gpa.totalCredits } : null,
+    gpa: gpa
+      ? {
+          gpa: gpa.gpa,
+          average: gpa.average,
+          position: gpa.position,
+          classSize: gpa.classSize,
+          totalCredits: gpa.totalCredits,
+        }
+      : null,
   };
 }
 
@@ -91,8 +128,11 @@ function toSchoolBrand(s: { name: string; motto: string; badge: Buffer | null })
   return { name: s.name, motto: s.motto, badge: s.badge };
 }
 
-const sigSlot = (s: CardSignature | null, fallbackTitle: string): SignatureSlot =>
-  ({ title: s?.title ?? fallbackTitle, name: s?.name ?? '', png: s?.png ?? null });
+const sigSlot = (s: CardSignature | null, fallbackTitle: string): SignatureSlot => ({
+  title: s?.title ?? fallbackTitle,
+  name: s?.name ?? '',
+  png: s?.png ?? null,
+});
 
 /** Grading-scale legend pulled from the active grade scale. */
 async function activeScaleLegend(): Promise<LegendBand[]> {
@@ -100,14 +140,21 @@ async function activeScaleLegend(): Promise<LegendBand[]> {
     where: { isActive: true },
     include: { bands: { orderBy: { minScore: 'desc' } } },
   });
-  return scale?.bands.map((b) => ({
-    letter: b.letter, minScore: b.minScore, maxScore: b.maxScore, remark: b.remark,
-  })) ?? [];
+  return (
+    scale?.bands.map((b) => ({
+      letter: b.letter,
+      minScore: b.minScore,
+      maxScore: b.maxScore,
+      remark: b.remark,
+    })) ?? []
+  );
 }
 
 async function qrPanel(url: string, sub: string): Promise<QrPanel> {
   const image = await QRCode.toBuffer(url, {
-    margin: 1, width: 220, color: { dark: COLOR.navy, light: '#ffffff' },
+    margin: 1,
+    width: 220,
+    color: { dark: COLOR.navy, light: '#ffffff' },
   });
   return { image, caption: 'Scan to verify', sub };
 }
@@ -137,7 +184,10 @@ export async function buildReportCardPdf(data: ReportCardData): Promise<Buffer> 
     summary: [
       { label: 'Term GPA', value: data.gpa ? data.gpa.gpa.toFixed(2) : '—' },
       { label: 'Average', value: data.gpa ? `${data.gpa.average.toFixed(1)}%` : '—' },
-      { label: 'Class Position', value: data.gpa?.position ? `${data.gpa.position} of ${data.gpa.classSize ?? '—'}` : '—' },
+      {
+        label: 'Class Position',
+        value: data.gpa?.position ? `${data.gpa.position} of ${data.gpa.classSize ?? '—'}` : '—',
+      },
     ],
     resultsTitle: 'Subject Performance',
     columns: [
@@ -193,7 +243,9 @@ export async function buildTranscriptPdf(studentId: string): Promise<Buffer> {
     orderBy: [{ semesterId: 'asc' }, { subject: { code: 'asc' } }],
   });
 
-  const cgpa = computeCgpa(records.map((r) => ({ totalPoints: r.totalPoints, totalCredits: r.totalCredits })));
+  const cgpa = computeCgpa(
+    records.map((r) => ({ totalPoints: r.totalPoints, totalCredits: r.totalCredits })),
+  );
   const code = student.admissionNumber.replace(/[^A-Za-z0-9]/g, '');
   const [school, legend, qr, sigs] = await Promise.all([
     getSchoolContext(),
@@ -229,15 +281,25 @@ export async function buildTranscriptPdf(studentId: string): Promise<Buffer> {
     terms: records.map((record) => ({
       heading: `${record.semester.name} — ${record.semester.academicYear.name}`,
       meta: `GPA ${record.gpa.toFixed(2)}   ·   Average ${record.average.toFixed(1)}%   ·   Position ${record.position ?? '—'} of ${record.classSize ?? '—'}`,
-      rows: results.filter((r) => r.semesterId === record.semesterId).map((r) => [
-        r.subject.code, r.subject.name, String(r.subject.creditUnits),
-        `${r.percentage.toFixed(1)}%`, r.letterGrade, r.gradePoint.toFixed(1),
-      ]),
+      rows: results
+        .filter((r) => r.semesterId === record.semesterId)
+        .map((r) => [
+          r.subject.code,
+          r.subject.name,
+          String(r.subject.creditUnits),
+          `${r.percentage.toFixed(1)}%`,
+          r.letterGrade,
+          r.gradePoint.toFixed(1),
+        ]),
     })),
     cgpaLabel: `CUMULATIVE GPA (CGPA):  ${cgpa.toFixed(2)}`,
     legend,
     signatures: [
-      { title: sigs.principal?.title ?? 'Registrar / Principal', name: sigs.principal?.name ?? '', png: sigs.principal?.png ?? null },
+      {
+        title: sigs.principal?.title ?? 'Registrar / Principal',
+        name: sigs.principal?.name ?? '',
+        png: sigs.principal?.png ?? null,
+      },
       { title: 'Date', name: '', png: null, prefill: today() },
     ],
     qr,

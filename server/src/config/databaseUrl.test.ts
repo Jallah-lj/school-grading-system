@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+
 import { parseDatabaseUrl } from './databaseUrl';
 
 const url = 'postgresql://user:password@example.com:5432/school';
@@ -12,7 +13,10 @@ assert.equal(
 );
 
 assert.throws(() => parseDatabaseUrl(''), /DATABASE_URL is required/);
-assert.throws(() => parseDatabaseUrl('DATABASE_URL=postgresql://example.com/school'), /connection URI itself/);
+assert.throws(
+  () => parseDatabaseUrl('DATABASE_URL=postgresql://example.com/school'),
+  /connection URI itself/,
+);
 assert.throws(() => parseDatabaseUrl('${{Postgres.DATABASE_URL}}'), /connection URI itself/);
 assert.throws(() => parseDatabaseUrl('<supabase-uri>'), /connection URI itself/);
 assert.throws(

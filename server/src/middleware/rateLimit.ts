@@ -15,5 +15,7 @@ export const authLimiter = rateLimit({
   limit: 30,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { error: { code: 'RATE_LIMITED', message: 'Too many authentication attempts. Try again later.' } },
+  message: {
+    error: { code: 'RATE_LIMITED', message: 'Too many authentication attempts. Try again later.' },
+  },
 });

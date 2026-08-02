@@ -1,5 +1,6 @@
 /* Self-contained engine tests:  npx tsx src/lib/grading.test.ts */
 import assert from 'node:assert/strict';
+
 import {
   computeCgpa,
   computeGpa,
@@ -43,13 +44,19 @@ assert.equal(computeWeightedPercentage(components), 77);
 
 // Non-100 max scores are normalised (quiz marked out of 20)
 assert.equal(
-  computeWeightedPercentage([{ weight: 50, maxScore: 20, score: 10 }, { weight: 50, maxScore: 100, score: 50 }]),
+  computeWeightedPercentage([
+    { weight: 50, maxScore: 20, score: 10 },
+    { weight: 50, maxScore: 100, score: 50 },
+  ]),
   50,
 );
 
 // Mixed maxima: 15/20 -> 75%, 60/100 -> 60% : (0.5*75 + 0.5*60) = 67.5
 assert.equal(
-  computeWeightedPercentage([{ weight: 50, maxScore: 20, score: 15 }, { weight: 50, maxScore: 100, score: 60 }]),
+  computeWeightedPercentage([
+    { weight: 50, maxScore: 20, score: 15 },
+    { weight: 50, maxScore: 100, score: 60 },
+  ]),
   67.5,
 );
 
@@ -60,17 +67,23 @@ assert.equal(res.gradePoint, 3.3);
 assert.equal(res.remark, 'Good');
 
 // Credit-weighted GPA: A (3.7 × 3cr) + B+ (3.3 × 4cr) + F (0 × 2cr) = 24.3/9 = 2.7
-assert.equal(computeGpa([
-  { gradePoint: 3.7, creditUnits: 3 },
-  { gradePoint: 3.3, creditUnits: 4 },
-  { gradePoint: 0, creditUnits: 2 },
-]), 2.7);
+assert.equal(
+  computeGpa([
+    { gradePoint: 3.7, creditUnits: 3 },
+    { gradePoint: 3.3, creditUnits: 4 },
+    { gradePoint: 0, creditUnits: 2 },
+  ]),
+  2.7,
+);
 
 // CGPA across terms
-assert.equal(computeCgpa([
-  { totalPoints: 11.1, totalCredits: 3 },
-  { totalPoints: 12.0, totalCredits: 3 },
-]), 3.85);
+assert.equal(
+  computeCgpa([
+    { totalPoints: 11.1, totalCredits: 3 },
+    { totalPoints: 12.0, totalCredits: 3 },
+  ]),
+  3.85,
+);
 
 // Competition ranking with ties: 92, 92, 80 → positions 1, 1, 3
 const ranks = rankIds([

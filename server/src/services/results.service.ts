@@ -1,16 +1,13 @@
-import { prisma } from '../lib/prisma';
 import { AppError } from '../lib/errors';
-import {
-  computeSubjectResult,
-  computeGpa,
-  rankIds,
-  round2,
-  type GradeBand,
-} from '../lib/grading';
+import { computeSubjectResult, computeGpa, rankIds, round2, type GradeBand } from '../lib/grading';
+import { prisma } from '../lib/prisma';
 
 /** Make sure every student assigned to a class has an enrollment row for the semester. */
 export async function ensureEnrollments(classId: string, semesterId: string): Promise<void> {
-  const students = await prisma.studentProfile.findMany({ where: { classId }, select: { id: true } });
+  const students = await prisma.studentProfile.findMany({
+    where: { classId },
+    select: { id: true },
+  });
   if (students.length === 0) return;
   await prisma.enrollment.createMany({
     data: students.map((s) => ({ studentId: s.id, classId, semesterId })),
@@ -19,7 +16,10 @@ export async function ensureEnrollments(classId: string, semesterId: string): Pr
 }
 
 async function activeBands(): Promise<GradeBand[]> {
-  const scale = await prisma.gradeScale.findFirst({ where: { isActive: true }, include: { bands: true } });
+  const scale = await prisma.gradeScale.findFirst({
+    where: { isActive: true },
+    include: { bands: true },
+  });
   if (!scale || scale.bands.length === 0) {
     throw new AppError(409, 'No active grading scale is configured', 'NO_GRADE_SCALE');
   }
@@ -83,7 +83,9 @@ export async function recomputeSubjectResults(
     await prisma.subjectResult.upsert({
       where: { studentId_subjectId_semesterId: { studentId, subjectId, semesterId } },
       create: {
-        studentId, subjectId, semesterId,
+        studentId,
+        subjectId,
+        semesterId,
         totalScore: result.totalScore,
         percentage: result.percentage,
         letterGrade: result.letterGrade,
@@ -107,7 +109,9 @@ export async function recomputeSubjectResults(
   const positions = rankIds(computedRows.map((r) => ({ id: r.studentId, value: r.percentage })));
   for (const row of computedRows) {
     await prisma.subjectResult.update({
-      where: { studentId_subjectId_semesterId: { studentId: row.studentId, subjectId, semesterId } },
+      where: {
+        studentId_subjectId_semesterId: { studentId: row.studentId, subjectId, semesterId },
+      },
       data: { position: positions.get(row.studentId) },
     });
   }
@@ -116,9 +120,15 @@ export async function recomputeSubjectResults(
 }
 
 /** Recompute GPA / average / class position for every enrolled student of a class. */
-export async function recomputeGpas(classId: string, semesterId: string): Promise<{ computed: number }> {
+export async function recomputeGpas(
+  classId: string,
+  semesterId: string,
+): Promise<{ computed: number }> {
   await ensureEnrollments(classId, semesterId);
-  const enrollments = await prisma.enrollment.findMany({ where: { classId, semesterId }, select: { studentId: true } });
+  const enrollments = await prisma.enrollment.findMany({
+    where: { classId, semesterId },
+    select: { studentId: true },
+  });
   const studentIds = enrollments.map((e) => e.studentId);
   if (studentIds.length === 0) return { computed: 0 };
 
@@ -131,14 +141,26 @@ export async function recomputeGpas(classId: string, semesterId: string): Promis
     });
     if (results.length === 0) continue;
 
-    const gpa = computeGpa(results.map((r) => ({ gradePoint: r.gradePoint, creditUnits: r.subject.creditUnits })));
+    const gpa = computeGpa(
+      results.map((r) => ({ gradePoint: r.gradePoint, creditUnits: r.subject.creditUnits })),
+    );
     const totalCredits = round2(results.reduce((a, r) => a + r.subject.creditUnits, 0));
-    const totalPoints = round2(results.reduce((a, r) => a + r.gradePoint * r.subject.creditUnits, 0));
+    const totalPoints = round2(
+      results.reduce((a, r) => a + r.gradePoint * r.subject.creditUnits, 0),
+    );
     const average = round2(results.reduce((a, r) => a + r.percentage, 0) / results.length);
 
     await prisma.gPARecord.upsert({
       where: { studentId_semesterId: { studentId, semesterId } },
-      create: { studentId, semesterId, gpa, totalCredits, totalPoints, average, computedAt: new Date() },
+      create: {
+        studentId,
+        semesterId,
+        gpa,
+        totalCredits,
+        totalPoints,
+        average,
+        computedAt: new Date(),
+      },
       update: { gpa, totalCredits, totalPoints, average, computedAt: new Date() },
     });
     rows.push({ studentId, gpa });

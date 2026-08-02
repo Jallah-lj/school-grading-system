@@ -1,5 +1,6 @@
-import type { Request } from 'express';
 import { prisma } from './prisma';
+
+import type { Request } from 'express';
 
 /** Persist an audit-trail entry. Never throws — auditing must not break requests. */
 export async function logAudit(

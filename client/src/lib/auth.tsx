@@ -1,5 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+
 import { api, tokenStore } from './api';
+
 import type { Role, SessionUser } from './types';
 
 interface AuthContextValue {
@@ -23,11 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const { data } = await api.get<{ user: SessionUser }>('/auth/me');
           if (!cancelled) setUser(data.user);
-        } catch { tokenStore.clear(); }
+        } catch {
+          tokenStore.clear();
+        }
       }
       if (!cancelled) setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -50,14 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     const refreshToken = localStorage.getItem('sgs.refreshToken');
-    try { if (refreshToken) await api.post('/auth/logout', { refreshToken }); } catch { /* ignore */ }
+    try {
+      if (refreshToken) await api.post('/auth/logout', { refreshToken });
+    } catch {
+      /* ignore */
+    }
     tokenStore.clear();
     setUser(null);
   }, []);
 
   const hasRole = useCallback((...roles: Role[]) => !!user && roles.includes(user.role), [user]);
 
-  const value = useMemo(() => ({ user, loading, login, logout, hasRole }), [user, loading, login, logout, hasRole]);
+  const value = useMemo(
+    () => ({ user, loading, login, logout, hasRole }),
+    [user, loading, login, logout, hasRole],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

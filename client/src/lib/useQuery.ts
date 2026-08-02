@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { apiError } from './api';
 
 interface QueryState<T> {
@@ -28,6 +29,8 @@ export function useQuery<T>(fetcher: () => Promise<T>, deps: unknown[] = []): Qu
     }
   }, []);
 
-  useEffect(() => { void run(); }, [run, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    void run();
+  }, [run, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
   return { data, loading, error, refetch: run };
 }

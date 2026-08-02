@@ -11,14 +11,20 @@ let accessToken: string | null = localStorage.getItem('sgs.accessToken');
 let refreshToken: string | null = localStorage.getItem('sgs.refreshToken');
 
 export const tokenStore = {
-  get access() { return accessToken; },
+  get access() {
+    return accessToken;
+  },
   set(access: string | null, refresh: string | null) {
     accessToken = access;
     refreshToken = refresh;
-    if (access) localStorage.setItem('sgs.accessToken', access); else localStorage.removeItem('sgs.accessToken');
-    if (refresh) localStorage.setItem('sgs.refreshToken', refresh); else localStorage.removeItem('sgs.refreshToken');
+    if (access) localStorage.setItem('sgs.accessToken', access);
+    else localStorage.removeItem('sgs.accessToken');
+    if (refresh) localStorage.setItem('sgs.refreshToken', refresh);
+    else localStorage.removeItem('sgs.refreshToken');
   },
-  clear() { this.set(null, null); },
+  clear() {
+    this.set(null, null);
+  },
 };
 
 api.interceptors.request.use((config) => {
@@ -44,10 +50,18 @@ async function tryRefresh(): Promise<boolean> {
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    if (error.response?.status === 401 && original && !original._retry && !original.url?.includes('/auth/')) {
+    const original = error.config as
+      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    if (
+      error.response?.status === 401 &&
+      original &&
+      !original._retry &&
+      !original.url?.includes('/auth/')
+    ) {
       original._retry = true;
-      refreshing ??= tryRefresh().finally(() => { refreshing = null; });
+      refreshing ??= tryRefresh().finally(() => {
+        refreshing = null;
+      });
       if (await refreshing) return api(original);
       window.dispatchEvent(new Event('sgs:logout'));
     }

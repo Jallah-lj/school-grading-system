@@ -8,18 +8,18 @@ function normalizeTimespan(value: unknown): unknown {
   const trimmed = value.trim();
   const first = trimmed[0];
   const last = trimmed[trimmed.length - 1];
-  const unquoted = trimmed.length >= 2
-    && (first === '"' || first === "'")
-    && first === last
-    ? trimmed.slice(1, -1).trim()
-    : trimmed;
+  const unquoted =
+    trimmed.length >= 2 && (first === '"' || first === "'") && first === last
+      ? trimmed.slice(1, -1).trim()
+      : trimmed;
 
   return unquoted.toLowerCase();
 }
 
 export const accessTokenTtlSchema = z.preprocess(
   normalizeTimespan,
-  z.string()
+  z
+    .string()
     .default('15m')
     .refine(
       (value) => TIMESPAN_PATTERN.test(value),

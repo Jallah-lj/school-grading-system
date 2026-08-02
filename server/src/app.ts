@@ -1,26 +1,27 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
+
 import { env } from './config/env';
-import { apiLimiter, authLimiter } from './middleware/rateLimit';
 import { errorHandler, notFoundHandler } from './middleware/error';
-import { authRouter } from './routes/auth';
-import { usersRouter } from './routes/users';
-import { studentsRouter } from './routes/students';
-import { teachersRouter } from './routes/teachers';
-import { parentsRouter } from './routes/parents';
-import { subjectsRouter } from './routes/subjects';
-import { classesRouter } from './routes/classes';
+import { apiLimiter, authLimiter } from './middleware/rateLimit';
 import { academicYearsRouter } from './routes/academicYears';
-import { gradeScalesRouter } from './routes/gradeScales';
-import { gradesRouter } from './routes/grades';
-import { analyticsRouter } from './routes/analytics';
-import { reportCardsRouter } from './routes/reportCards';
-import { notificationsRouter } from './routes/notifications';
-import { reportsRouter } from './routes/reports';
-import { signaturesRouter } from './routes/signatures';
-import { schoolRouter } from './routes/school';
 import { adminRouter } from './routes/admin';
+import { analyticsRouter } from './routes/analytics';
+import { authRouter } from './routes/auth';
+import { classesRouter } from './routes/classes';
+import { gradesRouter } from './routes/grades';
+import { gradeScalesRouter } from './routes/gradeScales';
+import { notificationsRouter } from './routes/notifications';
+import { parentsRouter } from './routes/parents';
+import { reportCardsRouter } from './routes/reportCards';
+import { reportsRouter } from './routes/reports';
+import { schoolRouter } from './routes/school';
+import { signaturesRouter } from './routes/signatures';
+import { studentsRouter } from './routes/students';
+import { subjectsRouter } from './routes/subjects';
+import { teachersRouter } from './routes/teachers';
+import { usersRouter } from './routes/users';
 
 export function createApp() {
   const app = express();
@@ -32,7 +33,9 @@ export function createApp() {
   app.use(express.json({ limit: '2mb' }));
 
   app.use('/api', apiLimiter);
-  app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'school-grading-api', time: new Date().toISOString() }));
+  app.get('/api/health', (_req, res) =>
+    res.json({ status: 'ok', service: 'school-grading-api', time: new Date().toISOString() }),
+  );
 
   // Friendly index for anyone who opens the API root in a browser.
   app.get('/api', (_req, res) => {

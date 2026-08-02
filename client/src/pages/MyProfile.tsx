@@ -1,7 +1,8 @@
-import { useAuth } from '../lib/auth';
 import { EmptyState } from '../components/ui';
-import TeacherProfile from './TeacherProfile';
+import { useAuth } from '../lib/auth';
+
 import StudentProfile from './StudentProfile';
+import TeacherProfile from './TeacherProfile';
 
 /**
  * "My Profile" — a read-only self-view for teachers and students.

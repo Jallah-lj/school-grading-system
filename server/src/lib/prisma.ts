@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+
 import { env } from '../config/env';
 
 // Reuse a single client across dev hot-reloads.

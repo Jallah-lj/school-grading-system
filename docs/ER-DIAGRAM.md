@@ -233,5 +233,5 @@ erDiagram
 
 - **`GRADE_ENTRY` is append-safe per attempt**: unique `(studentId, componentId, semesterId)` — one mark per component per student per term, advancing through `DRAFT → SUBMITTED → APPROVED → PUBLISHED`.
 - **`SUBJECT_RESULT` / `GPA_RECORD` are derived tables** — recomputed automatically on approval; `isPublished` gates what students/parents can see, so staff can preview before release.
-- **`ENROLLMENT (studentId, semesterId)` unique** records which class a student attended *each term*, keeping per-term rankings historically accurate even after class transfers.
+- **`ENROLLMENT (studentId, semesterId)` unique** records which class a student attended _each term_, keeping per-term rankings historically accurate even after class transfers.
 - **Weights live on `ASSESSMENT_COMPONENT`** (sum to 100 per subject) and the grading scale is data (`GRADE_SCALE_BAND`), so both are editable without code changes.

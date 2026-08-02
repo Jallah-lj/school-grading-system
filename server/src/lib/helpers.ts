@@ -1,7 +1,9 @@
-import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from './prisma';
+
 import { AppError } from './errors';
+import { prisma } from './prisma';
+
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
 /** Wrap async route handlers so rejections reach the error middleware. */
 export const ah =
@@ -43,7 +45,8 @@ export async function getActiveSemester() {
     where: { isCurrent: true },
     include: { academicYear: true },
   });
-  if (!semester) throw new AppError(409, 'No active semester/term is configured', 'NO_ACTIVE_SEMESTER');
+  if (!semester)
+    throw new AppError(409, 'No active semester/term is configured', 'NO_ACTIVE_SEMESTER');
   return semester;
 }
 
@@ -52,7 +55,8 @@ const csvCell = (value: unknown): string => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-export const toCsv = (rows: unknown[][]): string => rows.map((r) => r.map(csvCell).join(',')).join('\n');
+export const toCsv = (rows: unknown[][]): string =>
+  rows.map((r) => r.map(csvCell).join(',')).join('\n');
 
 export function sortDirection(dir: unknown): 'asc' | 'desc' {
   return dir === 'desc' ? 'desc' : 'asc';

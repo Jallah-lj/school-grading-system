@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+
 import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
 
@@ -33,7 +34,9 @@ export async function getSchoolContext(): Promise<SchoolContext> {
 }
 
 /** Normalize a badge/logo upload: rotate, fit inside 512×512, save as PNG (alpha preserved). */
-export async function processBadge(input: Buffer): Promise<{ png: Buffer; width: number; height: number }> {
+export async function processBadge(
+  input: Buffer,
+): Promise<{ png: Buffer; width: number; height: number }> {
   const png = await sharp(input)
     .rotate()
     .resize({ width: 512, height: 512, fit: 'inside', withoutEnlargement: true })

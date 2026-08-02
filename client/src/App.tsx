@@ -1,26 +1,29 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuth } from './lib/auth';
+
 import { AppLayout } from './components/layout/AppLayout';
 import { Spinner } from './components/ui';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Students from './pages/Students';
-import StudentProfile from './pages/StudentProfile';
-import Teachers from './pages/Teachers';
-import TeacherProfile from './pages/TeacherProfile';
-import Parents from './pages/Parents';
-import MyProfile from './pages/MyProfile';
-import GradeEntry from './pages/GradeEntry';
-import Approvals from './pages/Approvals';
-import MyGrades from './pages/MyGrades';
-import ReportCards from './pages/ReportCards';
-import VerifyReportCard from './pages/VerifyReportCard';
-import Analytics from './pages/Analytics';
-import AuditLogs from './pages/AuditLogs';
+import { useAuth } from './lib/auth';
 import Administration from './pages/Administration';
+import Analytics from './pages/Analytics';
+import Approvals from './pages/Approvals';
+import AuditLogs from './pages/AuditLogs';
+import Dashboard from './pages/Dashboard';
+import GradeEntry from './pages/GradeEntry';
 import Legal from './pages/Legal';
-import type { Role } from './lib/types';
+import Login from './pages/Login';
+import MyGrades from './pages/MyGrades';
+import MyProfile from './pages/MyProfile';
+import Parents from './pages/Parents';
+import ReportCards from './pages/ReportCards';
+import StudentProfile from './pages/StudentProfile';
+import Students from './pages/Students';
+import TeacherProfile from './pages/TeacherProfile';
+import Teachers from './pages/Teachers';
+import VerifyReportCard from './pages/VerifyReportCard';
+
 import type { ReactNode } from 'react';
+
+import type { Role } from './lib/types';
 
 function Splash() {
   return (
@@ -52,21 +55,111 @@ export default function App() {
       <Route path="/terms" element={<Legal />} />
       <Route path="/privacy" element={<Legal />} />
       <Route path="/verify/:code" element={<VerifyReportCard />} />
-      <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+      <Route
+        element={
+          <RequireAuth>
+            <AppLayout />
+          </RequireAuth>
+        }
+      >
         <Route path="/" element={<Dashboard />} />
-        <Route path="/students" element={<RequireRole roles={['ADMIN', 'TEACHER']}><Students /></RequireRole>} />
-        <Route path="/students/:id" element={<RequireRole roles={['ADMIN', 'TEACHER']}><StudentProfile /></RequireRole>} />
-        <Route path="/teachers" element={<RequireRole roles={['ADMIN']}><Teachers /></RequireRole>} />
-        <Route path="/teachers/:id" element={<RequireRole roles={['ADMIN']}><TeacherProfile /></RequireRole>} />
-        <Route path="/parents" element={<RequireRole roles={['ADMIN']}><Parents /></RequireRole>} />
-        <Route path="/my-profile" element={<RequireRole roles={['TEACHER', 'STUDENT']}><MyProfile /></RequireRole>} />
-        <Route path="/grade-entry" element={<RequireRole roles={['TEACHER', 'ADMIN']}><GradeEntry /></RequireRole>} />
-        <Route path="/approvals" element={<RequireRole roles={['ADMIN']}><Approvals /></RequireRole>} />
-        <Route path="/grades" element={<RequireRole roles={['STUDENT', 'PARENT']}><MyGrades /></RequireRole>} />
+        <Route
+          path="/students"
+          element={
+            <RequireRole roles={['ADMIN', 'TEACHER']}>
+              <Students />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/students/:id"
+          element={
+            <RequireRole roles={['ADMIN', 'TEACHER']}>
+              <StudentProfile />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/teachers"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <Teachers />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/teachers/:id"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <TeacherProfile />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/parents"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <Parents />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/my-profile"
+          element={
+            <RequireRole roles={['TEACHER', 'STUDENT']}>
+              <MyProfile />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/grade-entry"
+          element={
+            <RequireRole roles={['TEACHER', 'ADMIN']}>
+              <GradeEntry />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/approvals"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <Approvals />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/grades"
+          element={
+            <RequireRole roles={['STUDENT', 'PARENT']}>
+              <MyGrades />
+            </RequireRole>
+          }
+        />
         <Route path="/report-cards" element={<ReportCards />} />
-        <Route path="/analytics" element={<RequireRole roles={['ADMIN', 'TEACHER']}><Analytics /></RequireRole>} />
-        <Route path="/audit-logs" element={<RequireRole roles={['ADMIN']}><AuditLogs /></RequireRole>} />
-        <Route path="/admin" element={<RequireRole roles={['ADMIN']}><Administration /></RequireRole>} />
+        <Route
+          path="/analytics"
+          element={
+            <RequireRole roles={['ADMIN', 'TEACHER']}>
+              <Analytics />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/audit-logs"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <AuditLogs />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <Administration />
+            </RequireRole>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

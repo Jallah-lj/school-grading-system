@@ -7,14 +7,35 @@
  *   3. term headings are never orphaned from their tables.
  */
 import assert from 'node:assert/strict';
+
 import {
-  buildReportCardPages, buildTranscriptPages, renderPagesToPdf, wrapText, bandRange,
-  PAGE, FOOTER_H, CONTENT_BOTTOM, COLOR, FONT,
-  type DrawOp, type ImageOp, type PdfPage, type QrPanel, type ReportCardInput,
-  type LegendBand, type SchoolBrand, type TableColumn, type TextOp, type TranscriptInput,
+  buildReportCardPages,
+  buildTranscriptPages,
+  renderPagesToPdf,
+  wrapText,
+  bandRange,
+  PAGE,
+  FOOTER_H,
+  CONTENT_BOTTOM,
+  COLOR,
+  FONT,
+  type DrawOp,
+  type ImageOp,
+  type PdfPage,
+  type QrPanel,
+  type ReportCardInput,
+  type LegendBand,
+  type SchoolBrand,
+  type TableColumn,
+  type TextOp,
+  type TranscriptInput,
 } from './pdf-layout';
 
-const school: SchoolBrand = { name: 'Greenfield Hill Academy', motto: 'Wisdom Lights the Way', badge: null };
+const school: SchoolBrand = {
+  name: 'Greenfield Hill Academy',
+  motto: 'Wisdom Lights the Way',
+  badge: null,
+};
 
 const LEGEND: LegendBand[] = [
   { letter: 'A+', minScore: 90, maxScore: 100, remark: 'Excellent' },
@@ -42,12 +63,25 @@ const REPORT_COLUMNS: TableColumn[] = [
   { label: 'Remark', width: PAGE.width - 46 * 2 - 382 },
 ];
 
-const SUBJECTS = ['Mathematics', 'English', 'Biology', 'Chemistry', 'Physics', 'History', 'Geography', 'Kinyarwanda', 'French', 'Computer Studies'];
+const SUBJECTS = [
+  'Mathematics',
+  'English',
+  'Biology',
+  'Chemistry',
+  'Physics',
+  'History',
+  'Geography',
+  'Kinyarwanda',
+  'French',
+  'Computer Studies',
+];
 
 function subjectRows(n: number): string[][] {
   return Array.from({ length: n }, (_, i) => [
     `S${String(i + 1).padStart(3, '0')}`,
-    i < SUBJECTS.length ? SUBJECTS[i] : `${SUBJECTS[i % SUBJECTS.length]} (Elective ${Math.floor(i / SUBJECTS.length)})`,
+    i < SUBJECTS.length
+      ? SUBJECTS[i]
+      : `${SUBJECTS[i % SUBJECTS.length]} (Elective ${Math.floor(i / SUBJECTS.length)})`,
     `${(88 - (i % 37)).toFixed(1)}%`,
     ['A+', 'A', 'B+', 'B', 'C', 'F'][i % 6],
     (3.9 - (i % 6) * 0.5).toFixed(1),
@@ -82,15 +116,22 @@ function reportInput(rowCount: number): ReportCardInput {
     gradeCol: 3,
     legend: LEGEND,
     remarks: [
-      { title: "Class Teacher's Remarks", body: 'An excellent, focused term. Aline consistently supports her classmates and leads discussions.' },
-      { title: "Principal's Remarks", body: 'Outstanding conduct and scholarship. Keep aiming high.' },
+      {
+        title: "Class Teacher's Remarks",
+        body: 'An excellent, focused term. Aline consistently supports her classmates and leads discussions.',
+      },
+      {
+        title: "Principal's Remarks",
+        body: 'Outstanding conduct and scholarship. Keep aiming high.',
+      },
     ],
     signatures: [
       { title: 'Class Teacher', name: 'J. Mugisha', png: null },
       { title: 'Principal / Head of School', name: 'Dr. K. Umutoni', png: null },
     ],
     qr: QR,
-    footerNote: 'Greenfield Hill Academy  ·  Generated 2026-08-01  ·  School Grading System  ·  Authenticated via QR',
+    footerNote:
+      'Greenfield Hill Academy  ·  Generated 2026-08-01  ·  School Grading System  ·  Authenticated via QR',
   };
 }
 
@@ -144,11 +185,16 @@ const hasText = (p: PdfPage, needle: string | RegExp) =>
 
 function opBottom(op: DrawOp): number {
   switch (op.kind) {
-    case 'rect': return op.y + op.h;
-    case 'line': return Math.max(op.y1, op.y2) + op.width / 2;
-    case 'text': return op.y + op.size * 1.4; // ascent + descent allowance
-    case 'image': return op.y + op.fit[1];
-    case 'circle': return op.cy + op.r + (op.lineWidth ?? 1) / 2;
+    case 'rect':
+      return op.y + op.h;
+    case 'line':
+      return Math.max(op.y1, op.y2) + op.width / 2;
+    case 'text':
+      return op.y + op.size * 1.4; // ascent + descent allowance
+    case 'image':
+      return op.y + op.fit[1];
+    case 'circle':
+      return op.cy + op.r + (op.lineWidth ?? 1) / 2;
   }
 }
 
@@ -191,8 +237,22 @@ assert.equal(bandRange({ letter: 'A+', minScore: 90, maxScore: 100, remark: '' }
 assert.equal(bandRange({ letter: 'A', minScore: 80, maxScore: 89.99, remark: '' }), '80–89');
 assert.equal(bandRange({ letter: 'F', minScore: 0, maxScore: 49.99, remark: '' }), '0–49');
 assert.deepEqual(wrapText('', 9, FONT.serif, 100, 3), ['—']);
-assert.equal(wrapText('one two three four five six seven eight nine ten eleven twelve', 9.3, FONT.serif, 120, 3).length, 3);
-assert.ok(wrapText('alpha beta gamma delta epsilon zeta eta theta', 9.3, FONT.serif, 60, 2).at(-1)!.endsWith('…'), 'overflow wraps must ellipsise');
+assert.equal(
+  wrapText(
+    'one two three four five six seven eight nine ten eleven twelve',
+    9.3,
+    FONT.serif,
+    120,
+    3,
+  ).length,
+  3,
+);
+assert.ok(
+  wrapText('alpha beta gamma delta epsilon zeta eta theta', 9.3, FONT.serif, 60, 2)
+    .at(-1)!
+    .endsWith('…'),
+  'overflow wraps must ellipsise',
+);
 assert.ok(estimateWidthSafe(), 'width estimate monotonic');
 function estimateWidthSafe(): boolean {
   const a = wrapText('x '.repeat(200).trim(), 9, FONT.serif, 200, 4);
@@ -207,27 +267,74 @@ function estimateWidthSafe(): boolean {
   const p = pages[0];
 
   // Certificate header: serif letter-spaced title, navy/gold double rule, bands.
-  assert.ok(texts(p).some((t) => t.text === 'OFFICIAL STUDENT REPORT CARD' && t.font === FONT.serifBold && (t.charSpacing ?? 0) >= 2), 'letter-spaced serif title missing');
-  assert.ok(texts(p).some((t) => t.text === school.name && t.font === FONT.serifBold && t.color === COLOR.navy), 'serif school name missing');
+  assert.ok(
+    texts(p).some(
+      (t) =>
+        t.text === 'OFFICIAL STUDENT REPORT CARD' &&
+        t.font === FONT.serifBold &&
+        (t.charSpacing ?? 0) >= 2,
+    ),
+    'letter-spaced serif title missing',
+  );
+  assert.ok(
+    texts(p).some(
+      (t) => t.text === school.name && t.font === FONT.serifBold && t.color === COLOR.navy,
+    ),
+    'serif school name missing',
+  );
   assert.ok(hasText(p, `“${school.motto}”`), 'italic motto missing');
-  assert.ok(p.ops.some((o) => o.kind === 'line' && o.color === COLOR.navy && o.width === 2), 'navy rule missing');
-  assert.ok(p.ops.some((o) => o.kind === 'line' && o.color === COLOR.gold), 'gold rule missing');
-  assert.ok(p.ops.some((o) => o.kind === 'rect' && o.y === 0 && (o as { fill?: string }).fill === COLOR.navy), 'top navy band missing');
+  assert.ok(
+    p.ops.some((o) => o.kind === 'line' && o.color === COLOR.navy && o.width === 2),
+    'navy rule missing',
+  );
+  assert.ok(
+    p.ops.some((o) => o.kind === 'line' && o.color === COLOR.gold),
+    'gold rule missing',
+  );
+  assert.ok(
+    p.ops.some(
+      (o) => o.kind === 'rect' && o.y === 0 && (o as { fill?: string }).fill === COLOR.navy,
+    ),
+    'top navy band missing',
+  );
 
   // Details grid + summary band.
-  assert.ok(hasText(p, 'STUDENT NAME') && hasText(p, 'ADMISSION NO.') && hasText(p, 'DATE ISSUED'), 'details grid labels missing');
-  assert.ok(p.ops.some((o) => o.kind === 'rect' && (o as { fill?: string }).fill === COLOR.navy && (o as { h: number }).h === 34), 'navy summary band missing');
+  assert.ok(
+    hasText(p, 'STUDENT NAME') && hasText(p, 'ADMISSION NO.') && hasText(p, 'DATE ISSUED'),
+    'details grid labels missing',
+  );
+  assert.ok(
+    p.ops.some(
+      (o) =>
+        o.kind === 'rect' &&
+        (o as { fill?: string }).fill === COLOR.navy &&
+        (o as { h: number }).h === 34,
+    ),
+    'navy summary band missing',
+  );
   assert.ok(hasText(p, 'TERM GPA') && hasText(p, '3.85'), 'summary values missing');
 
   // Ruled table: navy header + gold underline, grades in bold navy ink (no pills).
-  assert.ok(texts(p).some((t) => t.text === 'A+' && t.font === FONT.serifBold && t.color === COLOR.navy), 'grade must print in navy serif ink');
-  assert.ok(!p.ops.some((o) => o.kind === 'rect' && (o as { h: number }).h === 14), 'no grade pills allowed');
+  assert.ok(
+    texts(p).some((t) => t.text === 'A+' && t.font === FONT.serifBold && t.color === COLOR.navy),
+    'grade must print in navy serif ink',
+  );
+  assert.ok(
+    !p.ops.some((o) => o.kind === 'rect' && (o as { h: number }).h === 14),
+    'no grade pills allowed',
+  );
 
   // Grading-scale legend from the active scale.
   assert.ok(hasText(p, 'GRADING SCALE'), 'legend title missing');
   for (const b of LEGEND) assert.ok(hasText(p, b.letter), `legend letter ${b.letter} missing`);
-  assert.ok(texts(p).some((t) => t.text.includes('90–100')), 'legend range 90–100 missing');
-  assert.ok(texts(p).some((t) => t.text.includes('0–49')), 'legend range 0–49 missing');
+  assert.ok(
+    texts(p).some((t) => t.text.includes('90–100')),
+    'legend range 90–100 missing',
+  );
+  assert.ok(
+    texts(p).some((t) => t.text.includes('0–49')),
+    'legend range 0–49 missing',
+  );
 
   // QR panel + footer.
   assert.ok(images(p).length >= 1, 'QR image missing');
@@ -242,11 +349,24 @@ function estimateWidthSafe(): boolean {
 
   // The exact historical bug: continuation pages lost their footer band.
   assertAllPagesFootered(pages, 'stress card');
-  pages.forEach((p, i) => assert.ok(hasText(p, `Page ${i + 1} of ${pages.length}`), `page ${i + 1} is missing its page number`));
+  pages.forEach((p, i) =>
+    assert.ok(
+      hasText(p, `Page ${i + 1} of ${pages.length}`),
+      `page ${i + 1} is missing its page number`,
+    ),
+  );
 
   // Table continues with a fresh navy header on page 2.
-  assert.ok(hasText(pages[1], 'SUBJECT'), 'results table header must repeat on the continuation page');
-  assert.ok(pages[1].ops.some((o) => o.kind === 'rect' && o.y === 0 && (o as { fill?: string }).fill === COLOR.navy), 'continuation band missing');
+  assert.ok(
+    hasText(pages[1], 'SUBJECT'),
+    'results table header must repeat on the continuation page',
+  );
+  assert.ok(
+    pages[1].ops.some(
+      (o) => o.kind === 'rect' && o.y === 0 && (o as { fill?: string }).fill === COLOR.navy,
+    ),
+    'continuation band missing',
+  );
 
   // Signatures survived intact on the last page, above the footer.
   const last = pages[pages.length - 1];
@@ -271,15 +391,22 @@ function estimateWidthSafe(): boolean {
   // the same page (keep-with-next guard).
   pages.forEach((p) => {
     for (const t of texts(p).filter((x) => x.text.startsWith('Term '))) {
-      const followed = p.ops.some((o) => o.kind === 'rect'
-        && (o as { fill?: string }).fill === COLOR.navy
-        && Math.abs((o as { h: number }).h - 18) < 0.01
-        && o.y > t.y && o.y < t.y + 60);
+      const followed = p.ops.some(
+        (o) =>
+          o.kind === 'rect' &&
+          (o as { fill?: string }).fill === COLOR.navy &&
+          Math.abs((o as { h: number }).h - 18) < 0.01 &&
+          o.y > t.y &&
+          o.y < t.y + 60,
+      );
       assert.ok(followed, `term heading "${t.text}" is orphaned from its table`);
     }
   });
   for (let tN = 1; tN <= 6; tN += 1) {
-    assert.ok(pages.some((p) => hasText(p, new RegExp(`^Term ${tN} —`))), `term ${tN} heading missing`);
+    assert.ok(
+      pages.some((p) => hasText(p, new RegExp(`^Term ${tN} —`))),
+      `term ${tN} heading missing`,
+    );
   }
 }
 
@@ -296,7 +423,8 @@ async function main(): Promise<void> {
     renderPagesToPdf(transcript, 'Transcript'),
   ]);
 
-  const pageCount = (buf: Buffer) => (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+  const pageCount = (buf: Buffer) =>
+    (buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).length;
 
   for (const buf of [pdfOne, pdfMany, pdfTranscript]) {
     assert.ok(buf.subarray(0, 5).toString('latin1') === '%PDF-', 'not a PDF');
