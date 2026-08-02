@@ -1,16 +1,16 @@
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import crypto from 'crypto';
 
 import { logAudit } from '../lib/audit';
 import { AppError } from '../lib/errors';
 import { ah, parseBody, passwordSchema, USER_SAFE_SELECT } from '../lib/helpers';
 import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from '../lib/jwt';
 import { hashPassword, verifyPassword } from '../lib/password';
-import { EmailNotificationProvider } from '../services/emailService';
-import { emailTemplates } from '../templates/emailTemplates';
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
+import { EmailNotificationProvider } from '../services/emailService';
+import { emailTemplates } from '../templates/emailTemplates';
 
 export const authRouter = Router();
 
@@ -179,8 +179,6 @@ authRouter.post(
 );
 
 // ─── Password reset (email-based, no database storage needed) ────────────
-
-import jwt from 'jsonwebtoken';
 
 function signResetToken(userId: string): string {
   const secret = (process.env.JWT_ACCESS_SECRET || 'default-secret-change-me') + '-reset';

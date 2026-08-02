@@ -14,7 +14,8 @@
  * the core value proposition is validated.
  */
 import { test, expect } from '@playwright/test';
-import { loginViaUI, testUsers } from '../fixtures/auth';
+
+import { loginViaUI } from '../fixtures/auth';
 
 test.describe('Grade workflow (end-to-end)', () => {
   // These tests assume seeded data exists (class, subject, semester, students).
@@ -137,7 +138,6 @@ test.describe('Grade workflow (end-to-end)', () => {
     test('student can see grade details', async ({ page }) => {
       await page.goto('/my-grades');
       // If grades are published, should see subject results
-      const gradeCards = page.locator('[data-testid="grade-card"], .grade-card, table').first();
       // This is a smoke test — just verify the page renders
       await expect(page.locator('body')).not.toHaveText(/error|crash/i);
     });

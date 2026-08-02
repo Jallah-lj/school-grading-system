@@ -14,5 +14,9 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  // Tests are run with tsx (no build step) and must never be able to break the
+  // production build — a type error in a test file used to fail `npm run build`
+  // on Render, which silently kept serving the previous (stale) deploy.
+  // They are still type-checked separately via `npm run typecheck` (tsconfig.test.json).
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/__tests__/**"]
 }

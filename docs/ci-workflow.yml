@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# COPY THIS FILE TO .github/workflows/ci.yml TO ENABLE CI.
+#
+# It is parked here because the automation that opened this change is not
+# permitted to create workflow files (GitHub Apps need an explicit `workflows`
+# permission). Enable it with:
+#
+#     mkdir -p .github/workflows && git mv docs/ci-workflow.yml .github/workflows/ci.yml
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: CI
+
+# Guards the deploy pipeline. The production build (`tsc`) previously broke
+# without anyone noticing, and Render simply kept serving the last successful
+# build — so newly added endpoints returned 404 in production while the code
+# looked correct in the repo. Failing the build here makes that loud.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install root dev dependencies (eslint/prettier)
+        run: npm install --include=dev --no-audit --no-fund
+
+      - name: Install client dependencies
+        run: npm --prefix client install --include=dev --no-audit --no-fund
+
+      - name: Install server dependencies
+        run: npm --prefix server install --include=dev --no-audit --no-fund
+
+      - name: Generate Prisma client
+        run: npm --prefix server run prisma:generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck (includes test sources)
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
+      # The real thing Render runs. If this fails, the deploy would silently
+      # keep serving a stale build, so it must fail the pipeline instead.
+      - name: Production build
+        run: npm run build
+
+      - name: Verify all API routes are mounted in the build
+        run: node scripts/verify-routes.mjs

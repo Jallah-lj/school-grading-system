@@ -4,6 +4,7 @@
  * Tests the login, logout, and session management flows through the UI.
  */
 import { test, expect } from '@playwright/test';
+
 import { testUsers } from '../fixtures/auth';
 
 test.describe('Authentication', () => {
@@ -44,7 +45,7 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL(/.*login/);
   });
 
-  test('logout clears session and redirects to login', async ({ page, request }) => {
+  test('logout clears session and redirects to login', async ({ page }) => {
     // First, log in
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(testUsers.admin.email);
