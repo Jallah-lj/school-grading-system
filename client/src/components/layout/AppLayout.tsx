@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { api, apiUrl } from '../../lib/api';
@@ -6,12 +6,19 @@ import { useAuth } from '../../lib/auth';
 import { cx, fmtDate, initials } from '../../lib/utils';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { Icon } from '../Icon';
-import { SignatureModal } from '../SignatureModal';
 import { useToast } from '../toast';
+import { Spinner } from '../ui';
 
 import type { MouseEvent as ReactMouseEvent } from 'react';
 
 import type { AppNotification, PendingApproval, Role, SchoolPublicInfo } from '../../lib/types';
+
+// Loaded on demand when the user opens the signature drawer, keeping
+// signature_pad out of the initial bundle.
+const SignatureModal = lazy(async () => {
+  const mod = await import('../SignatureModal');
+  return { default: mod.SignatureModal };
+});
 
 const icon = (path: string) => (
   <svg
@@ -530,9 +537,21 @@ export function AppLayout() {
           <ThemeToggle />
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
+          {/* Inner boundary so lazy page loads only swap the content area,
+              keeping the sidebar/header mounted during navigation. */}
+          <Suspense
+            fallback={
+              <div className="flex min-h-[40vh] items-center justify-center gap-3 text-slate-500">
+                <Spinner /> Loading…
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </main>
-        <SignatureModal open={signatureOpen} onClose={() => setSignatureOpen(false)} />
+        <Suspense fallback={null}>
+          <SignatureModal open={signatureOpen} onClose={() => setSignatureOpen(false)} />
+        </Suspense>
       </div>
     </div>
   );
