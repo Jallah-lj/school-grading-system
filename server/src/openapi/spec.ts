@@ -224,6 +224,11 @@ const tags = [
     description: 'In-app notifications for the signed-in user (grades published, report cards ready, etc.).',
   },
   {
+    name: 'Announcements',
+    description:
+      'Broadcast announcements to students, parents, teachers or everyone (in-app + optional email/SMS) — ADMIN only.',
+  },
+  {
     name: 'Admin',
     description: 'Audit logs viewer, database backup export — ADMIN only.',
   },
@@ -2256,6 +2261,106 @@ const paths: Record<string, Record<string, unknown>> = {
       tags: ['Notifications'],
       summary: 'Clear all notifications',
       ...authed({ 200: { description: 'Cleared', content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, deleted: { type: 'integer' } } } } } } }),
+    },
+  },
+
+  // ── Announcements ────────────────────────────────────────────────────────
+  '/api/announcements': {
+    get: {
+      tags: ['Announcements'],
+      summary: 'List broadcast announcements (ADMIN)',
+      description: 'Paginated list of announcement notifications previously broadcast.',
+      ...authed({
+        200: {
+          description: 'Announcement list',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { type: 'array', items: { type: 'object' } },
+                  total: { type: 'integer' },
+                  page: { type: 'integer' },
+                  pageSize: { type: 'integer' },
+                },
+              },
+            },
+          },
+        },
+        403: { description: 'ADMIN only' },
+      }),
+      parameters: [
+        { name: 'search', in: 'query', schema: { type: 'string' } },
+        { name: 'page', in: 'query', schema: { type: 'integer' } },
+        { name: 'pageSize', in: 'query', schema: { type: 'integer' } },
+      ],
+    },
+  },
+
+  '/api/announcements/broadcast': {
+    post: {
+      tags: ['Announcements'],
+      summary: 'Broadcast an announcement (ADMIN)',
+      description:
+        'Creates an in-app notification for every user in the chosen audience and optionally sends email and SMS/WhatsApp messages.',
+      ...authed({
+        200: {
+          description: 'Broadcast sent',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  audience: { type: 'string' },
+                  notifiedInApp: { type: 'integer' },
+                  notifiedEmail: { type: 'integer' },
+                  notifiedSMS: { type: 'integer' },
+                },
+              },
+              example: {
+                success: true,
+                audience: 'ALL',
+                notifiedInApp: 412,
+                notifiedEmail: 380,
+                notifiedSMS: 0,
+              },
+            },
+          },
+        },
+        403: { description: 'ADMIN only' },
+        422: { description: 'Validation error' },
+      }),
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['title', 'message'],
+              properties: {
+                title: { type: 'string', maxLength: 200 },
+                message: { type: 'string', maxLength: 2000 },
+                audience: {
+                  type: 'string',
+                  enum: ['ALL', 'STUDENTS', 'PARENTS', 'TEACHERS', 'STUDENTS_AND_PARENTS'],
+                  default: 'ALL',
+                },
+                link: { type: 'string', format: 'uri' },
+                includeEmail: { type: 'boolean', default: true },
+                includeSMS: { type: 'boolean', default: false },
+              },
+            },
+            example: {
+              title: 'Term 2 grades released',
+              message: 'Report cards are now available in your portal.',
+              audience: 'STUDENTS_AND_PARENTS',
+              includeEmail: true,
+              includeSMS: false,
+            },
+          },
+        },
+      },
     },
   },
 

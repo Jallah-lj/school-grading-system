@@ -125,6 +125,24 @@ VITE_API_URL=https://sgs-api.up.railway.app/api
 - [ ] `CLIENT_URL` matches the exact Vercel origin (no trailing slash)
 - [ ] Teacher can only see assigned classes; publishing notifies a test student/parent
 - [ ] Set up Supabase **scheduled backups** (or use `GET /api/admin/backup` regularly)
+- [ ] Newer endpoints answer (not 404), e.g. `curl -i -X POST $API/api/announcements/broadcast` should return **401**, not 404
+
+### Troubleshooting: “Route not found” / “No API route matches …”
+
+That JSON comes from the API's catch-all 404 handler, so the server is up but
+the path didn't match a mounted router. In order of likelihood:
+
+1. **The deployed API is running an older build.** The route exists in the repo
+   but not in the running container. Redeploy the API service (Railway/Render
+   caches the previous build when only the frontend was redeployed). Compare
+   `GET /api` — its `endpoints` object lists every mounted router group.
+2. **`VITE_API_URL` is wrong or missing.** If the frontend calls a path that the
+   host rewrites to `index.html`, you get HTML (or a Vercel 404) instead of the
+   API. Set it to the full API base including `/api`.
+3. **Stale rewrite target.** `client/vercel.json` rewrites `/api/(.*)` to a
+   hard-coded API domain — make sure that domain is the API you actually deploy.
+4. **Wrong method.** `/api/announcements/broadcast` is `POST`-only; a `GET`
+   falls through to the 404 handler.
 
 ## 5. Alternative: all-in-one VPS / Docker
 
