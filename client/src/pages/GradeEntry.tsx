@@ -7,6 +7,7 @@ import { MarksImportModal } from '../components/MarksImportModal';
 import { useToast } from '../components/toast';
 import { Badge, EmptyState, Modal, PageHeader, Spinner, TableSkeleton } from '../components/ui';
 import { api, apiError } from '../lib/api';
+import { gradeDraftKey, getOfflineDraft, removeOfflineDraft, saveOfflineDraft } from '../lib/offlineDrafts';
 import { useAuth } from '../lib/auth';
 import { useQuery } from '../lib/useQuery';
 import { downloadBlob, statusBadgeClass } from '../lib/utils';
@@ -41,7 +42,7 @@ export default function GradeEntry() {
   );
   const [fillValue, setFillValue] = useState('');
   const [fillEmptyOnly, setFillEmptyOnly] = useState(true);
-  const [saveState, setSaveState] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'error'>(
+  const [saveState, setSaveState] = useState<'idle' | 'dirty' | 'saving' | 'saved' | 'queued' | 'error'>(
     'idle',
   );
   const cellRefs = useRef<Record<string, Record<string, HTMLInputElement | null>>>({});
@@ -124,9 +125,22 @@ export default function GradeEntry() {
         next[s.id][c.id] = entry ? String(entry.score) : '';
       }
     }
+    const offline = getOfflineDraft(gradeDraftKey(classId, subjectId, semesterId));
+    if (offline) {
+      for (const entry of offline.payload.entries) {
+        if (next[entry.studentId]) {
+          for (const [componentId, score] of Object.entries(entry.scores)) {
+            if (componentId in next[entry.studentId]) next[entry.studentId][componentId] = score === null ? '' : String(score);
+          }
+        }
+      }
+      setDirty(true);
+      setSaveState('queued');
+    } else {
+      setDirty(false);
+      setSaveState('idle');
+    }
     setCells(next);
-    setDirty(false);
-    setSaveState('idle');
   }, [grid]);
 
   const setCell = (studentId: string, componentId: string, value: string) => {
@@ -235,28 +249,50 @@ export default function GradeEntry() {
     const savingVersion = editVersionRef.current;
     saveInFlightRef.current = true;
     setSaving(true);
+    const payload = {
+      classId,
+      subjectId,
+      semesterId,
+      entries: grid.students.map((s) => ({
+        studentId: s.id,
+        scores: Object.fromEntries(
+          grid.components.map((c) => {
+            const v = cells[s.id]?.[c.id] ?? '';
+            return [c.id, v === '' ? null : Number(v)];
+          }),
+        ),
+      })),
+    };
+    // A draft is stored locally before any request, so closing the app or losing
+    // signal cannot discard marks typed on a phone.
+    const offlineKey = gradeDraftKey(classId, subjectId, semesterId);
+    if (!navigator.onLine) {
+      saveOfflineDraft({ key: offlineKey, savedAt: new Date().toISOString(), payload });
+      setSaveState('queued');
+      setDirty(true);
+      if (!silent) toast('success', 'Draft saved on this device and will sync when online');
+      setSaving(false);
+      saveInFlightRef.current = false;
+      return true;
+    }
     try {
-      await api.post('/grades/entry', {
-        classId,
-        subjectId,
-        semesterId,
-        entries: grid.students.map((s) => ({
-          studentId: s.id,
-          scores: Object.fromEntries(
-            grid.components.map((c) => {
-              const v = cells[s.id]?.[c.id] ?? '';
-              return [c.id, v === '' ? null : Number(v)];
-            }),
-          ),
-        })),
-      });
+      await api.post('/grades/entry', payload);
       // Do not mark the grid clean if the teacher changed another cell while
       // this request was in flight; the effect below will queue one more save.
       lastFailedVersionRef.current = null;
+      removeOfflineDraft(offlineKey);
       if (editVersionRef.current === savingVersion) setDirty(false);
       if (!silent) toast('success', 'Marks saved as draft');
       return true;
     } catch (err) {
+      // Axios has no response for a connectivity failure. Queue only those;
+      // validation/permission failures remain visible rather than being retried forever.
+      if (!navigator.onLine || (err as { response?: unknown }).response === undefined) {
+        saveOfflineDraft({ key: offlineKey, savedAt: new Date().toISOString(), payload });
+        setSaveState('queued');
+        if (!silent) toast('success', 'Draft saved on this device and will sync when online');
+        return true;
+      }
       lastFailedVersionRef.current = savingVersion;
       toast('error', apiError(err));
       return false;
@@ -284,16 +320,27 @@ export default function GradeEntry() {
       void (async () => {
         setSaveState('saving');
         const ok = await save(true);
-        setSaveState(ok ? 'saved' : 'error');
+        setSaveState(ok ? (navigator.onLine ? 'saved' : 'queued') : 'error');
       })();
     }, 1800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cells, dirty, editable, ready, saving]);
 
+  // Retry the locally queued draft as soon as the browser regains a connection.
+  useEffect(() => {
+    const sync = () => {
+      if (dirty && editable && ready) void save(true).then((ok) => setSaveState(ok ? 'saved' : 'queued'));
+    };
+    window.addEventListener('online', sync);
+    return () => window.removeEventListener('online', sync);
+    // save intentionally reads the current grid/cells from this render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, editable, ready, cells]);
+
   const manualSave = async () => {
     const ok = await save();
-    setSaveState(ok ? 'saved' : 'error');
+    setSaveState(ok ? (navigator.onLine ? 'saved' : 'queued') : 'error');
   };
 
   const downloadMarksTemplate = async () => {
@@ -584,6 +631,11 @@ export default function GradeEntry() {
               {saveState === 'saved' && (
                 <span className="inline-flex items-center gap-1 text-emerald-500">
                   <Icon name="check-circle" size={13} /> All changes saved
+                </span>
+              )}
+              {saveState === 'queued' && (
+                <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                  <Icon name="warning" size={13} /> Saved on this device — syncs when you are online
                 </span>
               )}
               {saveState === 'error' && (

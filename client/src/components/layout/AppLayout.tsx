@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/auth';
 import { cx, fmtDate, initials } from '../../lib/utils';
 import { ConfirmDialog } from '../ConfirmDialog';
 import { Icon } from '../Icon';
+import { PwaControls } from '../PwaControls';
 import { SignatureModal } from '../SignatureModal';
 import { useToast } from '../toast';
 
@@ -516,6 +517,7 @@ export function AppLayout() {
             <Icon name="menu" size={20} />
           </button>
           <div className="flex-1" />
+          <PwaControls />
           {hasRole('TEACHER', 'ADMIN') && (
             <button
               className="btn-ghost px-2.5 py-2"
