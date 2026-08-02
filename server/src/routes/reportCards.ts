@@ -11,7 +11,7 @@ import { AppError } from '../lib/errors';
 import { ah, parseBody, parseQuery } from '../lib/helpers';
 import { prisma } from '../lib/prisma';
 import { authenticate, authorize } from '../middleware/auth';
-import { notifyUsers } from '../services/notify';
+import { notifyUsers, ExtendedNotificationService } from '../services/notify';
 import {
   buildReportCardPdf,
   buildTranscriptPdf,
@@ -347,7 +347,18 @@ async function publishCards(cardIds: string[], adminId: string) {
     'Your report card for this term is now available. Open the Report Cards page to view or download it.',
     '/report-cards',
   );
-  return audience.length;
+
+  const extService = new ExtendedNotificationService();
+  const { emailSent, smsSent } = await extService.notifyExternal(
+    audience,
+    'REPORT_CARD_AVAILABLE',
+    'Report card available',
+    'Your report card for this term is now available. View it at /report-cards',
+    '/report-cards',
+    true,
+    false,
+  );
+  return { inApp: audience.length, emailSent, smsSent };
 }
 
 reportCardsRouter.post(
@@ -355,9 +366,9 @@ reportCardsRouter.post(
   authenticate,
   authorize(Role.ADMIN),
   ah(async (req, res) => {
-    const notified = await publishCards([req.params.id], req.user!.id);
+    const result = await publishCards([req.params.id], req.user!.id);
     await logAudit(req, 'PUBLISH_REPORT_CARD', 'ReportCard', req.params.id);
-    res.json({ success: true, notified });
+    res.json({ success: true, notifiedInApp: result.inApp, notifiedEmail: result.emailSent, notifiedSMS: result.smsSent });
   }),
 );
 
@@ -382,11 +393,11 @@ reportCardsRouter.post(
       },
       select: { id: true },
     });
-    const notified = await publishCards(
+    const result = await publishCards(
       cards.map((c) => c.id),
       req.user!.id,
     );
     await logAudit(req, 'PUBLISH_REPORT_CARDS', 'ReportCard', undefined, { count: cards.length });
-    res.json({ published: cards.length, notified });
+    res.json({ published: cards.length, notifiedInApp: result.inApp, notifiedEmail: result.emailSent, notifiedSMS: result.smsSent });
   }),
 );

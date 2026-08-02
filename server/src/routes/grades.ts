@@ -9,7 +9,7 @@ import { ah, parseBody, parseQuery } from '../lib/helpers';
 import { prisma } from '../lib/prisma';
 import { parseSpreadsheetFile, spreadsheetUpload } from '../lib/spreadsheet';
 import { authenticate, authorize } from '../middleware/auth';
-import { notifyUsers, studentAudienceUserIds } from '../services/notify';
+import { notifyUsers, studentAudienceUserIds, ExtendedNotificationService } from '../services/notify';
 import {
   ensureEnrollments,
   recomputeGpas,
@@ -507,11 +507,26 @@ gradesRouter.post(
       '/grades',
     );
 
+    // Send external email notifications
+    const extService = new ExtendedNotificationService();
+    const { emailSent, smsSent } = await extService.notifyExternal(
+      audience,
+      'GRADES_PUBLISHED',
+      'Grades published',
+      `Results for ${subject} have been published. Check your grades at /grades`,
+      '/grades',
+      true, // includeEmail
+      false, // includeSMS by default (optional)
+    );
+
     await logAudit(req, 'PUBLISH_GRADES', 'GradeEntry', undefined, {
       ...body,
       published: approved,
+      notifiedInApp: audience.length,
+      notifiedEmail: emailSent,
+      notifiedSMS: smsSent,
     });
-    res.json({ published: approved, notified: audience.length });
+    res.json({ published: approved, notified: audience.length, notifiedEmail: emailSent, notifiedSMS: smsSent });
   }),
 );
 

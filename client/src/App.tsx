@@ -4,7 +4,10 @@ import { AppLayout } from './components/layout/AppLayout';
 import { Spinner } from './components/ui';
 import { useAuth } from './lib/auth';
 import Administration from './pages/Administration';
+import Announcements from './pages/Announcements';
 import Analytics from './pages/Analytics';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Approvals from './pages/Approvals';
 import AuditLogs from './pages/AuditLogs';
 import Dashboard from './pages/Dashboard';
@@ -52,6 +55,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/terms" element={<Legal />} />
       <Route path="/privacy" element={<Legal />} />
       <Route path="/verify/:code" element={<VerifyReportCard />} />
@@ -157,6 +162,14 @@ export default function App() {
           element={
             <RequireRole roles={['ADMIN']}>
               <Administration />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/announcements"
+          element={
+            <RequireRole roles={['ADMIN']}>
+              <Announcements />
             </RequireRole>
           }
         />

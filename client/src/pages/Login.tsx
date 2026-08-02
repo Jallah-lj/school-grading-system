@@ -279,10 +279,15 @@ export default function Login() {
             </div>
 
             {/* Help */}
-            <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-slate-400 dark:text-slate-500">
-              <Icon name="corner-up-left" size={13} />
-              Trouble signing in? Contact your school administrator.
-            </p>
+            <div className="mt-4 flex items-center justify-between">
+              <Link to="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300">
+                Forgot your password?
+              </Link>
+              <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+                <Icon name="corner-up-left" size={13} />
+                Trouble signing in? Contact your school administrator.
+              </span>
+            </div>
           </div>
         </div>
 

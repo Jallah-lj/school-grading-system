@@ -22,6 +22,7 @@ import { studentsRouter } from './routes/students';
 import { subjectsRouter } from './routes/subjects';
 import { teachersRouter } from './routes/teachers';
 import { docsRouter } from './routes/docs';
+import { announcementsRouter } from './routes/announcements';
 import { usersRouter } from './routes/users';
 
 export function createApp() {
@@ -85,6 +86,7 @@ export function createApp() {
   app.use('/api/signatures', signaturesRouter);
   app.use('/api/school', schoolRouter);
   app.use('/api/admin', adminRouter);
+  app.use('/api/announcements', announcementsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
