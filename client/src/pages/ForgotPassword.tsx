@@ -65,13 +65,13 @@ export default function ForgotPassword() {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="w-full max-w-md">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-10">
+          <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-xl shadow-stone-900/5 dark:border-stone-800 dark:bg-stone-900 sm:p-10">
             <a href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
               <Icon name="arrow-left" size={16} />
               Back to sign in
             </a>
 
-            <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Reset your password</h2>
+            <h2 className="mt-6 text-[26px] font-semibold font-display tracking-tight text-stone-900 dark:text-white">Reset your password</h2>
 
             {step === 'form' && (
               <>

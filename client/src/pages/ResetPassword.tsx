@@ -46,8 +46,8 @@ export default function ResetPassword() {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="w-full max-w-md">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-10">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Set a new password</h2>
+          <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-xl shadow-stone-900/5 dark:border-stone-800 dark:bg-stone-900 sm:p-10">
+            <h2 className="text-[26px] font-semibold font-display tracking-tight text-stone-900 dark:text-white">Set a new password</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Choose a strong password to secure your account.</p>
 
             {!token && (

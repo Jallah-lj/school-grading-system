@@ -108,7 +108,7 @@ export function MarksImportModal({
       {!result ? (
         <div className="space-y-4">
           {ctx && (
-            <div className="rounded-xl bg-indigo-50 px-4 py-2.5 text-sm text-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300">
+            <div className="rounded-xl bg-brand-50 px-4 py-2.5 text-sm text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">
               <Icon name="book-open" size={15} /> {ctx.classLabel} — {ctx.subjectLabel} ·{' '}
               {ctx.semesterLabel}
             </div>

@@ -73,7 +73,7 @@ export default function Announcements() {
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Send a message to students, parents, teachers, or everyone — via in-app notification, email, and optional SMS/WhatsApp.</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-xl shadow-stone-900/5 dark:border-stone-800 dark:bg-stone-900 sm:p-8">
         {sent && (
           <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/30 dark:text-emerald-300">
             <div className="flex items-start gap-2.5">

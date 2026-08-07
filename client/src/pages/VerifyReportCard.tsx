@@ -9,15 +9,15 @@ import { ordinal } from '../lib/utils';
 import type { ReportCardDetail } from '../lib/types';
 
 /** Classic official-document palette, mirroring the PDF report card. */
-const NAVY = '#1c3557';
+const FOREST = '#20382e';
 const GOLD = '#b8933d';
-const HAIRLINE = '#d9dee4';
-const ZEBRA = '#f5f6f8';
-const MUTED = '#5f6b78';
+const HAIRLINE = '#e7e5e4';
+const ZEBRA = '#f5f5f4';
+const MUTED = '#57534e';
 
 /** Public report-card verification / printable view (linked from the QR code).
- *  Styled like a printed certificate: white paper, serif headings, navy + gold
- *  rules. The paper stays light even in dark mode so it prints correctly. */
+ *  Styled like a printed certificate: white paper, serif headings, deep-green +
+ *  gold rules. The paper stays light even in dark mode so it prints correctly. */
 export default function VerifyReportCard() {
   const { code } = useParams<{ code: string }>();
   const { data, loading, error } = useQuery(
@@ -81,7 +81,7 @@ export default function VerifyReportCard() {
       {/* White paper document — stays light in dark mode for printing */}
       <div className="print-area mx-auto max-w-3xl bg-white text-slate-900 shadow-lg">
         {/* Top band: navy with a thin gold rule */}
-        <div className="h-2.5" style={{ backgroundColor: NAVY }} />
+        <div className="h-2.5" style={{ backgroundColor: FOREST }} />
         <div className="h-0.5" style={{ backgroundColor: GOLD }} />
 
         {/* Certificate header */}
@@ -89,7 +89,7 @@ export default function VerifyReportCard() {
           {data.school.hasBadge && (
             <div
               className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white p-1.5"
-              style={{ border: `2px solid ${GOLD}`, boxShadow: `0 0 0 1.5px ${NAVY} inset` }}
+              style={{ border: `2px solid ${GOLD}`, boxShadow: `0 0 0 1.5px ${FOREST} inset` }}
             >
               <img
                 src={apiUrl('/school/badge')}
@@ -100,7 +100,7 @@ export default function VerifyReportCard() {
           )}
           <h1
             className="font-doc mt-3 text-[26px] font-bold tracking-wide sm:text-[30px]"
-            style={{ color: NAVY }}
+            style={{ color: FOREST }}
           >
             {data.school.name}
           </h1>
@@ -110,11 +110,11 @@ export default function VerifyReportCard() {
             </p>
           )}
           {/* Navy + gold double rule */}
-          <div className="mt-4 h-[3px]" style={{ backgroundColor: NAVY }} />
+          <div className="mt-4 h-[3px]" style={{ backgroundColor: FOREST }} />
           <div className="mt-[3px] h-px" style={{ backgroundColor: GOLD }} />
           <p
             className="font-doc mt-4 text-[13px] font-bold tracking-[0.3em]"
-            style={{ color: NAVY }}
+            style={{ color: FOREST }}
           >
             OFFICIAL STUDENT REPORT CARD
           </p>
@@ -127,13 +127,13 @@ export default function VerifyReportCard() {
         <div className="px-8">
           <div
             className="grid grid-cols-2 gap-px border sm:grid-cols-4"
-            style={{ borderColor: NAVY, backgroundColor: HAIRLINE }}
+            style={{ borderColor: FOREST, backgroundColor: HAIRLINE }}
           >
             {details.map(([label, value]) => (
               <div key={label} className="bg-white px-3 py-2.5">
                 <div
                   className="text-[9px] font-bold uppercase tracking-widest"
-                  style={{ color: NAVY }}
+                  style={{ color: FOREST }}
                 >
                   {label}
                 </div>
@@ -151,7 +151,7 @@ export default function VerifyReportCard() {
 
         {/* Navy summary band with gold dividers */}
         <div className="px-8 pt-4">
-          <div className="grid grid-cols-3" style={{ backgroundColor: NAVY }}>
+          <div className="grid grid-cols-3" style={{ backgroundColor: FOREST }}>
             {summary.map((k, i) => (
               <div
                 key={k.label}
@@ -160,7 +160,7 @@ export default function VerifyReportCard() {
               >
                 <div
                   className="text-[9px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: '#c9d4e6' }}
+                  style={{ color: '#d4e0d9' }}
                 >
                   {k.label}
                 </div>
@@ -172,13 +172,13 @@ export default function VerifyReportCard() {
 
         {/* Ruled results table */}
         <div className="px-8 pt-5">
-          <div className="font-doc text-[11px] font-bold tracking-[0.22em]" style={{ color: NAVY }}>
+          <div className="font-doc text-[11px] font-bold tracking-[0.22em]" style={{ color: FOREST }}>
             SUBJECT PERFORMANCE
           </div>
           <div className="mb-2 mt-1 h-[2px] w-10" style={{ backgroundColor: GOLD }} />
           <table className="w-full text-sm">
             <thead>
-              <tr style={{ backgroundColor: NAVY, boxShadow: `inset 0 -2px 0 ${GOLD}` }}>
+              <tr style={{ backgroundColor: FOREST, boxShadow: `inset 0 -2px 0 ${GOLD}` }}>
                 <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
                   Code
                 </th>
@@ -219,7 +219,7 @@ export default function VerifyReportCard() {
                   </td>
                   <td
                     className="font-doc px-3 py-1.5 text-center text-[13px] font-bold"
-                    style={{ color: NAVY }}
+                    style={{ color: FOREST }}
                   >
                     {r.letterGrade}
                   </td>
@@ -249,7 +249,7 @@ export default function VerifyReportCard() {
             <div key={title} className="border px-4 py-3" style={{ borderColor: HAIRLINE }}>
               <div
                 className="text-[10px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: NAVY }}
+                style={{ color: FOREST }}
               >
                 {title}
               </div>
@@ -309,7 +309,7 @@ export default function VerifyReportCard() {
         <div className="h-0.5" style={{ backgroundColor: GOLD }} />
         <div
           className="px-6 py-2.5 text-center text-[11px]"
-          style={{ backgroundColor: NAVY, color: '#c9d4e6' }}
+          style={{ backgroundColor: FOREST, color: '#d4e0d9' }}
         >
           {data.school.name} &nbsp;·&nbsp; Verified via School Grading System &nbsp;·&nbsp;{' '}
           {data.verificationCode}

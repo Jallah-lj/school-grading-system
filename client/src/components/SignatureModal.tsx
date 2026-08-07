@@ -66,7 +66,7 @@ export function SignatureModal({ open, onClose }: { open: boolean; onClose: () =
       padRef.current?.off();
       padRef.current = new SignaturePad(canvasRef.current, {
         backgroundColor: 'rgba(255,255,255,0)',
-        penColor: '#1e3a8a',
+        penColor: '#264437',
         minWidth: 1.2,
         maxWidth: 3.2,
       });
@@ -224,7 +224,7 @@ export function SignatureModal({ open, onClose }: { open: boolean; onClose: () =
           <div>
             <label
               htmlFor="sig-upload"
-              className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 text-slate-400 transition hover:border-indigo-400 hover:text-indigo-400 dark:border-slate-600"
+              className="flex h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-300 text-stone-400 transition hover:border-brand-500 hover:text-brand-600 dark:border-stone-600"
             >
               {preview ? (
                 <img src={preview} alt="Signature preview" className="h-full object-contain p-2" />

@@ -243,25 +243,30 @@ function NotificationBell() {
         >
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
         </svg>
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-            {unread > 9 ? '9+' : unread}
-          </span>
-        )}
+          {unread > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-stone-900">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
       </button>
       {open && (
         <div className="card absolute right-0 z-40 mt-2 w-80 overflow-hidden p-0">
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-slate-800">
-            <span className="text-sm font-semibold">Notifications</span>
+          <div className="flex items-center justify-between border-b border-stone-200 px-4 py-2.5 dark:border-stone-800">
+            <span className="text-sm font-semibold text-stone-800 dark:text-stone-100">
+              Notifications
+            </span>
             <div className="flex items-center gap-3">
               {unread > 0 && (
-                <button className="text-xs text-indigo-500 hover:underline" onClick={markAll}>
+                <button
+                  className="text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
+                  onClick={markAll}
+                >
                   Mark all read
                 </button>
               )}
               {items.length > 0 && (
                 <button
-                  className="text-xs text-slate-400 hover:text-rose-500"
+                  className="text-xs text-stone-400 hover:text-rose-600"
                   onClick={() => setConfirmClear(true)}
                 >
                   Clear all
@@ -271,8 +276,8 @@ function NotificationBell() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             {items.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-4 py-8 text-sm text-slate-400">
-                <Icon name="smile" size={22} className="text-slate-300 dark:text-slate-600" />
+              <div className="flex flex-col items-center gap-2 px-4 py-8 text-sm text-stone-400">
+                <Icon name="smile" size={22} className="text-stone-300 dark:text-stone-600" />
                 You're all caught up
               </div>
             )}
@@ -280,25 +285,25 @@ function NotificationBell() {
               <div
                 key={n.id}
                 className={cx(
-                  'group relative border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/60',
-                  !n.isRead && 'bg-indigo-50/50 dark:bg-indigo-500/5',
+                  'group relative border-b border-stone-100 last:border-0 hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/60',
+                  !n.isRead && 'bg-brand-50/70 dark:bg-brand-500/5',
                 )}
               >
                 <button
                   onClick={() => void markRead(n)}
                   className="block w-full px-4 py-3 pr-9 text-left"
                 >
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    {!n.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />}
+                  <div className="flex items-center gap-2 text-sm font-medium text-stone-800 dark:text-stone-100">
+                    {!n.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />}
                     {n.title}
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
                     {n.message}
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-400">
+                  <div className="mt-1 flex items-center gap-2 text-[11px] text-stone-400">
                     {fmtDate(n.createdAt)}
                     {n.link && (
-                      <span className="inline-flex items-center gap-1 font-medium text-indigo-500">
+                      <span className="inline-flex items-center gap-1 font-semibold text-brand-700 dark:text-brand-300">
                         Open <Icon name="arrow-right" size={12} />
                       </span>
                     )}
@@ -311,7 +316,7 @@ function NotificationBell() {
                   }}
                   title="Delete notification"
                   aria-label="Delete notification"
-                  className="absolute right-2 top-2.5 rounded-md p-1 text-slate-300 transition hover:bg-rose-50 hover:text-rose-500 focus:opacity-100 dark:text-slate-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute right-2 top-2.5 rounded-md p-1 text-stone-300 transition hover:bg-rose-50 hover:text-rose-600 focus:opacity-100 dark:text-stone-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <svg
                     className="h-3.5 w-3.5"
@@ -399,11 +404,12 @@ export function AppLayout() {
   }, [user?.role, location.pathname]);
 
   const sidebar = (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-800">
-        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-3 py-3 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-200 dark:from-indigo-500/20 dark:via-slate-900 dark:to-violet-500/10 dark:ring-indigo-500/30">
+    <div className="flex h-full flex-col bg-brand-950 text-brand-100">
+      {/* Brand block */}
+      <div className="border-b border-white/10 px-5 pb-4 pt-5">
+        <div className="flex items-center gap-3">
           {school?.hasBadge ? (
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-md shadow-indigo-500/20 ring-2 ring-white dark:bg-slate-800 dark:ring-slate-700">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/95 p-1 shadow-sm ring-1 ring-white/20">
               <img
                 src={apiUrl('/school/badge')}
                 alt="School badge"
@@ -411,55 +417,52 @@ export function AppLayout() {
               />
             </div>
           ) : (
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-xl font-extrabold text-white shadow-md shadow-indigo-500/30 ring-2 ring-white dark:ring-slate-700">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 font-display text-xl font-bold text-brand-950 shadow-md ring-1 ring-white/20">
               {(school?.name ?? 'S')[0]}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-500/80 dark:text-indigo-300/70">
-              Current school
+            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
+              School grading
             </div>
             <div
-              className="truncate text-[15px] font-extrabold leading-snug tracking-tight text-slate-900 dark:text-white"
+              className="truncate font-display text-[17px] font-semibold leading-snug text-white"
               title={school?.name ?? 'Grading System'}
             >
               {school?.name ?? 'Grading System'}
             </div>
-            {school?.motto ? (
-              <div
-                className="mt-0.5 truncate text-[11px] italic leading-snug text-indigo-600/80 dark:text-indigo-300/80"
-                title={school.motto}
-              >
-                “{school.motto}”
-              </div>
-            ) : (
-              <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                School Grading System
-              </div>
-            )}
-            {school?.academicYear && (
-              <div className="mt-1.5 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-indigo-600/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">
-                <Icon name="calendar" size={10} />
-                <span className="truncate">{school.academicYear}</span>
-              </div>
-            )}
           </div>
         </div>
+        {school?.motto ? (
+          <p className="mt-4 truncate border-t border-white/10 pt-3 text-xs italic leading-snug text-brand-200/80">
+            “{school.motto}”
+          </p>
+        ) : (
+          <p className="mt-4 truncate border-t border-white/10 pt-3 text-[11px] font-medium uppercase tracking-wider text-brand-300/60">
+            School Grading System
+          </p>
+        )}
+        {school?.academicYear && (
+          <div className="mt-3 inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-amber-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-300 ring-1 ring-amber-300/25">
+            <Icon name="calendar" size={11} />
+            <span className="truncate">{school.academicYear}</span>
+          </div>
+        )}
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 pt-3">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         {links.map((n) => (
           <NavLink
             key={n.to}
             to={n.to}
             end={n.to === '/'}
             onClick={() => setMobileOpen(false)}
-            className={({ isActive }) => cx('navlink', isActive && 'navlink-active')}
+            className={({ isActive }) => cx('navlink-sidebar', isActive && 'navlink-sidebar-active')}
           >
             {icon(n.iconPath)}
             <span className="flex-1">{n.label}</span>
             {n.to === '/approvals' && pendingApprovals > 0 && (
               <span
-                className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white"
+                className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-brand-950"
                 title={`${pendingApprovals} submission(s) awaiting approval`}
               >
                 {pendingApprovals > 99 ? '99+' : pendingApprovals}
@@ -468,18 +471,21 @@ export function AppLayout() {
           </NavLink>
         ))}
       </nav>
-      <div className="border-t border-slate-200 p-4 dark:border-slate-800">
+      <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-300 text-xs font-bold text-brand-950">
             {initials(user?.name ?? '?')}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{user?.name}</div>
-            <div className="text-xs capitalize text-slate-400">{user?.role.toLowerCase()}</div>
+            <div className="truncate text-sm font-medium text-white">{user?.name}</div>
+            <div className="text-[11px] uppercase tracking-wider text-brand-300/60">
+              {user?.role.toLowerCase()}
+            </div>
           </div>
           <button
-            className="btn-ghost px-2 py-1.5"
+            className="rounded-lg p-2 text-brand-200/70 transition hover:bg-white/10 hover:text-white"
             title="Sign out"
+            aria-label="Sign out"
             onClick={() => {
               void logout().then(() => navigate('/login'));
             }}
@@ -503,19 +509,19 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-brand-950 lg:block">
         {sidebar}
       </aside>
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-slate-950/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-white dark:bg-slate-900">
+          <div className="absolute inset-0 bg-brand-950/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-64 bg-brand-950">
             {sidebar}
           </aside>
         </div>
       )}
       <div className="flex min-h-screen flex-1 flex-col lg:pl-64">
-        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-stone-200 bg-white/85 px-4 py-3 backdrop-blur dark:border-stone-800 dark:bg-stone-950/85">
           <button
             className="btn-ghost px-2 py-1.5 lg:hidden"
             onClick={() => setMobileOpen(true)}

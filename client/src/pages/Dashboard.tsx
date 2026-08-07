@@ -52,7 +52,7 @@ function AdminDashboard() {
       datasets: [
         {
           data: data.distribution.map((d) => d.count),
-          backgroundColor: ['#10b981', '#34d399', '#38bdf8', '#818cf8', '#fbbf24', '#f87171'],
+          backgroundColor: ['#2d5442', '#6fa086', '#b8933d', '#d97706', '#5c7040', '#e11d48'],
           borderWidth: 0,
         },
       ],
@@ -72,12 +72,12 @@ function AdminDashboard() {
         {
           label: 'School average GPA',
           data: data.gpaTrend.map((t) => t.average),
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99,102,241,0.12)',
+          borderColor: '#2d5442',
+          backgroundColor: 'rgba(45,84,66,0.12)',
           fill: true,
           tension: 0.35,
           pointRadius: 4,
-          pointBackgroundColor: '#6366f1',
+          pointBackgroundColor: '#2d5442',
         },
       ],
     },
@@ -94,7 +94,7 @@ function AdminDashboard() {
         <StatCard
           label="Total Students"
           value={data.counts.students}
-          tone="indigo"
+          tone="brand"
           icon={statIcon(
             'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
           )}
@@ -102,7 +102,7 @@ function AdminDashboard() {
         <StatCard
           label="Total Teachers"
           value={data.counts.teachers}
-          tone="sky"
+          tone="moss"
           icon={statIcon('M22 10L12 5 2 10l10 5 10-5zM6 12v5c3 3 9 3 12 0v-5')}
         />
         <StatCard
@@ -134,7 +134,7 @@ function AdminDashboard() {
           <StatCard
             label="Pending Submissions"
             value={data.pendingSubmissions}
-            tone={data.pendingSubmissions > 0 ? 'rose' : 'indigo'}
+            tone={data.pendingSubmissions > 0 ? 'rose' : 'brand'}
             hint={
               data.pendingSubmissions > 0
                 ? 'awaiting approval — click to review'
@@ -147,7 +147,7 @@ function AdminDashboard() {
           label="Active Term"
           value={data.activeSemester ? data.activeSemester.name : '—'}
           hint={data.activeSemester?.academicYear?.name}
-          tone="indigo"
+          tone="brand"
           icon={statIcon(
             'M8 7V3M16 7V3M3 11h18M5 5h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z',
           )}
@@ -159,7 +159,7 @@ function AdminDashboard() {
               ? `${data.topStudents.length}+ shown`
               : '—'
           }
-          tone="sky"
+          tone="moss"
           hint="top / bottom performers"
           icon={statIcon(
             'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
@@ -305,7 +305,7 @@ function TeacherDashboard() {
         <StatCard
           label="Assigned Subjects"
           value={new Set(data.assignments.map((a) => a.subject.id)).size}
-          tone="indigo"
+          tone="brand"
           icon={statIcon(
             'M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z',
           )}
@@ -313,7 +313,7 @@ function TeacherDashboard() {
         <StatCard
           label="Assigned Classes"
           value={new Set(data.assignments.map((a) => a.classRoom.id)).size}
-          tone="sky"
+          tone="moss"
           icon={statIcon('M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z')}
         />
         <StatCard
@@ -338,7 +338,7 @@ function TeacherDashboard() {
               <Link
                 key={i}
                 to={`/grade-entry?classId=${a.classRoom.id}&subjectId=${a.subject.id}`}
-                className="card p-4 transition hover:border-indigo-300 hover:shadow-md"
+                className="card p-4 transition hover:border-brand-400 hover:shadow-md"
               >
                 <div className="font-semibold">{a.subject.name}</div>
                 <div className="text-sm text-slate-400">
@@ -347,7 +347,7 @@ function TeacherDashboard() {
                 <div className="mt-2 text-xs text-slate-400">
                   {a.classRoom._count?.students ?? 0} students
                 </div>
-                <div className="mt-3 flex items-center gap-1 text-sm font-medium text-indigo-500">
+                <div className="mt-3 flex items-center gap-1 text-sm font-semibold text-brand-700 dark:text-brand-300">
                   Enter marks <Icon name="arrow-right" size={14} />
                 </div>
               </Link>
@@ -390,7 +390,7 @@ function StudentDashboard() {
         <StatCard
           label="GPA"
           value={data.gpa ? data.gpa.gpa.toFixed(2) : '—'}
-          tone="indigo"
+          tone="brand"
           hint={`of 4.00`}
           icon={statIcon(
             'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
@@ -406,7 +406,7 @@ function StudentDashboard() {
         <StatCard
           label="Average Score"
           value={data.gpa ? `${data.gpa.average.toFixed(1)}%` : '—'}
-          tone="sky"
+          tone="moss"
           hint={data.semester?.name}
           icon={statIcon('M18 20V10M12 20V4M6 20v-6')}
         />
@@ -462,7 +462,7 @@ function StudentDashboard() {
       </div>
       <Link
         to="/grades"
-        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-500 hover:underline"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300"
       >
         View full academic progress <Icon name="arrow-right" size={14} />
       </Link>

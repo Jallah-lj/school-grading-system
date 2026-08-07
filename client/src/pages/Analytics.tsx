@@ -79,7 +79,7 @@ export default function Analytics() {
         {
           label: 'Class average',
           data: (subjectPerf?.data ?? []).map((s) => s.average),
-          backgroundColor: '#6366f1',
+          backgroundColor: '#2d5442',
           borderRadius: 6,
         },
         {
@@ -111,7 +111,7 @@ export default function Analytics() {
         {
           label: 'Average GPA',
           data: (classPerf?.data ?? []).map((c) => c.averageGpa ?? 0),
-          backgroundColor: '#38bdf8',
+          backgroundColor: '#b8933d',
           borderRadius: 6,
         },
       ],

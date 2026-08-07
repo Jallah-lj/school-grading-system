@@ -28,18 +28,18 @@ console.log('\n🧩 Client utility tests\n');
 // ── gradeBadgeClass ────────────────────────────────────────────────────────
 console.log('── gradeBadgeClass ──');
 
-t('A grades → emerald classes', () => {
+t('A grades → brand classes', () => {
   const cls = gradeBadgeClass('A+');
-  assert.ok(cls.includes('emerald'), `Expected emerald, got: ${cls}`);
+  assert.ok(cls.includes('brand'), `Expected brand, got: ${cls}`);
 });
 
-t('A grades (plain) → emerald classes', () => {
-  assert.ok(gradeBadgeClass('A').includes('emerald'));
+t('A grades (plain) → brand classes', () => {
+  assert.ok(gradeBadgeClass('A').includes('brand'));
 });
 
-t('B grades → sky classes', () => {
-  assert.ok(gradeBadgeClass('B+').includes('sky'));
-  assert.ok(gradeBadgeClass('B').includes('sky'));
+t('B grades → emerald classes', () => {
+  assert.ok(gradeBadgeClass('B+').includes('emerald'));
+  assert.ok(gradeBadgeClass('B').includes('emerald'));
 });
 
 t('C grade → amber classes', () => {
@@ -53,28 +53,28 @@ t('F grade → rose classes', () => {
 // ── statusBadgeClass ───────────────────────────────────────────────────────
 console.log('\n── statusBadgeClass ──');
 
-t('DRAFT → slate classes', () => {
-  assert.ok(statusBadgeClass('DRAFT').includes('slate'));
+t('DRAFT → stone classes', () => {
+  assert.ok(statusBadgeClass('DRAFT').includes('stone'));
 });
 
 t('SUBMITTED → amber classes', () => {
   assert.ok(statusBadgeClass('SUBMITTED').includes('amber'));
 });
 
-t('APPROVED → blue classes', () => {
-  assert.ok(statusBadgeClass('APPROVED').includes('blue'));
+t('APPROVED → brand classes', () => {
+  assert.ok(statusBadgeClass('APPROVED').includes('brand'));
 });
 
 t('PUBLISHED → emerald classes', () => {
   assert.ok(statusBadgeClass('PUBLISHED').includes('emerald'));
 });
 
-t('GENERATED → blue classes', () => {
-  assert.ok(statusBadgeClass('GENERATED').includes('blue'));
+t('GENERATED → moss classes', () => {
+  assert.ok(statusBadgeClass('GENERATED').includes('moss'));
 });
 
-t('Unknown status → slate fallback', () => {
-  assert.ok(statusBadgeClass('UNKNOWN').includes('slate'));
+t('Unknown status → stone fallback', () => {
+  assert.ok(statusBadgeClass('UNKNOWN').includes('stone'));
 });
 
 // ── fmtDate ────────────────────────────────────────────────────────────────
