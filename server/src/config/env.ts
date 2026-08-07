@@ -14,8 +14,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(8),
   ACCESS_TOKEN_TTL: accessTokenTtlSchema,
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().positive().default(7),
-  SCHOOL_NAME: z.string().default('Excellence Model School'),
-  SCHOOL_MOTTO: z.string().default('Knowledge. Integrity. Excellence.'),
+  SCHOOL_NAME: z.string().default('Kigali Secondary School'),
+  SCHOOL_MOTTO: z.string().default(''),
   // Optional external notification configuration
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),

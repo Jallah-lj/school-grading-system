@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Chart } from '../components/Chart';
@@ -361,11 +362,13 @@ function TeacherDashboard() {
 
 function StudentDashboard() {
   const { user } = useAuth();
-  const targetId = user?.role === 'PARENT' ? user.parent?.children[0]?.id : user?.student?.id;
+  const isParent = user?.role === 'PARENT';
+  const children = user?.parent?.children ?? [];
+  const [childId, setChildId] = useState(children[0]?.id ?? '');
+  const targetId = isParent ? childId : user?.student?.id;
+  const selectedChild = children.find((c) => c.id === childId) ?? children[0];
   const semesterLabel =
-    user?.role === 'PARENT' && user.parent?.children[0]
-      ? `Viewing ${user.parent.children[0].user.name}`
-      : undefined;
+    isParent && selectedChild ? `Viewing ${selectedChild.user.name}` : undefined;
 
   const { data, loading } = useQuery(
     () =>
@@ -386,6 +389,26 @@ function StudentDashboard() {
 
   return (
     <div className="space-y-6">
+      {isParent && children.length > 1 && (
+        <div className="card flex flex-wrap items-center gap-3 p-4">
+          <label className="text-sm font-medium text-slate-600 dark:text-slate-300" htmlFor="child-switcher">
+            Child
+          </label>
+          <select
+            id="child-switcher"
+            className="input max-w-xs"
+            value={childId}
+            onChange={(e) => setChildId(e.target.value)}
+          >
+            {children.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.user.name} —{' '}
+                {c.classRoom ? `${c.classRoom.name} ${c.classRoom.stream}` : c.admissionNumber}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="GPA"

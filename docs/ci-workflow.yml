@@ -1,11 +1,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # COPY THIS FILE TO .github/workflows/ci.yml TO ENABLE CI.
 #
-# It is parked here because the automation that opened this change is not
-# permitted to create workflow files (GitHub Apps need an explicit `workflows`
-# permission). Enable it with:
+# GitHub Apps need an explicit `workflows` permission to create or update
+# workflow files. Enable CI with:
 #
 #     mkdir -p .github/workflows && git mv docs/ci-workflow.yml .github/workflows/ci.yml
+#     git commit -m "Enable CI workflow" && git push
 #
 # ─────────────────────────────────────────────────────────────────────────────
 

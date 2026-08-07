@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
 import { logAudit } from '../lib/audit';
@@ -180,7 +179,6 @@ authRouter.post(
 // The code is displayed on the page after email verification (no email needed).
 
 const CODE_EXPIRY_MS = 10 * 60 * 1000;   // 10 minutes
-const MAX_VERIFY_ATTEMPTS = 3;
 
 function generateCode(): string {
   // 6-digit numeric code, padded with leading zeros if needed.

@@ -443,8 +443,8 @@ async function main() {
     where: { id: 'school' },
     create: {
       id: 'school',
-      name: 'Excellence Model School',
-      motto: 'Knowledge. Integrity. Excellence.',
+      name: 'Kigali Secondary School',
+      motto: '',
       badgeData: badgePng,
       badgeMime: 'image/png',
     },
