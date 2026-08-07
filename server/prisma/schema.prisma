@@ -67,8 +67,9 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  refreshTokens   RefreshToken[]
-  studentProfile  StudentProfile?
+  refreshTokens       RefreshToken[]
+  passwordResetCodes PasswordResetCode[]
+  studentProfile      StudentProfile?
   teacherProfile  TeacherProfile?
   parentProfile   ParentProfile?
   notifications   Notification[]
