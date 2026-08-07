@@ -1,3 +1,4 @@
+import { NotificationType, Prisma, Role } from '@prisma/client';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -28,34 +29,34 @@ announcementsRouter.post(
     try {
       if (body.audience === 'ALL') {
         const users = await prisma.user.findMany({
-          where: { isActive: true, role: { in: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'] } },
+          where: { isActive: true, role: { in: [Role.STUDENT, Role.PARENT, Role.TEACHER, Role.ADMIN] } },
           select: { id: true },
         });
-        userIds = users.map((u: { id: string }) => u.id);
+        userIds = users.map((u) => u.id);
       } else if (body.audience === 'STUDENTS') {
         const profiles = await prisma.studentProfile.findMany({
           where: { user: { isActive: true } },
           select: { userId: true },
         });
-        userIds = profiles.map((p: { userId: string }) => p.userId);
+        userIds = profiles.map((p) => p.userId);
       } else if (body.audience === 'PARENTS') {
         const profiles = await prisma.parentProfile.findMany({
           where: { user: { isActive: true } },
           select: { userId: true },
         });
-        userIds = profiles.map((p: { userId: string }) => p.userId);
+        userIds = profiles.map((p) => p.userId);
       } else if (body.audience === 'TEACHERS') {
         const profiles = await prisma.teacherProfile.findMany({
           where: { user: { isActive: true } },
           select: { userId: true },
         });
-        userIds = profiles.map((p: { userId: string }) => p.userId);
+        userIds = profiles.map((p) => p.userId);
       } else if (body.audience === 'STUDENTS_AND_PARENTS') {
         const students = await prisma.studentProfile.findMany({
           where: { user: { isActive: true } },
           select: { userId: true, parent: { select: { userId: true } } },
-        }) as Array<{ userId: string; parent: { userId: string | null } | null }>;
-        userIds = students.flatMap((s) => [s.userId, s.parent?.userId].filter(Boolean) as string[]);
+        });
+        userIds = students.flatMap((s) => [s.userId, s.parent?.userId].filter((id): id is string => Boolean(id)));
       }
     } catch (err) {
       console.error('broadcast: audience resolution failed:', err);
@@ -133,33 +134,23 @@ announcementsRouter.get(
     const skip = (page ? page - 1 : 0) * (pageSize || 10);
     const take = pageSize || 10;
 
-    // Prisma's generated `NotificationWhereInput` is extremely strict on relation filters.
-    // `user: { role: { in: [...] } }` frequently produces the exact error the user saw:
-    //   "Type '{ in: string[]; }' is not assignable to type 'undefined'."
-    //
-    // Safe pragmatic fix used across this codebase: cast the where object.
-    const where = {
+    const where: Prisma.NotificationWhereInput = {
+      type: NotificationType.ANNOUNCEMENT,
       user: {
-        role: { in: ['STUDENT', 'PARENT', 'TEACHER', 'ADMIN'] },
+        role: { in: [Role.STUDENT, Role.PARENT, Role.TEACHER, Role.ADMIN] },
       },
-      ...(search ? { message: { contains: search, mode: 'insensitive' as const } } : {}),
-    } as any;
-
-    // Only fetch announcements
-    const announcementsOnly = {
-      ...where,
-      type: 'ANNOUNCEMENT' as const,
-    } as any;
+      ...(search ? { message: { contains: search, mode: 'insensitive' } } : {}),
+    };
 
     const [data, total] = await Promise.all([
       prisma.notification.findMany({
-        where: announcementsOnly,
+        where,
         include: { user: { select: { id: true, name: true, email: true, role: true } } },
         orderBy: { createdAt: 'desc' },
         skip,
         take,
       }),
-      prisma.notification.count({ where: announcementsOnly }),
+      prisma.notification.count({ where }),
     ]);
     res.json({ data, total, page: page || 1, pageSize: take });
   }),

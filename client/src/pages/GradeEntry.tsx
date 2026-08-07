@@ -141,7 +141,7 @@ export default function GradeEntry() {
       setSaveState('idle');
     }
     setCells(next);
-  }, [grid]);
+  }, [grid, classId, subjectId, semesterId]);
 
   const setCell = (studentId: string, componentId: string, value: string) => {
     if (!/^\d*\.?\d*$/.test(value)) return;

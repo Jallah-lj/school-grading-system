@@ -58,20 +58,19 @@ export class ExtendedNotificationService {
 
   async notifyEmail(userIds: string[], type: NotificationType, title: string, message: string, link?: string): Promise<number> {
     if (!userIds.length) return 0;
+    // email is a required non-null column — no null filter needed.
     const users = await prisma.user.findMany({
       where: {
         id: { in: userIds },
         isActive: true,
-        // Use NOT to satisfy strict generated types when prisma client is stale
-        NOT: { email: null },
-      } as any,
+      },
       select: { id: true, email: true, name: true },
     });
     if (!users.length) return 0;
 
     let sentCount = 0;
     for (const user of users) {
-      const to = user.email!;
+      const to = user.email;
 
       try {
         if (type === 'GRADES_PUBLISHED') {
@@ -100,17 +99,18 @@ export class ExtendedNotificationService {
       where: {
         id: { in: userIds },
         isActive: true,
-        NOT: { phone: null },
-      } as any,
+        phone: { not: null },
+      },
       select: { id: true, phone: true, name: true },
     });
     if (!users.length) return 0;
 
     let sentCount = 0;
     for (const user of users) {
+      if (!user.phone) continue;
       try {
         await this.smsProvider.sendSMS({
-          to: user.phone!,
+          to: user.phone,
           message: `${message}${link ? ` \n${link}` : ''}`,
           channel: 'whatsapp',
         });

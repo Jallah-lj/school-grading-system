@@ -45,6 +45,7 @@ export default function ForgotPassword() {
   };
 
   const handleResend = async () => {
+    if (resendDisabled) return;
     setError(null);
     try {
       const { data } = await api.post('/auth/forgot-password', {
@@ -53,6 +54,8 @@ export default function ForgotPassword() {
       if (data.code) {
         setCode(data.code);
         setExpiresIn(data.expiresInSeconds ?? 600);
+        setResendDisabled(true);
+        window.setTimeout(() => setResendDisabled(false), 10_000);
       }
     } catch (err) {
       setError(apiError(err));

@@ -159,7 +159,8 @@ the path didn't match a mounted router. In order of likelihood:
    > the real production build + `scripts/verify-routes.mjs` so a broken build
    > is caught before it silently freezes the deploy. Run it before every
    > release, or enable it in CI by moving `docs/ci-workflow.yml` to
-   > `.github/workflows/ci.yml`.
+   > `.github/workflows/ci.yml` (requires a token/account with the
+   > GitHub `workflows` permission).
 2. **`VITE_API_URL` is wrong or missing.** If the frontend calls a path that the
    host rewrites to `index.html`, you get HTML (or a Vercel 404) instead of the
    API. Set it to the full API base including `/api`.
