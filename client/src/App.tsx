@@ -18,6 +18,7 @@ import MyProfile from './pages/MyProfile';
 import Parents from './pages/Parents';
 import ReportCards from './pages/ReportCards';
 import ResetPassword from './pages/ResetPassword';
+import ResetPasswordCode from './pages/ResetPasswordCode';
 import StudentProfile from './pages/StudentProfile';
 import Students from './pages/Students';
 import TeacherProfile from './pages/TeacherProfile';
@@ -69,6 +70,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password-code" element={<ResetPasswordCode />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/terms" element={<Legal />} />
       <Route path="/privacy" element={<Legal />} />

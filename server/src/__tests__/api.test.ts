@@ -48,6 +48,23 @@ function resetStubs() {
       stub(m, method, fn);
     }
   }
+  // Ensure passwordResetCode is stubbed even if the Prisma client hasn't been
+  // regenerated to include the new model (e.g. in sandboxes without network).
+  const prismaAny = prisma as unknown as Record<string, Record<string, AsyncFn>>;
+  if (!Object.prototype.hasOwnProperty.call(prismaAny, 'passwordResetCode') || !prismaAny.passwordResetCode) {
+    prismaAny.passwordResetCode = {};
+  }
+  const fallback: Record<string, AsyncFn> = {
+    findUnique: async () => null,
+    findFirst: async () => null,
+    findMany: async () => [],
+    create: async (args: PrismaArgs) => ({ id: 'mock-code-id', ...(args.data as Record<string, unknown>) }),
+    update: async (args: PrismaArgs) => ({ id: 'mock-code-id', ...(args.data as Record<string, unknown>) }),
+    updateMany: async () => ({ count: 0 }),
+  };
+  for (const [method, fn] of Object.entries(fallback)) {
+    stub('passwordResetCode', method, fn);
+  }
 }
 
 // ── HTTP test helper (zero-dep, supertest-like) ──────────────────────────────
@@ -256,6 +273,136 @@ export async function runApiTests() {
     const token = signToken(users.admin);
     const res = await api.get('/api/auth/me').auth(token).expect(200);
     assert.equal((res.body as { user: { role: string } }).user.role, 'ADMIN');
+  });
+
+  // ── Password reset code flow ──────────────────────────────────────────────
+
+  await t('POST /api/auth/forgot-password → returns 6-digit code for valid email', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: true, passwordHash: 'hash',
+    }));
+    stub('passwordResetCode', 'updateMany', async () => ({ count: 0 }));
+    stub('passwordResetCode', 'create', async (args: { data?: Record<string, unknown> }) => ({
+      id: 'code-1', ...(args.data ?? {}),
+    }));
+    stub('refreshToken', 'updateMany', async () => ({ count: 0 }));
+    const res = await api.post('/api/auth/forgot-password').send({ email: users.admin.email }).expect(200);
+    const body = res.body as { success: boolean; code?: string; message?: string };
+    assert.equal(body.success, true);
+    assert.ok(body.code, 'Should return a code');
+    assert.equal(body.code!.length, 6, 'Code should be 6 digits');
+    assert.ok(/^\d{6}$/.test(body.code!), 'Code should be numeric');
+  });
+
+  await t('POST /api/auth/forgot-password → returns success without code for unknown email', async () => {
+    stub('user', 'findUnique', async () => null);
+    const res = await api.post('/api/auth/forgot-password').send({ email: 'nobody@example.com' }).expect(200);
+    const body = res.body as { success: boolean; code?: string };
+    assert.equal(body.success, true);
+    assert.equal(body.code, undefined, 'Should not return a code for unknown email');
+  });
+
+  await t('POST /api/auth/forgot-password → returns success for inactive user', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: false, passwordHash: 'hash',
+    }));
+    const res = await api.post('/api/auth/forgot-password').send({ email: users.admin.email }).expect(200);
+    const body = res.body as { success: boolean; code?: string };
+    assert.equal(body.success, true);
+    assert.equal(body.code, undefined, 'Should not return a code for inactive user');
+  });
+
+  await t('POST /api/auth/verify-reset-code → validates correct code', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: true, passwordHash: 'hash',
+    }));
+    stub('passwordResetCode', 'findFirst', async () => ({
+      id: 'code-1', userId: users.admin.id, code: '123456',
+      usedAt: null, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    }));
+    const res = await api.post('/api/auth/verify-reset-code').send({
+      email: users.admin.email,
+      code: '123456',
+    }).expect(200);
+    assert.equal((res.body as { valid: boolean }).valid, true);
+    assert.equal((res.body as { userId: string }).userId, users.admin.id);
+  });
+
+  await t('POST /api/auth/verify-reset-code → rejects wrong code', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: true, passwordHash: 'hash',
+    }));
+    stub('passwordResetCode', 'findFirst', async () => null);
+    const res = await api.post('/api/auth/verify-reset-code').send({
+      email: users.admin.email,
+      code: '000000',
+    }).expect(400);
+    assert.equal((res.body as { error: { code: string } }).error.code, 'INVALID_CODE');
+  });
+
+  await t('POST /api/auth/verify-reset-code → rejects for unknown user', async () => {
+    stub('user', 'findUnique', async () => null);
+    const res = await api.post('/api/auth/verify-reset-code').send({
+      email: 'nobody@example.com',
+      code: '123456',
+    }).expect(404);
+    assert.equal((res.body as { error: { code: string } }).error.code, 'USER_NOT_FOUND');
+  });
+
+  await t('POST /api/auth/reset-password → resets password with valid code', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: true, passwordHash: 'old-hash',
+    }));
+    stub('passwordResetCode', 'findFirst', async () => ({
+      id: 'code-1', userId: users.admin.id, code: '123456',
+      usedAt: null, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    }));
+    stub('passwordResetCode', 'update', async () => ({ id: 'code-1', usedAt: new Date() }));
+    stub('user', 'update', async () => ({ id: users.admin.id, passwordHash: 'new-hash' }));
+    stub('refreshToken', 'updateMany', async () => ({ count: 0 }));
+    const res = await api.post('/api/auth/reset-password').send({
+      email: users.admin.email,
+      code: '123456',
+      newPassword: 'new-secure-password-123',
+    }).expect(200);
+    assert.equal((res.body as { success: boolean }).success, true);
+    assert.ok((res.body as { message: string }).message.includes('reset successfully'));
+  });
+
+  await t('POST /api/auth/reset-password → rejects invalid code', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: true, passwordHash: 'hash',
+    }));
+    stub('passwordResetCode', 'findFirst', async () => null);
+    const res = await api.post('/api/auth/reset-password').send({
+      email: users.admin.email,
+      code: '000000',
+      newPassword: 'NewPassword1',
+    }).expect(400);
+    assert.equal((res.body as { error: { code: string } }).error.code, 'INVALID_CODE');
+  });
+
+  await t('POST /api/auth/reset-password → rejects short password', async () => {
+    stub('user', 'findUnique', async () => ({
+      id: users.admin.id, email: users.admin.email, name: users.admin.name,
+      role: 'ADMIN', isActive: true, passwordHash: 'hash',
+    }));
+    stub('passwordResetCode', 'findFirst', async () => ({
+      id: 'code-1', userId: users.admin.id, code: '123456',
+      usedAt: null, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    }));
+    const res = await api.post('/api/auth/reset-password').send({
+      email: users.admin.email,
+      code: '123456',
+      newPassword: 'short',
+    }).expect(422);
+    assert.equal((res.body as { error: { code: string } }).error.code, 'VALIDATION_ERROR');
   });
 
   // ── RBAC ─────────────────────────────────────────────────────────────────

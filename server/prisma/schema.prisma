@@ -86,8 +86,23 @@ model RefreshToken {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   revokedAt DateTime?
-  createdAt DateTime  @default(now())
+  createdAt DateTime   @default(now())
 
+  @@index([userId])
+}
+
+// ── Password reset codes (displayed on-page, not emailed) ───────────────────
+
+model PasswordResetCode {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String   // 6-digit numeric code
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([code])
   @@index([userId])
 }
 
