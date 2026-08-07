@@ -9,8 +9,6 @@ import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken } from
 import { hashPassword, verifyPassword } from '../lib/password';
 import { prisma } from '../lib/prisma';
 import { authenticate } from '../middleware/auth';
-import { EmailNotificationProvider } from '../services/emailService';
-import { emailTemplates } from '../templates/emailTemplates';
 
 export const authRouter = Router();
 
@@ -178,24 +176,29 @@ authRouter.post(
   }),
 );
 
-// ─── Password reset (email-based, no database storage needed) ────────────
+// ─── Password reset via on-page 6-digit code ────────────────────────────────
+// The code is displayed on the page after email verification (no email needed).
 
-function signResetToken(userId: string): string {
-  const secret = (process.env.JWT_ACCESS_SECRET || 'default-secret-change-me') + '-reset';
-  return jwt.sign({ sub: userId, purpose: 'password-reset' }, secret, { expiresIn: '15m' });
-}
+const CODE_EXPIRY_MS = 10 * 60 * 1000;   // 10 minutes
+const MAX_VERIFY_ATTEMPTS = 3;
 
-function verifyResetToken(token: string): { sub: string } {
-  const secret = (process.env.JWT_ACCESS_SECRET || 'default-secret-change-me') + '-reset';
-  return jwt.verify(token, secret) as { sub: string };
+function generateCode(): string {
+  // 6-digit numeric code, padded with leading zeros if needed.
+  return String(Math.floor(100000 + Math.random() * 900000));
 }
 
 const forgotPasswordSchema = z.object({
   email: z.string().email(),
 });
 
+const verifyCodeSchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6, 'Code must be exactly 6 digits'),
+});
+
 const resetPasswordSchema = z.object({
-  token: z.string().min(10),
+  email: z.string().email(),
+  code: z.string().length(6, 'Code must be exactly 6 digits'),
   newPassword: passwordSchema,
 });
 
@@ -206,37 +209,105 @@ authRouter.post(
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
     });
-    // Always return success so attackers cannot enumerate accounts.
+
     if (!user || !user.isActive) {
-      return res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+      // Always return the same shape to prevent account enumeration.
+      return res.json({
+        success: true,
+        message: 'If an account exists, a verification code has been generated.',
+      });
     }
 
-    const resetToken = signResetToken(user.id);
-    const resetLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password?token=${encodeURIComponent(resetToken)}`;
-    const tpl = emailTemplates.passwordReset(user.name, resetLink);
+    // Invalidate any unused codes for this user first.
+    await prisma.passwordResetCode.updateMany({
+      where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+      data: { usedAt: new Date() },
+    });
 
-    const provider = new EmailNotificationProvider();
-    await provider.sendEmail({ to: user.email, subject: tpl.subject, html: tpl.html, text: tpl.text });
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + CODE_EXPIRY_MS);
+
+    await prisma.passwordResetCode.create({
+      data: { userId: user.id, code, expiresAt },
+    });
 
     await logAudit(req, 'FORGOT_PASSWORD', 'User', user.id);
-    res.json({ success: true, message: 'If an account exists, a reset email has been sent.' });
+
+    // Return the code so the frontend can display it on the page.
+    // The code is also stored hashed-free in the DB for verification.
+    res.json({
+      success: true,
+      message: 'Verification code generated. Enter it on the next page along with your new password.',
+      code, // displayed on the page — not sent via email
+      expiresInSeconds: Math.round(CODE_EXPIRY_MS / 1000),
+    });
+  }),
+);
+
+authRouter.post(
+  '/verify-reset-code',
+  ah(async (req, res) => {
+    const { email, code } = parseBody(verifyCodeSchema, req);
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user || !user.isActive) {
+      throw new AppError(404, 'User not found or account is disabled', 'USER_NOT_FOUND');
+    }
+
+    const stored = await prisma.passwordResetCode.findFirst({
+      where: {
+        userId: user.id,
+        code,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!stored) {
+      throw new AppError(400, 'Invalid or expired verification code', 'INVALID_CODE');
+    }
+
+    res.json({ valid: true, userId: user.id });
   }),
 );
 
 authRouter.post(
   '/reset-password',
   ah(async (req, res) => {
-    const { token, newPassword } = parseBody(resetPasswordSchema, req);
-    let payload: { sub: string };
-    try {
-      payload = verifyResetToken(token);
-    } catch {
-      throw new AppError(400, 'Invalid or expired reset token', 'INVALID_RESET_TOKEN');
+    const { email, code, newPassword } = parseBody(resetPasswordSchema, req);
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (!user || !user.isActive) {
+      throw new AppError(404, 'User not found or account is disabled', 'USER_NOT_FOUND');
     }
 
-    const user = await prisma.user.findUnique({ where: { id: payload.sub, isActive: true } });
-    if (!user) throw new AppError(404, 'User not found', 'USER_NOT_FOUND');
+    // Find and consume the code in one go.
+    const stored = await prisma.passwordResetCode.findFirst({
+      where: {
+        userId: user.id,
+        code,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
+    if (!stored) {
+      throw new AppError(400, 'Invalid or expired verification code', 'INVALID_CODE');
+    }
+
+    // Mark code as used.
+    await prisma.passwordResetCode.update({
+      where: { id: stored.id },
+      data: { usedAt: new Date() },
+    });
+
+    // Update password and revoke all sessions.
     await prisma.user.update({
       where: { id: user.id },
       data: { passwordHash: await hashPassword(newPassword) },
@@ -245,6 +316,7 @@ authRouter.post(
       where: { userId: user.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+
     await logAudit(req, 'RESET_PASSWORD', 'User', user.id);
     res.json({ success: true, message: 'Password reset successfully. You can now log in with your new password.' });
   }),
