@@ -146,10 +146,10 @@ export default function StudentProfile({ profileId, self = false }: StudentProfi
 
       {/* Hero */}
       <div className="card mb-6 overflow-hidden">
-        <div className="h-20 bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600" />
+        <div className="h-20 bg-brand-900 border-b border-amber-400" />
         <div className="px-6 pb-6">
           <div className="-mt-10 flex flex-wrap items-end gap-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-indigo-700 shadow-lg ring-4 ring-white dark:bg-slate-800 dark:text-indigo-300 dark:ring-slate-900">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-400 text-2xl font-display font-bold text-brand-950 shadow-lg ring-4 ring-white dark:ring-stone-900">
               {student.photoUrl ? (
                 <img
                   src={student.photoUrl}
@@ -162,7 +162,7 @@ export default function StudentProfile({ profileId, self = false }: StudentProfi
             </div>
             <div className="min-w-0 flex-1 pt-10 sm:pt-2">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {student.user.name}
                 </h1>
                 <Badge
@@ -176,7 +176,7 @@ export default function StudentProfile({ profileId, self = false }: StudentProfi
                 </Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                <span className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                <span className="font-mono text-xs font-semibold text-brand-700 dark:text-brand-400">
                   {student.admissionNumber}
                 </span>
                 <span>·</span>
@@ -213,7 +213,7 @@ export default function StudentProfile({ profileId, self = false }: StudentProfi
             label: 'Term GPA',
             value: latestGpa ? latestGpa.gpa.toFixed(2) : '—',
             hint: latestGpa ? `${latestGpa.semester.name}` : 'No results yet',
-            tone: 'indigo' as const,
+            tone: 'brand' as const,
             icon: 'award' as const,
           },
           {
@@ -242,8 +242,8 @@ export default function StudentProfile({ profileId, self = false }: StudentProfi
             <div
               className={cx(
                 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
-                s.tone === 'indigo' &&
-                  'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400',
+                s.tone === 'brand' &&
+                  'bg-brand-100 text-brand-800 dark:bg-brand-500/15 dark:text-brand-300',
                 s.tone === 'sky' && 'bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400',
                 s.tone === 'emerald' &&
                   'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
@@ -419,7 +419,7 @@ export default function StudentProfile({ profileId, self = false }: StudentProfi
                       <tr key={g.id} className="border-t border-slate-100 dark:border-slate-800">
                         <td className="td font-medium">{g.semester.name}</td>
                         <td className="td text-slate-500">{g.semester.academicYear.name}</td>
-                        <td className="td text-right font-bold text-indigo-600 dark:text-indigo-400">
+                        <td className="td text-right font-bold text-brand-700 dark:text-brand-300">
                           {g.gpa.toFixed(2)}
                         </td>
                         <td className="td text-right">{g.average.toFixed(1)}%</td>

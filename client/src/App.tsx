@@ -31,8 +31,28 @@ import type { Role } from './lib/types';
 
 function Splash() {
   return (
-    <div className="flex min-h-screen items-center justify-center gap-3 text-slate-500">
-      <Spinner /> Loading…
+    <div className="flex min-h-screen flex-col items-center justify-center bg-stone-50 text-stone-500 dark:bg-stone-950 dark:text-stone-400">
+      <div className="flex flex-col items-center gap-4">
+        {/* Elegant institutional-themed pulse badge */}
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-700 to-brand-900 shadow-lg shadow-brand-900/10 ring-1 ring-brand-800/10 dark:from-brand-600 dark:to-brand-800">
+          <svg
+            className="h-8 w-8 text-amber-300 animate-pulse"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c3 3 9 3 12 0v-5" />
+          </svg>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-brand-800 dark:text-brand-300 uppercase">
+          <Spinner className="h-3.5 w-3.5 text-brand-700 dark:text-brand-400" />
+          <span>Initialising Portal…</span>
+        </div>
+      </div>
     </div>
   );
 }

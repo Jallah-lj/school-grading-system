@@ -403,6 +403,28 @@ export function AppLayout() {
     };
   }, [user?.role, location.pathname]);
 
+  // Dynamically update document title based on route and school context
+  useEffect(() => {
+    const titleMap: Record<string, string> = {
+      '/': 'Dashboard',
+      '/grade-entry': 'Grade Entry',
+      '/approvals': 'Approvals Inbox',
+      '/students': 'Student Directory',
+      '/teachers': 'Faculty Directory',
+      '/parents': 'Parent Management',
+      '/grades': 'Academic Results',
+      '/my-profile': 'User Profile',
+      '/report-cards': 'Report Card Center',
+      '/analytics': 'Performance Analytics',
+      '/audit-logs': 'Security Audit Logs',
+      '/admin': 'Platform Settings',
+      '/broadcast': 'Broadcast Hub',
+    };
+    const prefix = titleMap[location.pathname] || 'Grading Portal';
+    const schoolName = school?.name || 'School Grading Portal';
+    document.title = `${prefix} | ${schoolName}`;
+  }, [school, location.pathname]);
+
   const sidebar = (
     <div className="flex h-full flex-col bg-brand-950 text-brand-100">
       {/* Brand block */}
