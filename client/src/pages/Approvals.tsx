@@ -68,8 +68,8 @@ export default function Approvals() {
   return (
     <div>
       <PageHeader
-        title="Approval Inbox"
-        subtitle="Marks submitted by teachers land here. Approving computes totals, grades, GPA and positions automatically."
+        title="Approvals"
+        subtitle="Submitted marks wait here for review. Approving computes totals, grades, GPA and positions."
         actions={
           rows.length > 0 ? (
             <Badge className="bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">

@@ -418,7 +418,7 @@ export default function ReportCards() {
     <div>
       <PageHeader
         title="Report Cards"
-        subtitle="Generate, publish and download official term report cards."
+        subtitle="Generate, publish and download report cards."
       />
       {hasRole('ADMIN', 'TEACHER') ? <AdminReportCards /> : <MineReportCards />}
     </div>

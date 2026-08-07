@@ -1,7 +1,7 @@
 {
   "name": "School Grading System",
   "short_name": "School Grades",
-  "description": "Grades, report cards, and school progress in one secure app.",
+  "description": "Grades, report cards and progress tracking for your school.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

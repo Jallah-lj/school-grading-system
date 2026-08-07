@@ -108,7 +108,7 @@ const NAV: { to: string; label: string; iconPath: string; roles: Role[] }[] = [
   },
   {
     to: '/broadcast',
-    label: 'Broadcast',
+    label: 'Announcements',
     iconPath:
       'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-.54-7.54l-3-3a5 5 0 00-7.54.54l-3 3a5 5 0 00.54 7.54l3 3z',
     roles: ['ADMIN'],
@@ -408,20 +408,21 @@ export function AppLayout() {
     const titleMap: Record<string, string> = {
       '/': 'Dashboard',
       '/grade-entry': 'Grade Entry',
-      '/approvals': 'Approvals Inbox',
-      '/students': 'Student Directory',
-      '/teachers': 'Faculty Directory',
-      '/parents': 'Parent Management',
-      '/grades': 'Academic Results',
-      '/my-profile': 'User Profile',
-      '/report-cards': 'Report Card Center',
-      '/analytics': 'Performance Analytics',
-      '/audit-logs': 'Security Audit Logs',
-      '/admin': 'Platform Settings',
-      '/broadcast': 'Broadcast Hub',
+      '/approvals': 'Approvals',
+      '/students': 'Students',
+      '/teachers': 'Teachers',
+      '/parents': 'Parents',
+      '/grades': 'My Grades',
+      '/my-profile': 'My Profile',
+      '/report-cards': 'Report Cards',
+      '/analytics': 'Analytics',
+      '/audit-logs': 'Audit Logs',
+      '/admin': 'Administration',
+      '/announcements': 'Announcements',
+      '/broadcast': 'Announcements',
     };
-    const prefix = titleMap[location.pathname] || 'Grading Portal';
-    const schoolName = school?.name || 'School Grading Portal';
+    const prefix = titleMap[location.pathname] || 'School Portal';
+    const schoolName = school?.name || 'School Portal';
     document.title = `${prefix} | ${schoolName}`;
   }, [school, location.pathname]);
 
@@ -449,9 +450,9 @@ export function AppLayout() {
             </div>
             <div
               className="truncate font-display text-[17px] font-semibold leading-snug text-white"
-              title={school?.name ?? 'Grading System'}
+              title={school?.name ?? 'School Portal'}
             >
-              {school?.name ?? 'Grading System'}
+              {school?.name ?? 'School Portal'}
             </div>
           </div>
         </div>
@@ -461,7 +462,7 @@ export function AppLayout() {
           </p>
         ) : (
           <p className="mt-4 truncate border-t border-white/10 pt-3 text-[11px] font-medium uppercase tracking-wider text-brand-300/60">
-            School Grading System
+            Student &amp; staff portal
           </p>
         )}
         {school?.academicYear && (

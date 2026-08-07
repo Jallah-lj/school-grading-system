@@ -58,7 +58,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Public Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Fraunces', 'Georgia', 'ui-serif', 'serif'],
+        display: ['Georgia', 'Cambria', '"Times New Roman"', 'serif'],
         doc: ['"Times New Roman"', 'Times', 'ui-serif', 'serif'],
       },
       colors: {

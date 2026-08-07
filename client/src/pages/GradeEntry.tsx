@@ -403,7 +403,7 @@ export default function GradeEntry() {
     <div>
       <PageHeader
         title="Grade Entry"
-        subtitle="Enter marks per assessment component — totals, grades and GPA are computed automatically."
+        subtitle="Enter marks for each assessment component. Totals, grades and GPA are calculated automatically."
         actions={
           <>
             {ready && (

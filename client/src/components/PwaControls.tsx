@@ -34,7 +34,7 @@ export function PwaControls() {
     <div className="flex items-center gap-1.5">
       {!online && <span className="hidden rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 sm:inline dark:bg-amber-500/20 dark:text-amber-200">Offline</span>}
       {prompt && (
-        <button className="btn-secondary px-2.5 py-1.5 text-xs" onClick={() => void install()} title="Install the School Grading app">
+        <button className="btn-secondary px-2.5 py-1.5 text-xs" onClick={() => void install()} title="Install this app on your device">
           <Icon name="download" size={15} /> <span className="hidden sm:inline">Install app</span>
         </button>
       )}

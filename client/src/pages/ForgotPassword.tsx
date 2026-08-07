@@ -59,8 +59,6 @@ export default function ForgotPassword() {
     }
   };
 
-  const schoolName = 'School Grading System';
-
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="flex flex-1 flex-col items-center justify-center p-6">
@@ -172,7 +170,7 @@ export default function ForgotPassword() {
             )}
           </div>
           <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">
-            © {new Date().getFullYear()} {schoolName}. All rights reserved.
+            © {new Date().getFullYear()} School Grading System. All rights reserved.
           </p>
         </div>
       </div>

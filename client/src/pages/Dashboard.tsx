@@ -153,14 +153,14 @@ function AdminDashboard() {
           )}
         />
         <StatCard
-          label="Published Students"
+          label="Top &amp; Review Lists"
           value={
             data.topStudents.length + data.bottomStudents.length > 0
-              ? `${data.topStudents.length + data.bottomStudents.length} tracked`
+              ? `${data.topStudents.length} + ${data.bottomStudents.length}`
               : '—'
           }
           tone="moss"
-          hint="cohort performance subsets"
+          hint="top 5 and 5 needing support this term"
           icon={statIcon(
             'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
           )}
@@ -194,14 +194,14 @@ function AdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         {[
           {
-            title: 'Top Performing Cohort',
+            title: 'Top Students',
             icon: 'award' as const,
             iconClass: 'text-amber-500',
             rows: data.topStudents,
             good: true,
           },
           {
-            title: 'Academic Review Required',
+            title: 'Students Needing Support',
             icon: 'warning' as const,
             iconClass: 'text-rose-500',
             rows: data.bottomStudents,
@@ -473,10 +473,10 @@ function StudentDashboard() {
 export default function Dashboard() {
   const { user, hasRole } = useAuth();
   const subtitle = hasRole('ADMIN')
-    ? 'Academic performance analytics and administrative overview.'
+    ? 'Enrolment, results and pending approvals at a glance.'
     : hasRole('TEACHER')
-      ? 'My classes, teaching assignments, and assessment summaries.'
-      : 'My student dashboard, grading reports, and progress trends.';
+      ? 'Your classes, assignments and recent activity.'
+      : 'Latest results, GPA and class position.';
 
   return (
     <div>

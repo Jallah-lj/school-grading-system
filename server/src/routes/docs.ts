@@ -41,7 +41,7 @@ const swaggerHtml = `<!DOCTYPE html>
     /* Make the top bar match the school brand */
     .topbar-wrapper img[alt="Swagger UI"] { display: none; }
     .topbar-wrapper .link::after {
-      content: '🎓 School Grading System API';
+      content: 'School Grading System API';
       font-size: 18px;
       font-weight: 600;
       color: #fff;
