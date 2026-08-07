@@ -50,7 +50,7 @@ function Splash() {
         </div>
         <div className="flex items-center gap-2 text-xs font-bold tracking-wider text-brand-800 dark:text-brand-300 uppercase">
           <Spinner className="h-3.5 w-3.5 text-brand-700 dark:text-brand-400" />
-          <span>Initialising Portal…</span>
+          <span>Loading…</span>
         </div>
       </div>
     </div>
@@ -73,9 +73,9 @@ function RequireRole({ roles, children }: { roles: Role[]; children: ReactNode }
 }
 
 /**
- * The sidebar calls this feature “Broadcast”, while older links and bookmarks
- * use “Announcements”. Keep both URLs pointed at the same protected page so a
- * deep link never falls through to the catch-all route.
+ * The sidebar calls this feature “Announcements”. Older links and bookmarks may
+ * use /announcements or /broadcast, so both URLs point at the same protected
+ * page and a deep link never falls through to the catch-all route.
  */
 function AdminAnnouncementsRoute() {
   return (
@@ -200,9 +200,8 @@ export default function App() {
             </RequireRole>
           }
         />
-        {/* /announcements is retained for existing bookmarks and notification links. */}
+        {/* /broadcast is retained for older bookmarks and notification links. */}
         <Route path="/announcements" element={<AdminAnnouncementsRoute />} />
-        {/* Broadcast is the name shown in the navigation and the public URL. */}
         <Route path="/broadcast" element={<AdminAnnouncementsRoute />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -19,9 +19,10 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const FEATURES = [
-  'Automated Assessment Engine (GPA, Letter Grades & Weighted Totals)',
-  'Secure Role-Based Access Control (RBAC) for all stakeholders',
-  'Verifiable Digital Transcripts & Printable PDF Report Cards with QR Verification',
+  'Teachers enter and submit marks for the classes they teach.',
+  'Students and parents view published results, GPA and class position.',
+  'Admins approve results and publish official report cards.',
+  'Every report card carries a QR code that anyone can verify.',
 ];
 
 export default function Login() {
@@ -58,18 +59,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen bg-stone-100 dark:bg-stone-950">
       {/* Branding panel */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 p-12 text-white lg:flex">
-        {/* Decorative background */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: 'radial-gradient(#f3d78f 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-        <div className="pointer-events-none absolute -left-28 top-1/4 h-96 w-96 rounded-full bg-amber-300/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 h-[28rem] w-[28rem] rounded-full bg-emerald-400/10 blur-3xl" />
-
+      <div className="relative hidden w-1/2 flex-col justify-between border-r border-white/10 bg-brand-950 p-12 text-white lg:flex">
         {/* Header */}
         <div className="relative z-10 flex items-center gap-4">
           {school?.hasBadge ? (
@@ -85,7 +75,7 @@ export default function Login() {
           )}
           <div className="min-w-0">
             <span className="block truncate text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
-              School grading portal
+              Student &amp; staff portal
             </span>
             <span className="block truncate font-display text-xl font-semibold leading-tight">
               {schoolName}
@@ -100,16 +90,12 @@ export default function Login() {
 
         {/* Pitch */}
         <div className="relative z-10 max-w-md">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-amber-200 ring-1 ring-amber-300/25">
-            <Icon name="shield-check" size={12} />
-            School Grading Portal
-          </span>
-          <h1 className="mt-6 font-display text-[42px] font-semibold leading-[1.1] tracking-tight">
-            Assessment, <em className="text-amber-300">automated.</em>
+          <h1 className="font-display text-[42px] font-semibold leading-[1.1] tracking-tight">
+            Grades, report cards and announcements — in one place.
           </h1>
           <p className="mt-5 max-w-md text-base leading-relaxed text-brand-100/85">
-            Grade entry, automatic GPA &amp; ranking, printable report cards with QR verification,
-            and performance analytics — in one secure platform.
+            Teachers enter marks for their classes. Students and parents see published results,
+            GPA and report cards as soon as they are out.
           </p>
           <ul className="mt-8 space-y-3 text-sm text-brand-100/90">
             {FEATURES.map((f) => (
@@ -131,7 +117,7 @@ export default function Login() {
                   {schoolYearLabel}
                 </span>
               )}
-              <span>Secure · Role-based · Audited</span>
+              <span>For students, parents and staff</span>
             </div>
             <div className="flex flex-col items-end gap-1 text-brand-200/60">
               <span>
@@ -178,15 +164,11 @@ export default function Login() {
 
             {/* Sign-in card */}
             <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-xl shadow-stone-900/5 dark:border-stone-800 dark:bg-stone-900 sm:p-10">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-700/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-brand-800 ring-1 ring-brand-700/15 dark:bg-brand-400/10 dark:text-brand-300 dark:ring-brand-400/25">
-                <Icon name="shield-check" size={12} />
-                Secure sign in
-              </span>
-              <h2 className="mt-4 font-display text-[26px] font-semibold tracking-tight text-stone-900 dark:text-white">
-                Welcome back
+              <h2 className="font-display text-[26px] font-semibold tracking-tight text-stone-900 dark:text-white">
+                Sign in
               </h2>
               <p className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
-                Sign in with your account credentials to continue.
+                Enter the email and password issued by your school.
               </p>
 
               {error && (

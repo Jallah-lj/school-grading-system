@@ -127,8 +127,8 @@ export default function Analytics() {
   return (
     <div>
       <PageHeader
-        title="Performance Analytics"
-        subtitle="Subject, class and school-wide performance insights."
+        title="Analytics"
+        subtitle="Subject, class and school-wide performance."
       />
 
       <div className="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:max-w-xl">

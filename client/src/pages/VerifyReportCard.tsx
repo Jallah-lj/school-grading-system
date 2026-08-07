@@ -311,7 +311,7 @@ export default function VerifyReportCard() {
           className="px-6 py-2.5 text-center text-[11px]"
           style={{ backgroundColor: FOREST, color: '#d4e0d9' }}
         >
-          {data.school.name} &nbsp;·&nbsp; Verified via School Grading System &nbsp;·&nbsp;{' '}
+          {data.school.name} &nbsp;·&nbsp; Digitally verified &nbsp;·&nbsp;{' '}
           {data.verificationCode}
         </div>
       </div>

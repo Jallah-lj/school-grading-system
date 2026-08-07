@@ -109,7 +109,7 @@ export default function MyGrades() {
   return (
     <div>
       <PageHeader
-        title="Academic Progress"
+        title="My Grades"
         subtitle="Published results, GPA history and transcripts."
         actions={
           <button className="btn-secondary" onClick={() => void downloadTranscript()}>

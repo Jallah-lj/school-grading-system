@@ -36,7 +36,7 @@ export default function Announcements() {
       <div className="flex min-h-[40vh] items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Access denied</h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Only administrators can broadcast announcements.</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Only administrators can send announcements.</p>
         </div>
       </div>
     );
@@ -69,8 +69,8 @@ export default function Announcements() {
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Broadcast Announcement</h1>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Send a message to students, parents, teachers, or everyone — via in-app notification, email, and optional SMS/WhatsApp.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Announcements</h1>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Send a message to students, parents, teachers or everyone — by in-app notification and email, with optional SMS.</p>
       </div>
 
       <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-xl shadow-stone-900/5 dark:border-stone-800 dark:bg-stone-900 sm:p-8">
