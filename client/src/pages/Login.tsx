@@ -19,9 +19,9 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const FEATURES = [
-  'Automatic totals, percentages, letter grades & GPA',
-  'Role-based access for admins, teachers, students & parents',
-  'PDF report cards, transcripts & CSV exports',
+  'Automated Assessment Engine (GPA, Letter Grades & Weighted Totals)',
+  'Secure Role-Based Access Control (RBAC) for all stakeholders',
+  'Verifiable Digital Transcripts & Printable PDF Report Cards with QR Verification',
 ];
 
 export default function Login() {

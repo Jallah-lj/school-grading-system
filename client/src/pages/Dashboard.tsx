@@ -156,11 +156,11 @@ function AdminDashboard() {
           label="Published Students"
           value={
             data.topStudents.length + data.bottomStudents.length > 0
-              ? `${data.topStudents.length}+ shown`
+              ? `${data.topStudents.length + data.bottomStudents.length} tracked`
               : '—'
           }
           tone="moss"
-          hint="top / bottom performers"
+          hint="cohort performance subsets"
           icon={statIcon(
             'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
           )}
@@ -194,14 +194,14 @@ function AdminDashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         {[
           {
-            title: 'Highest Performing Students',
+            title: 'Top Performing Cohort',
             icon: 'award' as const,
             iconClass: 'text-amber-500',
             rows: data.topStudents,
             good: true,
           },
           {
-            title: 'Students Needing Improvement',
+            title: 'Academic Review Required',
             icon: 'warning' as const,
             iconClass: 'text-rose-500',
             rows: data.bottomStudents,
@@ -472,11 +472,17 @@ function StudentDashboard() {
 
 export default function Dashboard() {
   const { user, hasRole } = useAuth();
+  const subtitle = hasRole('ADMIN')
+    ? 'Academic performance analytics and administrative overview.'
+    : hasRole('TEACHER')
+      ? 'My classes, teaching assignments, and assessment summaries.'
+      : 'My student dashboard, grading reports, and progress trends.';
+
   return (
     <div>
       <PageHeader
         title={`Welcome, ${user?.name.split(' ')[0]}`}
-        subtitle="Here's what's happening at the school."
+        subtitle={subtitle}
       />
       {hasRole('ADMIN') ? (
         <AdminDashboard />

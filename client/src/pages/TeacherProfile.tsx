@@ -102,10 +102,10 @@ export default function TeacherProfile({ profileId, self = false }: TeacherProfi
 
       {/* Hero */}
       <div className="card mb-6 overflow-hidden">
-        <div className="h-20 bg-gradient-to-r from-sky-600 via-indigo-500 to-violet-600" />
+        <div className="h-20 bg-brand-900 border-b border-amber-400" />
         <div className="px-6 pb-6">
           <div className="-mt-10 flex flex-wrap items-end gap-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-sky-700 shadow-lg ring-4 ring-white dark:bg-slate-800 dark:text-sky-300 dark:ring-slate-900">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-400 text-2xl font-display font-bold text-brand-950 shadow-lg ring-4 ring-white dark:ring-stone-900">
               {teacher.photoUrl ? (
                 <img
                   src={teacher.photoUrl}
@@ -118,7 +118,7 @@ export default function TeacherProfile({ profileId, self = false }: TeacherProfi
             </div>
             <div className="min-w-0 flex-1 pt-10 sm:pt-2">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {teacher.user.name}
                 </h1>
                 <Badge
@@ -132,7 +132,7 @@ export default function TeacherProfile({ profileId, self = false }: TeacherProfi
                 </Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                <span className="font-mono text-xs font-semibold text-sky-600 dark:text-sky-400">
+                <span className="font-mono text-xs font-semibold text-brand-700 dark:text-brand-400">
                   {teacher.staffNumber}
                 </span>
                 <span>·</span>
@@ -163,7 +163,7 @@ export default function TeacherProfile({ profileId, self = false }: TeacherProfi
             label: 'Assignments',
             value: String(teacher.assignments.length),
             icon: 'book' as const,
-            tone: 'indigo',
+            tone: 'brand',
           },
           {
             label: 'Subjects',
@@ -187,8 +187,8 @@ export default function TeacherProfile({ profileId, self = false }: TeacherProfi
           <div key={s.label} className="card flex items-center gap-4 p-4">
             <div
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                s.tone === 'indigo'
-                  ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400'
+                s.tone === 'brand'
+                  ? 'bg-brand-100 text-brand-800 dark:bg-brand-500/15 dark:text-brand-300'
                   : s.tone === 'sky'
                     ? 'bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400'
                     : s.tone === 'emerald'
@@ -292,7 +292,7 @@ export default function TeacherProfile({ profileId, self = false }: TeacherProfi
                         className="border-t border-slate-100 dark:border-slate-800"
                       >
                         <td className="td font-medium">{a.subject.name}</td>
-                        <td className="td font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                        <td className="td font-mono text-xs font-semibold text-brand-700 dark:text-brand-400">
                           {a.subject.code}
                         </td>
                         <td className="td">
