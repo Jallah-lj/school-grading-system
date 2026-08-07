@@ -61,7 +61,7 @@ export function PasswordConfirmDialog({
         />
         <button
           type="button"
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-500 hover:underline"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
           onClick={() => setShow((s) => !s)}
         >
           {show ? 'Hide' : 'Show'}

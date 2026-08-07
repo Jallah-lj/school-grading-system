@@ -4,22 +4,22 @@ export const cx = (...args: ClassValue[]) => clsx(...args);
 
 export const gradeBadgeClass = (letter: string): string =>
   letter.startsWith('A')
-    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+    ? 'bg-brand-100 text-brand-800 dark:bg-brand-500/15 dark:text-brand-300'
     : letter.startsWith('B')
-      ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-400'
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
       : letter === 'C'
         ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
         : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400';
 
 export const statusBadgeClass = (status: string): string =>
   ({
-    DRAFT: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
+    DRAFT: 'bg-stone-200 text-stone-700 dark:bg-stone-700 dark:text-stone-200',
     SUBMITTED: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400',
-    APPROVED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
+    APPROVED: 'bg-brand-100 text-brand-800 dark:bg-brand-500/15 dark:text-brand-300',
     PUBLISHED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
-    GENERATED: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400',
-    EMPTY: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  })[status] ?? 'bg-slate-200 text-slate-700';
+    GENERATED: 'bg-moss-100 text-moss-800 dark:bg-moss-500/15 dark:text-moss-300',
+    EMPTY: 'bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300',
+  })[status] ?? 'bg-stone-200 text-stone-700';
 
 export const fmtDate = (iso?: string | null): string =>
   iso

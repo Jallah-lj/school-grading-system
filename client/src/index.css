@@ -7,52 +7,66 @@
     @apply antialiased;
   }
   body {
-    @apply bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-200;
+    @apply bg-stone-100 text-stone-800 dark:bg-stone-950 dark:text-stone-200;
+  }
+  ::selection {
+    @apply bg-brand-700/20 text-brand-950 dark:bg-brand-400/30 dark:text-white;
   }
 }
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+    @apply rounded-xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800;
+    @apply btn bg-brand-700 text-white shadow-sm shadow-brand-900/20 hover:bg-brand-800 active:bg-brand-900;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;
+    @apply btn border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700;
   }
   .btn-danger {
-    @apply btn bg-rose-600 text-white hover:bg-rose-700;
+    @apply btn bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800;
   }
   .btn-ghost {
-    @apply btn text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800;
+    @apply btn text-stone-600 hover:bg-stone-200/70 dark:text-stone-300 dark:hover:bg-stone-800;
   }
   .input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:placeholder:text-slate-500;
+    @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600 dark:border-stone-700 dark:bg-stone-800 dark:placeholder:text-stone-500;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300;
+    @apply mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300;
   }
   .th {
-    @apply px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+    @apply px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400;
   }
   .td {
     @apply px-4 py-2.5 text-sm;
   }
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
   .navlink {
-    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800;
+    @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-white;
   }
   .navlink-active {
-    @apply bg-indigo-600/10 text-indigo-700 hover:bg-indigo-600/10 dark:text-indigo-400;
+    @apply bg-brand-700/10 text-brand-800 hover:bg-brand-700/10 dark:bg-brand-400/10 dark:text-brand-300 dark:hover:bg-brand-400/10;
+  }
+  /* Dark sidebar navigation */
+  .navlink-sidebar {
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100/70 transition hover:bg-white/5 hover:text-white;
+  }
+  .navlink-sidebar-active {
+    @apply bg-white/10 text-white hover:bg-white/10;
+  }
+  .navlink-sidebar-active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-amber-400;
   }
   .skeleton {
-    @apply animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800;
+    @apply animate-pulse rounded-lg bg-stone-200 dark:bg-stone-800;
   }
 }
 

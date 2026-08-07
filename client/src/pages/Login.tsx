@@ -56,37 +56,42 @@ export default function Login() {
   const schoolName = school?.name ?? 'School Grading System';
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen bg-stone-100 dark:bg-stone-950">
       {/* Branding panel */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-950 p-12 text-white lg:flex">
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 p-12 text-white lg:flex">
         {/* Decorative background */}
-        <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-500/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 h-[28rem] w-[28rem] rounded-full bg-indigo-400/20 blur-3xl" />
         <div
-          className="pointer-events-none absolute inset-0 opacity-40"
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
-            backgroundImage: 'radial-gradient(rgba(255,255,255,0.13) 1px, transparent 1px)',
-            backgroundSize: '26px 26px',
+            backgroundImage: 'radial-gradient(#f3d78f 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
           }}
         />
+        <div className="pointer-events-none absolute -left-28 top-1/4 h-96 w-96 rounded-full bg-amber-300/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-40 -right-24 h-[28rem] w-[28rem] rounded-full bg-emerald-400/10 blur-3xl" />
 
         {/* Header */}
-        <div className="relative z-10 flex items-center gap-3">
+        <div className="relative z-10 flex items-center gap-4">
           {school?.hasBadge ? (
             <img
               src={apiUrl('/school/badge')}
               alt="School badge"
-              className="h-12 w-12 rounded-xl object-contain shadow-lg shadow-black/20 ring-1 ring-white/25"
+              className="h-12 w-12 rounded-xl bg-white/95 object-contain p-1 shadow-lg shadow-black/20 ring-1 ring-white/25"
             />
           ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl font-extrabold backdrop-blur">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 font-display text-xl font-bold text-brand-950 shadow-lg shadow-black/20 ring-1 ring-white/25">
               {schoolName[0]}
             </div>
           )}
           <div className="min-w-0">
-            <span className="block truncate text-lg font-semibold leading-tight">{schoolName}</span>
+            <span className="block truncate text-[11px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
+              School grading portal
+            </span>
+            <span className="block truncate font-display text-xl font-semibold leading-tight">
+              {schoolName}
+            </span>
             {school?.motto && (
-              <span className="mt-0.5 block truncate text-xs italic text-indigo-200/90">
+              <span className="mt-0.5 block truncate text-xs italic text-brand-200/80">
                 “{school.motto}”
               </span>
             )}
@@ -95,21 +100,21 @@ export default function Login() {
 
         {/* Pitch */}
         <div className="relative z-10 max-w-md">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-indigo-100 ring-1 ring-white/15">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-amber-200 ring-1 ring-amber-300/25">
             <Icon name="shield-check" size={12} />
             School Grading Portal
           </span>
-          <h1 className="mt-6 text-4xl font-extrabold leading-tight tracking-tight">
-            Assessment, <span className="text-indigo-300">automated.</span>
+          <h1 className="mt-6 font-display text-[42px] font-semibold leading-[1.1] tracking-tight">
+            Assessment, <em className="text-amber-300">automated.</em>
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-indigo-100/95">
+          <p className="mt-5 max-w-md text-base leading-relaxed text-brand-100/85">
             Grade entry, automatic GPA &amp; ranking, printable report cards with QR verification,
             and performance analytics — in one secure platform.
           </p>
-          <ul className="mt-8 space-y-3 text-sm text-indigo-100">
+          <ul className="mt-8 space-y-3 text-sm text-brand-100/90">
             {FEATURES.map((f) => (
               <li key={f} className="flex items-start gap-2.5">
-                <Icon name="check-circle" size={16} className="mt-0.5 shrink-0 text-emerald-300" />
+                <Icon name="check-circle" size={16} className="mt-0.5 shrink-0 text-amber-300" />
                 <span>{f}</span>
               </li>
             ))}
@@ -117,18 +122,18 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <footer className="relative z-10 border-t border-white/15 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-indigo-200">
+        <footer className="relative z-10 border-t border-white/10 pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-brand-200/80">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {schoolYearLabel && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 font-medium text-indigo-50">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-300/10 px-2.5 py-1 font-semibold text-amber-200 ring-1 ring-amber-300/25">
                   <Icon name="calendar" size={12} />
                   {schoolYearLabel}
                 </span>
               )}
               <span>Secure · Role-based · Audited</span>
             </div>
-            <div className="flex flex-col items-end gap-1 text-indigo-200/80">
+            <div className="flex flex-col items-end gap-1 text-brand-200/60">
               <span>
                 © {copyrightYear} {schoolName}. All rights reserved.
               </span>
@@ -156,15 +161,15 @@ export default function Login() {
                 <img
                   src={apiUrl('/school/badge')}
                   alt=""
-                  className="h-9 w-9 rounded-lg object-contain ring-1 ring-slate-200 dark:ring-slate-700"
+                  className="h-9 w-9 rounded-lg bg-white object-contain p-0.5 ring-1 ring-stone-200 dark:ring-stone-700"
                 />
               )}
               <div className="min-w-0">
-                <div className="truncate text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+                <div className="truncate font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-white">
                   {schoolName}
                 </div>
                 {school?.motto && (
-                  <div className="mt-0.5 truncate text-xs italic text-slate-500 dark:text-slate-400">
+                  <div className="mt-0.5 truncate text-xs italic text-stone-500 dark:text-stone-400">
                     “{school.motto}”
                   </div>
                 )}
@@ -172,15 +177,15 @@ export default function Login() {
             </div>
 
             {/* Sign-in card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-10">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-indigo-600 ring-1 ring-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:ring-indigo-500/20">
+            <div className="rounded-xl border border-stone-200 bg-white p-8 shadow-xl shadow-stone-900/5 dark:border-stone-800 dark:bg-stone-900 sm:p-10">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-700/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-brand-800 ring-1 ring-brand-700/15 dark:bg-brand-400/10 dark:text-brand-300 dark:ring-brand-400/25">
                 <Icon name="shield-check" size={12} />
                 Secure sign in
               </span>
-              <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h2 className="mt-4 font-display text-[26px] font-semibold tracking-tight text-stone-900 dark:text-white">
                 Welcome back
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
                 Sign in with your account credentials to continue.
               </p>
 
@@ -203,7 +208,7 @@ export default function Login() {
                     <Icon
                       name="mail"
                       size={16}
-                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500"
                     />
                     <input
                       id="email"
@@ -230,7 +235,7 @@ export default function Login() {
                     <Icon
                       name="lock"
                       size={16}
-                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 dark:text-stone-500"
                     />
                     <input
                       id="password"
@@ -245,7 +250,7 @@ export default function Login() {
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                       title={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 dark:hover:bg-stone-800 dark:hover:text-stone-300"
                     >
                       <Icon name={showPassword ? 'eye-off' : 'eye'} size={16} />
                     </button>
@@ -280,10 +285,13 @@ export default function Login() {
 
             {/* Help */}
             <div className="mt-4 flex items-center justify-between">
-              <Link to="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-brand-700 hover:text-brand-800 hover:underline dark:text-brand-300 dark:hover:text-brand-200"
+              >
                 Forgot your password?
               </Link>
-              <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <span className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-stone-500">
                 <Icon name="corner-up-left" size={13} />
                 Trouble signing in? Contact your school administrator.
               </span>
@@ -292,10 +300,10 @@ export default function Login() {
         </div>
 
         {/* Mobile / narrow footer */}
-        <footer className="border-t border-slate-200 px-6 py-4 text-center text-xs text-slate-400 dark:border-slate-800 lg:hidden">
+        <footer className="border-t border-stone-200 px-6 py-4 text-center text-xs text-stone-400 dark:border-stone-800 lg:hidden">
           <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-3">
             {schoolYearLabel && (
-              <span className="font-medium text-slate-500 dark:text-slate-400">
+              <span className="font-medium text-stone-500 dark:text-stone-400">
                 {schoolYearLabel}
               </span>
             )}
@@ -304,11 +312,11 @@ export default function Login() {
             </span>
           </div>
           <div className="mt-1.5 flex justify-center gap-2">
-            <Link to="/terms" className="hover:text-indigo-500 hover:underline">
+            <Link to="/terms" className="hover:text-brand-700 hover:underline">
               Terms
             </Link>
             <span>·</span>
-            <Link to="/privacy" className="hover:text-indigo-500 hover:underline">
+            <Link to="/privacy" className="hover:text-brand-700 hover:underline">
               Privacy
             </Link>
           </div>
