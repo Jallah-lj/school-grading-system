@@ -29,7 +29,7 @@
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^2.2.0",
+    "multer": "^2.3.0",
     "nodemailer": "^9.0.3",
     "pdfkit": "^0.15.1",
     "qrcode": "^1.5.4",
