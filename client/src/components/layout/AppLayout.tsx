@@ -5,7 +5,7 @@ import { api, apiUrl } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { cx, fmtDate, initials } from '../../lib/utils';
 import { ConfirmDialog } from '../ConfirmDialog';
-import { Icon } from '../Icon';
+import { Icon, type IconName } from '../Icon';
 import { PwaControls } from '../PwaControls';
 import { SignatureModal } from '../SignatureModal';
 import { useToast } from '../toast';
@@ -14,106 +14,79 @@ import type { MouseEvent as ReactMouseEvent } from 'react';
 
 import type { AppNotification, PendingApproval, Role, SchoolPublicInfo } from '../../lib/types';
 
-const icon = (path: string) => (
-  <svg
-    className="h-5 w-5 shrink-0"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d={path} />
-  </svg>
-);
+type NavItem = { to: string; label: string; icon: IconName; roles: Role[]; section: string };
 
-const NAV: { to: string; label: string; iconPath: string; roles: Role[] }[] = [
+const NAV: NavItem[] = [
   {
     to: '/',
     label: 'Dashboard',
-    iconPath: 'M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10',
+    icon: 'home',
     roles: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'],
+    section: 'Academic',
   },
   {
     to: '/grade-entry',
     label: 'Grade Entry',
-    iconPath: 'M11 4H4v16h16v-7M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.5-9.5z',
+    icon: 'edit',
     roles: ['TEACHER', 'ADMIN'],
-  },
-  {
-    to: '/approvals',
-    label: 'Approvals',
-    iconPath: 'M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    roles: ['ADMIN'],
-  },
-  {
-    to: '/students',
-    label: 'Students',
-    iconPath:
-      'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
-    roles: ['ADMIN', 'TEACHER'],
-  },
-  {
-    to: '/teachers',
-    label: 'Teachers',
-    iconPath: 'M22 10L12 5 2 10l10 5 10-5zM6 12v5c3 3 9 3 12 0v-5',
-    roles: ['ADMIN'],
-  },
-  {
-    to: '/parents',
-    label: 'Parents',
-    iconPath:
-      'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
-    roles: ['ADMIN'],
+    section: 'Academic',
   },
   {
     to: '/grades',
     label: 'My Grades',
-    iconPath:
-      'M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z',
+    icon: 'book',
     roles: ['STUDENT', 'PARENT'],
-  },
-  {
-    to: '/my-profile',
-    label: 'My Profile',
-    iconPath: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
-    roles: ['TEACHER', 'STUDENT'],
+    section: 'Academic',
   },
   {
     to: '/report-cards',
     label: 'Report Cards',
-    iconPath:
-      'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM14 2v6h6M16 13H8M16 17H8M10 9H8',
+    icon: 'file-text',
     roles: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'],
+    section: 'Academic',
   },
   {
     to: '/analytics',
     label: 'Analytics',
-    iconPath: 'M18 20V10M12 20V4M6 20v-6',
+    icon: 'bar-chart',
     roles: ['ADMIN', 'TEACHER'],
+    section: 'Academic',
   },
   {
-    to: '/audit-logs',
-    label: 'Audit Logs',
-    iconPath: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
-    roles: ['ADMIN'],
+    to: '/students',
+    label: 'Students',
+    icon: 'student',
+    roles: ['ADMIN', 'TEACHER'],
+    section: 'People',
   },
+  { to: '/teachers', label: 'Teachers', icon: 'teacher', roles: ['ADMIN'], section: 'People' },
+  { to: '/parents', label: 'Parents', icon: 'parent', roles: ['ADMIN'], section: 'People' },
   {
-    to: '/admin',
-    label: 'Administration',
-    iconPath:
-      'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h.01a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h.01a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.01a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z',
+    to: '/approvals',
+    label: 'Approvals',
+    icon: 'check-circle',
     roles: ['ADMIN'],
+    section: 'Operations',
   },
   {
     to: '/broadcast',
     label: 'Announcements',
-    iconPath:
-      'M10 13a5 5 0 007.54.54l3-3a5 5 0 00-.54-7.54l-3-3a5 5 0 00-7.54.54l-3 3a5 5 0 00.54 7.54l3 3z',
+    icon: 'megaphone',
     roles: ['ADMIN'],
+    section: 'Operations',
+  },
+  { to: '/audit-logs', label: 'Audit Logs', icon: 'shield', roles: ['ADMIN'], section: 'System' },
+  { to: '/admin', label: 'Administration', icon: 'settings', roles: ['ADMIN'], section: 'System' },
+  {
+    to: '/my-profile',
+    label: 'My Profile',
+    icon: 'users',
+    roles: ['TEACHER', 'STUDENT'],
+    section: 'System',
   },
 ];
+
+const SECTIONS = ['Academic', 'People', 'Operations', 'System'];
 
 function ThemeToggle() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
@@ -164,10 +137,15 @@ function NotificationBell() {
     const onClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
     document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
     return () => {
       clearInterval(timer);
       document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
     };
   }, []);
 
@@ -250,7 +228,7 @@ function NotificationBell() {
           )}
       </button>
       {open && (
-        <div className="card absolute right-0 z-40 mt-2 w-80 overflow-hidden p-0">
+        <div className="card absolute right-0 z-40 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden p-0">
           <div className="flex items-center justify-between border-b border-stone-200 px-4 py-2.5 dark:border-stone-800">
             <span className="text-sm font-semibold text-stone-800 dark:text-stone-100">
               Notifications
@@ -472,27 +450,38 @@ export function AppLayout() {
           </div>
         )}
       </div>
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-        {links.map((n) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.to === '/'}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) => cx('navlink-sidebar', isActive && 'navlink-sidebar-active')}
-          >
-            {icon(n.iconPath)}
-            <span className="flex-1">{n.label}</span>
-            {n.to === '/approvals' && pendingApprovals > 0 && (
-              <span
-                className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-brand-950"
-                title={`${pendingApprovals} submission(s) awaiting approval`}
-              >
-                {pendingApprovals > 99 ? '99+' : pendingApprovals}
-              </span>
-            )}
-          </NavLink>
-        ))}
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
+        {SECTIONS.map((section) => {
+          const items = links.filter((n) => n.section === section);
+          if (items.length === 0) return null;
+          return (
+            <div key={section} className="mb-1">
+              <div className="nav-section">{section}</div>
+              {items.map((n) => (
+                <NavLink
+                  key={n.to}
+                  to={n.to}
+                  end={n.to === '/'}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    cx('navlink-sidebar', isActive && 'navlink-sidebar-active')
+                  }
+                >
+                  <Icon name={n.icon} size={18} />
+                  <span className="flex-1">{n.label}</span>
+                  {n.to === '/approvals' && pendingApprovals > 0 && (
+                    <span
+                      className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-brand-950"
+                      title={`${pendingApprovals} submission(s) awaiting approval`}
+                    >
+                      {pendingApprovals > 99 ? '99+' : pendingApprovals}
+                    </span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          );
+        })}
       </nav>
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3">
@@ -530,6 +519,24 @@ export function AppLayout() {
     </div>
   );
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
+  const mobilePrimary = links.filter((n) =>
+    ['/', '/grades', '/grade-entry', '/students', '/report-cards'].includes(n.to),
+  ).slice(0, 4);
+
   return (
     <div className="flex min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-brand-950 lg:block">
@@ -537,26 +544,29 @@ export function AppLayout() {
       </aside>
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-brand-950/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64 bg-brand-950">
+          <div className="absolute inset-0 bg-brand-950/60" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-[min(18rem,88vw)] bg-brand-950 shadow-xl">
             {sidebar}
           </aside>
         </div>
       )}
-      <div className="flex min-h-screen flex-1 flex-col lg:pl-64">
-        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-stone-200 bg-white/85 px-4 py-3 backdrop-blur dark:border-stone-800 dark:bg-stone-950/85">
+      <div className="flex min-h-screen flex-1 flex-col pb-16 lg:pl-64 lg:pb-0">
+        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-stone-200 bg-white px-3 py-2.5 dark:border-stone-800 dark:bg-stone-950 sm:px-4">
           <button
-            className="btn-ghost px-2 py-1.5 lg:hidden"
+            className="btn-ghost min-h-11 min-w-11 px-2 lg:hidden"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
           >
             <Icon name="menu" size={20} />
           </button>
-          <div className="flex-1" />
+          <div className="min-w-0 flex-1 truncate text-sm font-semibold text-stone-800 dark:text-stone-100 lg:hidden">
+            {school?.name ?? 'School Portal'}
+          </div>
+          <div className="hidden flex-1 lg:block" />
           <PwaControls />
           {hasRole('TEACHER', 'ADMIN') && (
             <button
-              className="btn-ghost px-2.5 py-2"
+              className="btn-ghost min-h-11 min-w-11 px-2.5"
               title="My digital signature"
               aria-label="My digital signature"
               onClick={() => setSignatureOpen(true)}
@@ -567,9 +577,38 @@ export function AppLayout() {
           <NotificationBell />
           <ThemeToggle />
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main className="flex-1 px-3 py-5 sm:px-6 lg:px-8">
           <Outlet />
         </main>
+        <nav
+          className="fixed inset-x-0 bottom-0 z-20 flex border-t border-stone-200 bg-white pb-safe dark:border-stone-800 dark:bg-stone-950 lg:hidden"
+          aria-label="Primary"
+        >
+          {mobilePrimary.map((n) => (
+            <NavLink
+              key={n.to}
+              to={n.to}
+              end={n.to === '/'}
+              className={({ isActive }) =>
+                cx(
+                  'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium',
+                  isActive ? 'text-brand-800 dark:text-brand-300' : 'text-stone-500',
+                )
+              }
+            >
+              <Icon name={n.icon} size={20} />
+              {n.label}
+            </NavLink>
+          ))}
+          <button
+            type="button"
+            className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium text-stone-500"
+            onClick={() => setMobileOpen(true)}
+          >
+            <Icon name="menu" size={20} />
+            More
+          </button>
+        </nav>
         <SignatureModal open={signatureOpen} onClose={() => setSignatureOpen(false)} />
       </div>
     </div>

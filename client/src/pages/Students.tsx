@@ -740,9 +740,9 @@ export default function Students() {
         }
       />
 
-      <div className="card mb-4 flex flex-wrap items-center gap-3 p-4">
+      <div className="card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center">
         <input
-          className="input max-w-xs"
+          className="input w-full sm:max-w-xs"
           placeholder="Search name, email or admission no…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -783,7 +783,56 @@ export default function Students() {
         ) : !data || data.data.length === 0 ? (
           <EmptyState title="No students found" hint="Try adjusting your search or filters." />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-stone-100 md:hidden dark:divide-stone-800">
+            {data.data.map((s) => (
+              <div key={s.id} className="flex flex-col gap-2 px-4 py-3">
+                <Link to={`/students/${s.id}`} className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800 dark:bg-brand-500/20 dark:text-brand-300">
+                    {initials(s.user.name)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium text-brand-800 dark:text-brand-300">{s.user.name}</div>
+                    <div className="text-xs text-stone-500">
+                      {s.admissionNumber}
+                      {s.classRoom ? ` · ${s.classRoom.name} ${s.classRoom.stream}` : ''}
+                    </div>
+                  </div>
+                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge
+                    className={
+                      s.user.isActive
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400'
+                    }
+                  >
+                    {s.user.isActive ? 'Active' : 'Disabled'}
+                  </Badge>
+                  {hasRole('ADMIN') && (
+                    <>
+                      <button
+                        className="btn-ghost min-h-10 px-2 text-xs"
+                        onClick={() => {
+                          setEditing(s);
+                          setModalOpen(true);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-ghost min-h-10 px-2 text-xs text-rose-500"
+                        onClick={() => setDeleting(s)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full">
               <thead className="border-b border-slate-200 dark:border-slate-800">
                 <tr>
