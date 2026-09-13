@@ -298,6 +298,35 @@ export const ICONS = {
       {P('M6 12v5c3 3 9 3 12 0v-5')}
     </>
   ),
+  /** Academic student — mortarboard + figure, same stroke family */
+  student: (
+    <>
+      {P('M2 9l10-5 10 5-10 5z')}
+      {P('M6 12v4c2.5 2.2 7.5 2.2 10 0v-4')}
+      {L(22, 9, 22, 14)}
+      {C(12, 18.5, 1.2)}
+      {P('M8 22v-1.2a4 4 0 014-4h0a4 4 0 014 4V22')}
+    </>
+  ),
+  /** Educator — podium / open book with figure */
+  teacher: (
+    <>
+      {C(12, 7, 3)}
+      {P('M6 21v-1a6 6 0 0112 0v1')}
+      {P('M4 21h16')}
+      {P('M8 14.5h8')}
+      {P('M9 14.5V12a3 3 0 016 0v2.5')}
+    </>
+  ),
+  /** Parent / family — two figures, consistent stroke */
+  parent: (
+    <>
+      {C(9, 7, 3)}
+      {P('M3 21v-1.5a6 6 0 0112 0V21')}
+      {C(17, 8, 2.4)}
+      {P('M15.2 21v-1.2a4.8 4.8 0 015.8-4.7')}
+    </>
+  ),
   book: (
     <>
       {P('M4 19.5A2.5 2.5 0 016.5 17H20')}

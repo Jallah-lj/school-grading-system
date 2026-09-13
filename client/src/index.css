@@ -12,6 +12,10 @@
   ::selection {
     @apply bg-brand-700/20 text-brand-950 dark:bg-brand-400/30 dark:text-white;
   }
+  :focus-visible {
+    outline: 2px solid #2d5442;
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -19,7 +23,7 @@
     @apply rounded-xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
     @apply btn bg-brand-700 text-white shadow-sm shadow-brand-900/20 hover:bg-brand-800 active:bg-brand-900;
@@ -34,7 +38,11 @@
     @apply btn text-stone-600 hover:bg-stone-200/70 dark:text-stone-300 dark:hover:bg-stone-800;
   }
   .input {
-    @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600 dark:border-stone-700 dark:bg-stone-800 dark:placeholder:text-stone-500;
+    @apply w-full min-h-11 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600 dark:border-stone-700 dark:bg-stone-800 dark:placeholder:text-stone-500;
+  }
+  select.input {
+    @apply appearance-none bg-[length:1rem] bg-[right_0.65rem_center] bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2378716c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   }
   .label {
     @apply mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300;
@@ -92,4 +100,8 @@
   html { -webkit-text-size-adjust: 100%; }
   body { overscroll-behavior-y: none; }
   input, select, textarea { font-size: 16px; }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

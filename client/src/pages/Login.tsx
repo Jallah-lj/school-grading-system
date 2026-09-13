@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Icon } from '../components/Icon';
-import { Spinner } from '../components/ui';
+import { RoleCard, Spinner } from '../components/ui';
 import { api, apiError, apiUrl } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { useQuery } from '../lib/useQuery';
@@ -97,7 +97,21 @@ export default function Login() {
             Teachers enter marks for their classes. Students and parents see published results,
             GPA and report cards as soon as they are out.
           </p>
-          <ul className="mt-8 space-y-3 text-sm text-brand-100/90">
+          <div className="mt-8 grid gap-2.5">
+            <RoleCard
+              role="parent"
+              description="Monitor academic progress, attendance and communication."
+            />
+            <RoleCard
+              role="student"
+              description="Access courses, assignments, grades and academic information."
+            />
+            <RoleCard
+              role="teacher"
+              description="Manage classes, assignments, attendance and student performance."
+            />
+          </div>
+          <ul className="mt-6 space-y-2 text-sm text-brand-100/80">
             {FEATURES.map((f) => (
               <li key={f} className="flex items-start gap-2.5">
                 <Icon name="check-circle" size={16} className="mt-0.5 shrink-0 text-amber-300" />

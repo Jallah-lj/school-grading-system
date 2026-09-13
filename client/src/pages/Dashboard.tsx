@@ -93,31 +93,12 @@ function AdminDashboard() {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total Students"
+          label="Students"
           value={data.counts.students}
           tone="brand"
+          hint={`${data.counts.teachers} teachers · ${data.counts.classes} classes · ${data.counts.subjects} subjects`}
           icon={statIcon(
             'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
-          )}
-        />
-        <StatCard
-          label="Total Teachers"
-          value={data.counts.teachers}
-          tone="moss"
-          icon={statIcon('M22 10L12 5 2 10l10 5 10-5zM6 12v5c3 3 9 3 12 0v-5')}
-        />
-        <StatCard
-          label="Classes"
-          value={data.counts.classes}
-          tone="emerald"
-          icon={statIcon('M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z')}
-        />
-        <StatCard
-          label="Subjects"
-          value={data.counts.subjects}
-          tone="amber"
-          icon={statIcon(
-            'M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z',
           )}
         />
         <StatCard
@@ -127,11 +108,7 @@ function AdminDashboard() {
           hint={data.activeSemester ? data.activeSemester.name : undefined}
           icon={statIcon('M23 6l-9.5 9.5-5-5L1 18M17 6h6v6')}
         />
-        <Link
-          to="/approvals"
-          className="block transition hover:scale-[1.02]"
-          title="Open the approval inbox"
-        >
+        <Link to="/approvals" className="block" title="Open the approval inbox">
           <StatCard
             label="Pending Submissions"
             value={data.pendingSubmissions}
@@ -151,19 +128,6 @@ function AdminDashboard() {
           tone="brand"
           icon={statIcon(
             'M8 7V3M16 7V3M3 11h18M5 5h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z',
-          )}
-        />
-        <StatCard
-          label="Top &amp; Review Lists"
-          value={
-            data.topStudents.length + data.bottomStudents.length > 0
-              ? `${data.topStudents.length} + ${data.bottomStudents.length}`
-              : '—'
-          }
-          tone="moss"
-          hint="top 5 and 5 needing support this term"
-          icon={statIcon(
-            'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
           )}
         />
       </div>
@@ -258,7 +222,23 @@ function AdminDashboard() {
         {data.recentResults.length === 0 ? (
           <EmptyState title="Nothing published yet" />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-stone-100 md:hidden dark:divide-stone-800">
+            {data.recentResults.map((r) => (
+              <div key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <div className="font-medium">{r.student}</div>
+                  <div className="text-xs text-stone-500">{r.subject}</div>
+                  <div className="mt-1 text-[11px] text-stone-400">{fmtDate(r.computedAt)}</div>
+                </div>
+                <div className="text-right">
+                  <Badge className={gradeBadgeClass(r.letterGrade)}>{r.letterGrade}</Badge>
+                  <div className="mt-1 text-sm font-semibold">{r.percentage.toFixed(1)}%</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full">
               <thead className="border-b border-slate-200 dark:border-slate-800">
                 <tr>
@@ -287,6 +267,7 @@ function AdminDashboard() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>
@@ -447,7 +428,22 @@ function StudentDashboard() {
             hint="You'll be notified when grades are published."
           />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="divide-y divide-stone-100 md:hidden dark:divide-stone-800">
+            {data.results.map((r) => (
+              <div key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div>
+                  <div className="font-medium">{r.subject.name}</div>
+                  <div className="text-xs text-stone-500">{r.remark}</div>
+                </div>
+                <div className="text-right">
+                  <Badge className={gradeBadgeClass(r.letterGrade)}>{r.letterGrade}</Badge>
+                  <div className="mt-1 text-sm font-semibold">{r.percentage.toFixed(1)}%</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full">
               <thead className="border-b border-slate-200 dark:border-slate-800">
                 <tr>
