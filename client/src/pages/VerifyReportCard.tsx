@@ -68,7 +68,7 @@ export default function VerifyReportCard() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8 dark:bg-slate-950">
+    <div className="verify-report-page min-h-screen bg-slate-100 py-8 dark:bg-slate-950">
       <div className="no-print mx-auto mb-4 flex max-w-3xl flex-col gap-2 px-4 sm:flex-row sm:items-center sm:justify-between">
         <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
           <Icon name="shield-check" size={13} /> Verified authentic
@@ -79,7 +79,7 @@ export default function VerifyReportCard() {
       </div>
 
       {/* White paper document — stays light in dark mode for printing */}
-      <div className="print-area mx-auto max-w-3xl overflow-hidden bg-white text-slate-900 shadow-lg">
+      <div className="verify-paper print-area mx-auto max-w-3xl overflow-hidden bg-white text-slate-900 shadow-lg">
         {/* Top band: navy with a thin gold rule */}
         <div className="h-2.5" style={{ backgroundColor: FOREST }} />
         <div className="h-0.5" style={{ backgroundColor: GOLD }} />
@@ -137,11 +137,7 @@ export default function VerifyReportCard() {
                 >
                   {label}
                 </div>
-                <div
-                  className="font-doc mt-0.5 truncate text-[15px] font-bold"
-                  style={{ color: '#232a33' }}
-                  title={value}
-                >
+                <div className="font-doc mt-0.5 text-[15px] font-bold break-words" style={{ color: '#232a33' }}>
                   {value}
                 </div>
               </div>
@@ -176,8 +172,36 @@ export default function VerifyReportCard() {
             SUBJECT PERFORMANCE
           </div>
           <div className="mb-2 mt-1 h-[2px] w-10" style={{ backgroundColor: GOLD }} />
-          <div className="overflow-x-auto">
-            <table className="min-w-[40rem] text-sm sm:min-w-0 sm:w-full">
+          <div className="space-y-2 sm:hidden">
+            {data.results.map((r, i) => (
+              <div
+                key={r.code}
+                className="rounded border px-3 py-2"
+                style={{ borderColor: HAIRLINE, backgroundColor: i % 2 === 0 ? ZEBRA : '#ffffff' }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-doc text-[13px] font-bold text-slate-900">{r.name}</div>
+                    <div className="font-doc text-[11px] text-slate-500">{r.code}</div>
+                  </div>
+                  <div className="font-doc text-[14px] font-bold" style={{ color: FOREST }}>
+                    {r.letterGrade}
+                  </div>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-[12px]">
+                  <div className="font-doc">Score: {r.percentage.toFixed(1)}%</div>
+                  <div className="font-doc">Point: {r.gradePoint.toFixed(1)}</div>
+                  <div className="font-doc">Rank: {ordinal(r.position)}</div>
+                  <div className="font-doc break-words" style={{ color: MUTED }}>
+                    {r.remark}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[40rem] text-sm">
               <thead>
                 <tr style={{ backgroundColor: FOREST, boxShadow: `inset 0 -2px 0 ${GOLD}` }}>
                   <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
@@ -214,7 +238,7 @@ export default function VerifyReportCard() {
                     }}
                   >
                     <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.code}</td>
-                    <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.name}</td>
+                    <td className="font-doc px-3 py-1.5 text-[13px] font-bold break-words">{r.name}</td>
                     <td className="font-doc px-3 py-1.5 text-right text-[13px]">
                       {r.percentage.toFixed(1)}%
                     </td>
@@ -230,7 +254,10 @@ export default function VerifyReportCard() {
                     <td className="font-doc px-3 py-1.5 text-center text-[13px]">
                       {ordinal(r.position)}
                     </td>
-                    <td className="font-doc px-3 py-1.5 text-[13px]" style={{ color: MUTED }}>
+                    <td
+                      className="font-doc px-3 py-1.5 text-[13px] break-words whitespace-normal"
+                      style={{ color: MUTED }}
+                    >
                       {r.remark}
                     </td>
                   </tr>
