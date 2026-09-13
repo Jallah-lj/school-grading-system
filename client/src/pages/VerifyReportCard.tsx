@@ -69,7 +69,7 @@ export default function VerifyReportCard() {
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 dark:bg-slate-950">
-      <div className="no-print mx-auto mb-4 flex max-w-3xl items-center justify-between px-4">
+      <div className="no-print mx-auto mb-4 flex max-w-3xl flex-col gap-2 px-4 sm:flex-row sm:items-center sm:justify-between">
         <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
           <Icon name="shield-check" size={13} /> Verified authentic
         </Badge>
@@ -79,13 +79,13 @@ export default function VerifyReportCard() {
       </div>
 
       {/* White paper document — stays light in dark mode for printing */}
-      <div className="print-area mx-auto max-w-3xl bg-white text-slate-900 shadow-lg">
+      <div className="print-area mx-auto max-w-3xl overflow-hidden bg-white text-slate-900 shadow-lg">
         {/* Top band: navy with a thin gold rule */}
         <div className="h-2.5" style={{ backgroundColor: FOREST }} />
         <div className="h-0.5" style={{ backgroundColor: GOLD }} />
 
         {/* Certificate header */}
-        <header className="px-8 pb-6 pt-8 text-center">
+        <header className="px-4 pb-6 pt-8 text-center sm:px-8">
           {data.school.hasBadge && (
             <div
               className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white p-1.5"
@@ -124,7 +124,7 @@ export default function VerifyReportCard() {
         </header>
 
         {/* Formal details grid */}
-        <div className="px-8">
+        <div className="px-4 sm:px-8">
           <div
             className="grid grid-cols-2 gap-px border sm:grid-cols-4"
             style={{ borderColor: FOREST, backgroundColor: HAIRLINE }}
@@ -150,7 +150,7 @@ export default function VerifyReportCard() {
         </div>
 
         {/* Navy summary band with gold dividers */}
-        <div className="px-8 pt-4">
+        <div className="px-4 pt-4 sm:px-8">
           <div className="grid grid-cols-3" style={{ backgroundColor: FOREST }}>
             {summary.map((k, i) => (
               <div
@@ -171,75 +171,77 @@ export default function VerifyReportCard() {
         </div>
 
         {/* Ruled results table */}
-        <div className="px-8 pt-5">
+        <div className="px-4 pt-5 sm:px-8">
           <div className="font-doc text-[11px] font-bold tracking-[0.22em]" style={{ color: FOREST }}>
             SUBJECT PERFORMANCE
           </div>
           <div className="mb-2 mt-1 h-[2px] w-10" style={{ backgroundColor: GOLD }} />
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ backgroundColor: FOREST, boxShadow: `inset 0 -2px 0 ${GOLD}` }}>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Code
-                </th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Subject
-                </th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Score
-                </th>
-                <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Grade
-                </th>
-                <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Point
-                </th>
-                <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Rank
-                </th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
-                  Remark
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.results.map((r, i) => (
-                <tr
-                  key={r.code}
-                  className="border-b"
-                  style={{
-                    borderColor: HAIRLINE,
-                    backgroundColor: i % 2 === 0 ? ZEBRA : '#ffffff',
-                  }}
-                >
-                  <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.code}</td>
-                  <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.name}</td>
-                  <td className="font-doc px-3 py-1.5 text-right text-[13px]">
-                    {r.percentage.toFixed(1)}%
-                  </td>
-                  <td
-                    className="font-doc px-3 py-1.5 text-center text-[13px] font-bold"
-                    style={{ color: FOREST }}
-                  >
-                    {r.letterGrade}
-                  </td>
-                  <td className="font-doc px-3 py-1.5 text-center text-[13px]">
-                    {r.gradePoint.toFixed(1)}
-                  </td>
-                  <td className="font-doc px-3 py-1.5 text-center text-[13px]">
-                    {ordinal(r.position)}
-                  </td>
-                  <td className="font-doc px-3 py-1.5 text-[13px]" style={{ color: MUTED }}>
-                    {r.remark}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-[40rem] text-sm sm:min-w-0 sm:w-full">
+              <thead>
+                <tr style={{ backgroundColor: FOREST, boxShadow: `inset 0 -2px 0 ${GOLD}` }}>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Code
+                  </th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Subject
+                  </th>
+                  <th className="px-3 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Score
+                  </th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Grade
+                  </th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Point
+                  </th>
+                  <th className="px-3 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Rank
+                  </th>
+                  <th className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white">
+                    Remark
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.results.map((r, i) => (
+                  <tr
+                    key={r.code}
+                    className="border-b"
+                    style={{
+                      borderColor: HAIRLINE,
+                      backgroundColor: i % 2 === 0 ? ZEBRA : '#ffffff',
+                    }}
+                  >
+                    <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.code}</td>
+                    <td className="font-doc px-3 py-1.5 text-[13px] font-bold">{r.name}</td>
+                    <td className="font-doc px-3 py-1.5 text-right text-[13px]">
+                      {r.percentage.toFixed(1)}%
+                    </td>
+                    <td
+                      className="font-doc px-3 py-1.5 text-center text-[13px] font-bold"
+                      style={{ color: FOREST }}
+                    >
+                      {r.letterGrade}
+                    </td>
+                    <td className="font-doc px-3 py-1.5 text-center text-[13px]">
+                      {r.gradePoint.toFixed(1)}
+                    </td>
+                    <td className="font-doc px-3 py-1.5 text-center text-[13px]">
+                      {ordinal(r.position)}
+                    </td>
+                    <td className="font-doc px-3 py-1.5 text-[13px]" style={{ color: MUTED }}>
+                      {r.remark}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Bordered remarks */}
-        <div className="space-y-3 px-8 pt-5">
+        <div className="space-y-3 px-4 pt-5 sm:px-8">
           {(
             [
               ["Class Teacher's Remarks", data.teacherRemarks],
@@ -261,7 +263,7 @@ export default function VerifyReportCard() {
         </div>
 
         {/* Signatures + QR verification panel */}
-        <div className="flex flex-wrap items-end justify-between gap-6 px-8 pb-7 pt-6">
+        <div className="flex flex-wrap items-end justify-between gap-6 px-4 pb-7 pt-6 sm:px-8">
           <div className="flex flex-wrap gap-10 text-xs" style={{ color: MUTED }}>
             {[
               { label: 'Class Teacher', sig: data.signatures?.classTeacher ?? null },

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Icon } from '../components/Icon';
@@ -1196,6 +1196,7 @@ function SchoolTab() {
   const [form, setForm] = useState({ name: '', motto: '', studentIdPrefix: 'SGS' });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const badgeInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [badgeVersion, setBadgeVersion] = useState(0);
   const [confirmRemoveBadge, setConfirmRemoveBadge] = useState(false);
@@ -1235,6 +1236,7 @@ function SchoolTab() {
       body.append('file', file);
       await api.post('/school/badge', body);
       toast('success', 'Badge updated — it now appears on all report cards');
+      if (badgeInputRef.current) badgeInputRef.current.value = '';
       setFile(null);
       setPreview((p) => {
         if (p) URL.revokeObjectURL(p);
@@ -1349,10 +1351,11 @@ function SchoolTab() {
             </div>
             <div className="flex-1 space-y-3">
               <input
+                ref={badgeInputRef}
                 id="badge-upload"
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                className="hidden"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml,image/heic,image/heif"
+                className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
                   setFile(f);
@@ -1362,9 +1365,18 @@ function SchoolTab() {
                   });
                 }}
               />
-              <label htmlFor="badge-upload" className="btn-secondary w-full cursor-pointer">
+              <button
+                type="button"
+                className="btn-secondary w-full"
+                onClick={() => {
+                  if (!badgeInputRef.current) return;
+                  badgeInputRef.current.value = '';
+                  badgeInputRef.current.click();
+                }}
+              >
                 Choose image…
-              </label>
+              </button>
+              <p className="truncate text-xs text-slate-400">{file ? file.name : 'No file selected'}</p>
               <button
                 className="btn-primary w-full"
                 onClick={() => void uploadBadge()}

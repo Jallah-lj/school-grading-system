@@ -196,85 +196,150 @@ function AdminReportCards() {
           hint="Click “Generate Cards” after grades have been approved."
         />
       ) : (
-        <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-slate-200 dark:border-slate-800">
-                <tr>
-                  <th className="th">Student</th>
-                  <th className="th">GPA</th>
-                  <th className="th">Position</th>
-                  <th className="th">Status</th>
-                  <th className="th">Code</th>
-                  <th className="th text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.data.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="border-b border-slate-100 last:border-0 dark:border-slate-800"
+        <>
+          <div className="space-y-3 sm:hidden">
+            {data.data.map((c) => (
+              <div key={c.id} className="card p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link
+                      to={`/students/${c.student.id}`}
+                      className="block truncate font-medium text-indigo-700 hover:underline dark:text-indigo-300"
+                    >
+                      {c.student.name}
+                    </Link>
+                    <div className="font-mono text-xs text-slate-400">{c.student.admissionNumber}</div>
+                  </div>
+                  <Badge className={statusBadgeClass(c.status)}>{c.status}</Badge>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400">GPA:</span>{' '}
+                    <span className="font-semibold">{c.gpa !== null ? c.gpa.toFixed(2) : '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 dark:text-slate-400">Position:</span>{' '}
+                    <span className="font-semibold">{c.position ?? '—'}</span>
+                  </div>
+                  <div className="col-span-2 truncate font-mono text-xs text-slate-400">
+                    Code: {c.verificationCode}
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  <Link
+                    to={`/verify/${c.verificationCode}`}
+                    target="_blank"
+                    className="btn-ghost px-2 py-1 text-xs"
                   >
-                    <td className="td">
-                      <Link
-                        to={`/students/${c.student.id}`}
-                        className="font-medium text-indigo-700 hover:underline dark:text-indigo-300"
+                    View
+                  </Link>
+                  <button className="btn-ghost px-2 py-1 text-xs" onClick={() => void downloadPdf(c)}>
+                    PDF
+                  </button>
+                  {c.status !== 'PUBLISHED' && (
+                    <>
+                      <button
+                        className="btn-ghost px-2 py-1 text-xs"
+                        onClick={() => {
+                          setEditing(c);
+                          setTeacherRemarks(c.teacherRemarks ?? '');
+                          setPrincipalRemarks(c.principalRemarks ?? '');
+                        }}
                       >
-                        {c.student.name}
-                      </Link>
-                      <div className="font-mono text-xs text-slate-400">
-                        {c.student.admissionNumber}
-                      </div>
-                    </td>
-                    <td className="td font-semibold">{c.gpa !== null ? c.gpa.toFixed(2) : '—'}</td>
-                    <td className="td">{c.position ?? '—'}</td>
-                    <td className="td">
-                      <Badge className={statusBadgeClass(c.status)}>{c.status}</Badge>
-                    </td>
-                    <td className="td font-mono text-xs text-slate-400">{c.verificationCode}</td>
-                    <td className="td text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link
-                          to={`/verify/${c.verificationCode}`}
-                          target="_blank"
-                          className="btn-ghost px-2 py-1 text-xs"
-                        >
-                          View
-                        </Link>
-                        <button
-                          className="btn-ghost px-2 py-1 text-xs"
-                          onClick={() => void downloadPdf(c)}
-                        >
-                          PDF
-                        </button>
-                        {c.status !== 'PUBLISHED' && (
-                          <>
-                            <button
-                              className="btn-ghost px-2 py-1 text-xs"
-                              onClick={() => {
-                                setEditing(c);
-                                setTeacherRemarks(c.teacherRemarks ?? '');
-                                setPrincipalRemarks(c.principalRemarks ?? '');
-                              }}
-                            >
-                              Remarks
-                            </button>
-                            <button
-                              className="btn-ghost px-2 py-1 text-xs text-indigo-500"
-                              onClick={() => void publishOne(c)}
-                            >
-                              Publish
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        Remarks
+                      </button>
+                      <button
+                        className="btn-ghost px-2 py-1 text-xs text-indigo-500"
+                        onClick={() => void publishOne(c)}
+                      >
+                        Publish
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+          <div className="card hidden overflow-hidden sm:block">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="th">Student</th>
+                    <th className="th">GPA</th>
+                    <th className="th">Position</th>
+                    <th className="th">Status</th>
+                    <th className="th">Code</th>
+                    <th className="th text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.data.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="border-b border-slate-100 last:border-0 dark:border-slate-800"
+                    >
+                      <td className="td">
+                        <Link
+                          to={`/students/${c.student.id}`}
+                          className="font-medium text-indigo-700 hover:underline dark:text-indigo-300"
+                        >
+                          {c.student.name}
+                        </Link>
+                        <div className="font-mono text-xs text-slate-400">
+                          {c.student.admissionNumber}
+                        </div>
+                      </td>
+                      <td className="td font-semibold">{c.gpa !== null ? c.gpa.toFixed(2) : '—'}</td>
+                      <td className="td">{c.position ?? '—'}</td>
+                      <td className="td">
+                        <Badge className={statusBadgeClass(c.status)}>{c.status}</Badge>
+                      </td>
+                      <td className="td font-mono text-xs text-slate-400">{c.verificationCode}</td>
+                      <td className="td text-right">
+                        <div className="flex justify-end gap-1">
+                          <Link
+                            to={`/verify/${c.verificationCode}`}
+                            target="_blank"
+                            className="btn-ghost px-2 py-1 text-xs"
+                          >
+                            View
+                          </Link>
+                          <button
+                            className="btn-ghost px-2 py-1 text-xs"
+                            onClick={() => void downloadPdf(c)}
+                          >
+                            PDF
+                          </button>
+                          {c.status !== 'PUBLISHED' && (
+                            <>
+                              <button
+                                className="btn-ghost px-2 py-1 text-xs"
+                                onClick={() => {
+                                  setEditing(c);
+                                  setTeacherRemarks(c.teacherRemarks ?? '');
+                                  setPrincipalRemarks(c.principalRemarks ?? '');
+                                }}
+                              >
+                                Remarks
+                              </button>
+                              <button
+                                className="btn-ghost px-2 py-1 text-xs text-indigo-500"
+                                onClick={() => void publishOne(c)}
+                              >
+                                Publish
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       <Modal
