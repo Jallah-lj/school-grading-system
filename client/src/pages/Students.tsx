@@ -926,6 +926,7 @@ export default function Students() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         {data && data.total > data.pageSize && (
           <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 dark:border-slate-800">

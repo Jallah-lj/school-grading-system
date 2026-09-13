@@ -477,6 +477,7 @@ function StudentDashboard() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
       <Link
