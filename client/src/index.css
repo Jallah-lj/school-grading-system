@@ -79,11 +79,26 @@
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
   body {
     background: #fff !important;
   }
   .no-print {
     display: none !important;
+  }
+  .verify-report-page {
+    min-height: auto !important;
+    background: #fff !important;
+    padding: 0 !important;
+  }
+  .verify-paper {
+    width: 100% !important;
+    max-width: none !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
   .print-area {
     box-shadow: none !important;

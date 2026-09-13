@@ -20,6 +20,7 @@ function AdminReportCards() {
   const [teacherRemarks, setTeacherRemarks] = useState('');
   const [principalRemarks, setPrincipalRemarks] = useState('');
   const [publishAllOpen, setPublishAllOpen] = useState(false);
+  const [mobileAction, setMobileAction] = useState<'generate' | 'publish' | 'csv'>('generate');
   const [busy, setBusy] = useState(false);
 
   const { data: year } = useQuery(
@@ -133,6 +134,18 @@ function AdminReportCards() {
     }
   };
 
+  const runMobileAction = () => {
+    if (mobileAction === 'generate') {
+      void generate();
+      return;
+    }
+    if (mobileAction === 'publish') {
+      setPublishAllOpen(true);
+      return;
+    }
+    void downloadClassCsv();
+  };
+
   return (
     <div className="space-y-4">
       <div className="card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -163,24 +176,56 @@ function AdminReportCards() {
             ))}
           </select>
         </div>
-        <div className="flex items-end gap-2 sm:col-span-2">
-          <button className="btn-primary" onClick={() => void generate()} disabled={!ready || busy}>
-            <Icon name="settings" size={15} /> Generate Cards
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => setPublishAllOpen(true)}
-            disabled={!ready}
-          >
-            <Icon name="megaphone" size={15} /> Publish All
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={() => void downloadClassCsv()}
-            disabled={!ready}
-          >
-            <Icon name="download" size={15} /> Class CSV
-          </button>
+        <div className="sm:col-span-2">
+          <div className="grid gap-2 sm:hidden">
+            <div>
+              <label className="label">Function</label>
+              <select
+                className="input"
+                value={mobileAction}
+                onChange={(e) => setMobileAction(e.target.value as typeof mobileAction)}
+              >
+                <option value="generate">Generate Cards</option>
+                <option value="publish">Publish All</option>
+                <option value="csv">Download Class CSV</option>
+              </select>
+            </div>
+            <button
+              className="btn-primary w-full"
+              onClick={runMobileAction}
+              disabled={!ready || (mobileAction === 'generate' && busy)}
+            >
+              <Icon
+                name={mobileAction === 'publish' ? 'megaphone' : mobileAction === 'csv' ? 'download' : 'settings'}
+                size={15}
+              />{' '}
+              {mobileAction === 'publish'
+                ? 'Publish All'
+                : mobileAction === 'csv'
+                  ? 'Class CSV'
+                  : 'Generate Cards'}
+            </button>
+          </div>
+
+          <div className="hidden flex-wrap items-end gap-2 sm:flex">
+            <button className="btn-primary" onClick={() => void generate()} disabled={!ready || busy}>
+              <Icon name="settings" size={15} /> Generate Cards
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => setPublishAllOpen(true)}
+              disabled={!ready}
+            >
+              <Icon name="megaphone" size={15} /> Publish All
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => void downloadClassCsv()}
+              disabled={!ready}
+            >
+              <Icon name="download" size={15} /> Class CSV
+            </button>
+          </div>
         </div>
       </div>
 
