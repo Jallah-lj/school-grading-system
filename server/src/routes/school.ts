@@ -16,7 +16,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (/^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/.test(file.mimetype)) cb(null, true);
+    if (/^image\/(png|jpe?g|webp|gif|bmp|svg\+xml|heic|heif)$/.test(file.mimetype)) cb(null, true);
     else cb(null, false);
   },
 });
@@ -117,7 +117,7 @@ schoolRouter.post(
   ah(async (req, res) => {
     if (!req.file)
       throw AppError.badRequest(
-        'Attach an image file in the `file` field (PNG/JPG/SVG/WebP, max 5 MB)',
+        'Attach an image file in the `file` field (PNG/JPG/SVG/WebP/HEIC, max 5 MB)',
       );
     let processed;
     try {
