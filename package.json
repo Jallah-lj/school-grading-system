@@ -2,7 +2,7 @@
   "name": "school-grading-system",
   "version": "1.0.0",
   "private": true,
-  "description": "School Grading System \u2014 monorepo root. Orchestrates the React client (client/) and the Express + Prisma API (server/) so the whole repository can be installed, built and started from the root (e.g. on Render with the default build command).",
+  "description": "School Grading System — monorepo root. Orchestrates the React client (client/) and the Express + Prisma API (server/) so the whole repository can be installed, built and started from the root (e.g. on Render with the default build command).",
   "scripts": {
     "build": "npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix server install --include=dev && npm --prefix server run build",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build && node scripts/verify-routes.mjs",
@@ -21,7 +21,7 @@
     "format:check": "prettier --check ."
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=20.19.0",
     "npm": ">=10.0.0"
   },
   "license": "MIT",

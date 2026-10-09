@@ -246,7 +246,7 @@ export default function Login() {
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                       title={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 dark:hover:bg-stone-800 dark:hover:text-stone-300"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-600/40 dark:hover:bg-stone-800 dark:hover:text-stone-300"
                     >
                       <Icon name={showPassword ? 'eye-off' : 'eye'} size={16} />
                     </button>

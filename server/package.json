@@ -12,7 +12,7 @@
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "test": "tsx src/__tests__/run-tests.ts",
-    "test:unit": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/services/pdf-layout.test.ts",
+    "test:unit": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/config/envSchema.test.ts && tsx src/services/pdf-layout.test.ts",
     "test:api": "tsx src/__tests__/run-tests.ts"
   },
   "prisma": {
@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
-    "@types/nodemailer": "^8.0.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -30,10 +29,10 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^10.0.16",
     "pdfkit": "^0.15.1",
     "qrcode": "^1.5.4",
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
