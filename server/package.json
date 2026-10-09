@@ -12,7 +12,7 @@
     "prisma:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "test": "tsx src/__tests__/run-tests.ts",
-    "test:unit": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/services/pdf-layout.test.ts",
+    "test:unit": "tsx src/lib/grading.test.ts && tsx src/config/databaseUrl.test.ts && tsx src/config/tokenTtl.test.ts && tsx src/config/envSchema.test.ts && tsx src/services/pdf-layout.test.ts",
     "test:api": "tsx src/__tests__/run-tests.ts"
   },
   "prisma": {
