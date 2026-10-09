@@ -1,8 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+/* Keep the existing JS theme (colours, fonts) working under Tailwind v4. */
+@config "../tailwind.config.js";
+/* The app toggles the `dark` class on <html>, so dark variants must follow it. */
+@custom-variant dark (&:is(.dark *));
 
 @layer base {
+  /* Tailwind v3 defaulted border colour to gray-200; v4 defaults to currentColor. Keep v3 behaviour. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
   html {
     @apply antialiased;
   }
@@ -23,22 +33,22 @@
     @apply rounded-xl border border-stone-200 bg-white shadow-sm dark:border-stone-800 dark:bg-stone-900;
   }
   .btn {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand-700 text-white shadow-sm shadow-brand-900/20 hover:bg-brand-800 active:bg-brand-900;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50 bg-brand-700 text-white shadow-sm shadow-brand-900/20 hover:bg-brand-800 active:bg-brand-900;
   }
   .btn-secondary {
-    @apply btn border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50 border border-stone-300 bg-white text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700;
   }
   .btn-danger {
-    @apply btn bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50 bg-rose-600 text-white hover:bg-rose-700 active:bg-rose-800;
   }
   .btn-ghost {
-    @apply btn text-stone-600 hover:bg-stone-200/70 dark:text-stone-300 dark:hover:bg-stone-800;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-600/40 disabled:pointer-events-none disabled:opacity-50 text-stone-600 hover:bg-stone-200/70 dark:text-stone-300 dark:hover:bg-stone-800;
   }
   .input {
-    @apply w-full min-h-11 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-1 focus:ring-brand-600 dark:border-stone-700 dark:bg-stone-800 dark:placeholder:text-stone-500;
+    @apply w-full min-h-11 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus:border-brand-600 focus:outline-hidden focus:ring-1 focus:ring-brand-600 dark:border-stone-700 dark:bg-stone-800 dark:placeholder:text-stone-500;
   }
   select.input {
     @apply appearance-none bg-[length:1rem] bg-[right_0.65rem_center] bg-no-repeat pr-9;
@@ -112,8 +122,14 @@
 }
 
 @media (max-width: 640px) {
-  html { -webkit-text-size-adjust: 100%; }
-  input, select, textarea { font-size: 16px; }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 .pb-safe {

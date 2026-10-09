@@ -13,7 +13,8 @@ const base = {
   ACCESS_TOKEN_TTL: '15m',
 };
 
-const parse = (overrides: Record<string, unknown>) => envSchema.safeParse({ ...base, ...overrides });
+const parse = (overrides: Record<string, unknown>) =>
+  envSchema.safeParse({ ...base, ...overrides });
 
 const messages = (result: ReturnType<typeof parse>) =>
   result.success ? [] : result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`);
@@ -23,11 +24,20 @@ assert.equal(parse({}).success, true);
 
 // Secrets shorter than 32 characters are rejected.
 assert.equal(parse({ JWT_ACCESS_SECRET: 'short-secret-1234' }).success, false);
-assert.match(messages(parse({ JWT_REFRESH_SECRET: 'short-secret-1234' })).join('\n'), /at least 32 characters/);
+assert.match(
+  messages(parse({ JWT_REFRESH_SECRET: 'short-secret-1234' })).join('\n'),
+  /at least 32 characters/,
+);
 
 // The placeholder values from server/.env.example are rejected, even when long enough.
-assert.equal(parse({ JWT_ACCESS_SECRET: 'change-me-access-secret-value-padded-out' }).success, false);
-assert.equal(parse({ JWT_REFRESH_SECRET: 'change-me-refresh-secret-value-padded-out' }).success, false);
+assert.equal(
+  parse({ JWT_ACCESS_SECRET: 'change-me-access-secret-value-padded-out' }).success,
+  false,
+);
+assert.equal(
+  parse({ JWT_REFRESH_SECRET: 'change-me-refresh-secret-value-padded-out' }).success,
+  false,
+);
 assert.match(
   messages(parse({ JWT_ACCESS_SECRET: 'change-me-access-secret-value-padded-out' })).join('\n'),
   /placeholder value/,

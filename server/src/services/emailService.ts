@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 
 export interface EmailOptions {
   to: string;
@@ -18,7 +18,7 @@ export interface NotificationProvider {
  * falls back to a console (simulated) mode that logs the email instead of sending.
  */
 export class EmailNotificationProvider implements NotificationProvider {
-  private transporter: nodemailer.Transporter | null = null;
+  private transporter: Transporter | null = null;
   private consoleMode = false;
 
   constructor() {
@@ -45,11 +45,15 @@ export class EmailNotificationProvider implements NotificationProvider {
     }
 
     if (this.consoleMode) {
-      console.info('[Email Provider] Running in console/simulated mode. Emails will be logged, not sent.');
+      console.info(
+        '[Email Provider] Running in console/simulated mode. Emails will be logged, not sent.',
+      );
     }
   }
 
-  async sendEmail(options: EmailOptions): Promise<{ sent: boolean; messageId?: string; error?: string }> {
+  async sendEmail(
+    options: EmailOptions,
+  ): Promise<{ sent: boolean; messageId?: string; error?: string }> {
     const from = options.from || process.env.EMAIL_FROM || 'noreply@school-grading-system.local';
     const to = options.to;
     const subject = options.subject;
