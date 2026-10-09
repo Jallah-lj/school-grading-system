@@ -88,6 +88,36 @@ const NAV: NavItem[] = [
 
 const SECTIONS = ['Academic', 'People', 'Operations', 'System'];
 
+const SIDEBAR_COLLAPSE_KEY = 'sgs.sidebar';
+
+/** Uniform, touch-friendly icon button for header actions (with tooltip). */
+function HeaderIconButton({
+  label,
+  onClick,
+  pressed,
+  className,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      aria-pressed={pressed}
+      className={cx('btn-ghost min-h-11 min-w-11 px-0', className)}
+    >
+      {children}
+    </button>
+  );
+}
+
 function ThemeToggle() {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
   const toggle = () => {
@@ -97,14 +127,9 @@ function ThemeToggle() {
     localStorage.setItem('sgs.theme', next ? 'dark' : 'light');
   };
   return (
-    <button
-      onClick={toggle}
-      className="btn-ghost px-2.5 py-2"
-      aria-label="Toggle theme"
-      title="Toggle dark / light mode"
-    >
+    <HeaderIconButton label="Toggle dark / light mode" onClick={toggle}>
       <Icon name={dark ? 'sun' : 'moon'} size={18} />
-    </button>
+    </HeaderIconButton>
   );
 }
 
@@ -203,29 +228,22 @@ function NotificationBell() {
   return (
     <div className="relative" ref={ref}>
       <button
-        className="btn-ghost relative px-2.5 py-2"
+        className="btn-ghost relative min-h-11 min-w-11 px-0"
         onClick={() => {
           setOpen((o) => !o);
           if (!open) void load();
         }}
-        aria-label="Notifications"
+        aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ''}`}
+        title="Notifications"
+        aria-haspopup="true"
+        aria-expanded={open}
       >
-        <svg
-          className="h-5 w-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />
-        </svg>
-          {unread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-stone-900">
-              {unread > 9 ? '9+' : unread}
-            </span>
-          )}
+        <Icon name="bell" size={18} />
+        {unread > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-stone-950">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
       </button>
       {open && (
         <div className="card absolute right-0 z-40 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden p-0">
@@ -293,20 +311,10 @@ function NotificationBell() {
                     setDeletingId(n.id);
                   }}
                   title="Delete notification"
-                  aria-label="Delete notification"
+                  aria-label={`Delete notification: ${n.title}`}
                   className="absolute right-2 top-2.5 rounded-md p-1 text-stone-300 transition hover:bg-rose-50 hover:text-rose-600 focus:opacity-100 dark:text-stone-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 sm:opacity-0 sm:group-hover:opacity-100"
                 >
-                  <svg
-                    className="h-3.5 w-3.5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
+                  <Icon name="x" size={14} />
                 </button>
               </div>
             ))}
@@ -338,6 +346,95 @@ function NotificationBell() {
   );
 }
 
+/** Compact account menu: identity + profile shortcut + sign out. */
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  if (!user) return null;
+  const showProfile = user.role === 'TEACHER' || user.role === 'STUDENT';
+
+  const itemClass =
+    'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-stone-700 transition hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800';
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        title="Account"
+        aria-label={`Account menu (${user.name})`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="ml-0.5 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-bold text-brand-950 shadow-sm ring-2 ring-transparent transition focus:outline-hidden focus-visible:ring-amber-500/60 hover:ring-amber-400/60"
+      >
+        {initials(user.name)}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label="Account"
+          className="card absolute right-0 z-40 mt-2 w-60 overflow-hidden p-0"
+        >
+          <div className="border-b border-stone-200 px-4 py-3 dark:border-stone-800">
+            <div className="truncate text-sm font-semibold text-stone-900 dark:text-white">
+              {user.name}
+            </div>
+            <div className="truncate text-xs text-stone-400">{user.email}</div>
+            <div className="mt-1.5">
+              <span className="badge bg-brand-100 uppercase tracking-wide text-brand-800 dark:bg-brand-500/15 dark:text-brand-300">
+                {user.role}
+              </span>
+            </div>
+          </div>
+          {showProfile && (
+            <button
+              role="menuitem"
+              className={itemClass}
+              onClick={() => {
+                setOpen(false);
+                navigate('/my-profile');
+              }}
+            >
+              <Icon name="users" size={16} className="text-stone-400" />
+              My profile
+            </button>
+          )}
+          <button
+            role="menuitem"
+            className={itemClass}
+            onClick={() => {
+              setOpen(false);
+              void logout().then(() => navigate('/login'));
+            }}
+          >
+            <Icon name="log-out" size={16} className="text-stone-400" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppLayout() {
   const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
@@ -345,6 +442,17 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState(0);
+  // Desktop icon-rail mode (persisted). The mobile drawer is always expanded.
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === 'collapsed',
+  );
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      localStorage.setItem(SIDEBAR_COLLAPSE_KEY, c ? 'expanded' : 'collapsed');
+      return !c;
+    });
 
   const links = NAV.filter((n) => user && n.roles.includes(user.role));
   const [school, setSchool] = useState<SchoolPublicInfo | null>(null);
@@ -404,13 +512,15 @@ export function AppLayout() {
     document.title = `${prefix} | ${schoolName}`;
   }, [school, location.pathname]);
 
-  const sidebar = (
-    <div className="flex h-full flex-col bg-brand-950 text-brand-100">
+  const sidebar = (isCollapsed: boolean) => (
+    <div className="sidebar-scope flex h-full flex-col bg-brand-950">
       {/* Brand block */}
-      <div className="border-b border-white/10 px-5 pb-4 pt-5">
-        <div className="flex items-center gap-3">
+      <div
+        className={cx('border-b border-white/[0.08] pt-5', isCollapsed ? 'px-3 pb-4' : 'px-5 pb-5')}
+      >
+        <div className={cx('flex items-center', isCollapsed ? 'justify-center' : 'gap-3')}>
           {school?.hasBadge ? (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/95 p-1 shadow-sm ring-1 ring-white/20">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/95 p-1 shadow-sm ring-1 ring-white/20">
               <img
                 src={apiUrl('/school/badge')}
                 alt="School badge"
@@ -418,81 +528,121 @@ export function AppLayout() {
               />
             </div>
           ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 font-display text-xl font-bold text-brand-950 shadow-md ring-1 ring-white/20">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 font-display text-lg font-bold text-brand-950 shadow-md ring-1 ring-white/20">
               {(school?.name ?? 'S')[0]}
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
-              School grading
+          {!isCollapsed && (
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300/90">
+                School portal
+              </div>
+              <div
+                className="truncate font-display text-[17px] font-semibold leading-snug text-white"
+                title={school?.name ?? 'School Portal'}
+              >
+                {school?.name ?? 'School Portal'}
+              </div>
             </div>
-            <div
-              className="truncate font-display text-[17px] font-semibold leading-snug text-white"
-              title={school?.name ?? 'School Portal'}
-            >
-              {school?.name ?? 'School Portal'}
-            </div>
-          </div>
+          )}
         </div>
-        {school?.motto ? (
-          <p className="mt-4 truncate border-t border-white/10 pt-3 text-xs italic leading-snug text-brand-200/80">
-            “{school.motto}”
-          </p>
-        ) : (
-          <p className="mt-4 truncate border-t border-white/10 pt-3 text-[11px] font-medium uppercase tracking-wider text-brand-300/60">
-            Student &amp; staff portal
-          </p>
-        )}
-        {school?.academicYear && (
-          <div className="mt-3 inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-amber-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-300 ring-1 ring-amber-300/25">
-            <Icon name="calendar" size={11} />
-            <span className="truncate">{school.academicYear}</span>
-          </div>
+        {!isCollapsed && (
+          <>
+            {school?.motto ? (
+              <p className="mt-4 truncate border-t border-white/[0.08] pt-3 text-xs italic leading-snug text-brand-200/80">
+                “{school.motto}”
+              </p>
+            ) : (
+              <p className="mt-4 truncate border-t border-white/[0.08] pt-3 text-[11px] font-medium uppercase tracking-wider text-brand-300/60">
+                Student &amp; staff portal
+              </p>
+            )}
+            {school?.academicYear && (
+              <div className="mt-3 inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-amber-300/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-300 ring-1 ring-amber-300/25">
+                <Icon name="calendar" size={11} className="shrink-0" />
+                <span className="truncate">{school.academicYear}</span>
+              </div>
+            )}
+          </>
         )}
       </div>
-      <nav className="flex-1 overflow-y-auto px-2 py-3">
-        {SECTIONS.map((section) => {
+
+      {/* Navigation — scrolls independently when the viewport is short */}
+      <nav
+        className={cx('sidebar-scroll flex-1 overflow-y-auto overscroll-contain py-4 px-2')}
+        aria-label="Main"
+      >
+        {SECTIONS.map((section, idx) => {
           const items = links.filter((n) => n.section === section);
           if (items.length === 0) return null;
           return (
-            <div key={section} className="mb-1">
-              <div className="nav-section">{section}</div>
-              {items.map((n) => (
-                <NavLink
-                  key={n.to}
-                  to={n.to}
-                  end={n.to === '/'}
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    cx('navlink-sidebar', isActive && 'navlink-sidebar-active')
-                  }
-                >
-                  <Icon name={n.icon} size={18} />
-                  <span className="flex-1">{n.label}</span>
-                  {n.to === '/approvals' && pendingApprovals > 0 && (
-                    <span
-                      className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-brand-950"
-                      title={`${pendingApprovals} submission(s) awaiting approval`}
-                    >
-                      {pendingApprovals > 99 ? '99+' : pendingApprovals}
-                    </span>
+            <div key={section}>
+              {isCollapsed ? (
+                <div
+                  className={cx(
+                    'nav-section-collapsed',
+                    idx === 0 && 'nav-section-collapsed-first',
                   )}
-                </NavLink>
-              ))}
+                  aria-hidden="true"
+                />
+              ) : (
+                <div
+                  className={cx('nav-section', idx === 0 && 'nav-section-first')}
+                  aria-hidden="true"
+                >
+                  {section}
+                </div>
+              )}
+              <ul className={cx('mb-1 space-y-0.5', isCollapsed && 'mb-0 space-y-1')}>
+                {items.map((n) => (
+                  <li key={n.to}>
+                    <NavLink
+                      to={n.to}
+                      end={n.to === '/'}
+                      onClick={() => setMobileOpen(false)}
+                      title={isCollapsed ? n.label : undefined}
+                      aria-label={n.label}
+                      className={({ isActive }) =>
+                        cx(
+                          'navlink-sidebar',
+                          isActive && 'navlink-sidebar-active',
+                          isCollapsed && 'justify-center px-0',
+                        )
+                      }
+                    >
+                      <Icon name={n.icon} size={18} className="shrink-0" />
+                      {!isCollapsed && <span className="flex-1 truncate">{n.label}</span>}
+                      {n.to === '/approvals' && pendingApprovals > 0 && !isCollapsed && (
+                        <span
+                          className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-brand-950"
+                          title={`${pendingApprovals} submission(s) awaiting approval`}
+                        >
+                          {pendingApprovals > 99 ? '99+' : pendingApprovals}
+                        </span>
+                      )}
+                      {n.to === '/approvals' && pendingApprovals > 0 && isCollapsed && (
+                        <span
+                          className="absolute right-2.5 top-1.5 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-brand-950"
+                          title={`${pendingApprovals} submission(s) awaiting approval`}
+                        />
+                      )}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
             </div>
           );
         })}
       </nav>
-      <div className="border-t border-white/10 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-300 text-xs font-bold text-brand-950">
+
+      {/* Signed-in user — anchored to the bottom */}
+      {isCollapsed ? (
+        <div className="flex flex-col items-center gap-2.5 border-t border-white/[0.08] px-2 py-4">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-bold text-brand-950 ring-1 ring-white/15"
+            title={user?.name}
+          >
             {initials(user?.name ?? '?')}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium text-white">{user?.name}</div>
-            <div className="text-[11px] uppercase tracking-wider text-brand-300/60">
-              {user?.role.toLowerCase()}
-            </div>
           </div>
           <button
             className="rounded-lg p-2 text-brand-200/70 transition hover:bg-white/10 hover:text-white"
@@ -502,20 +652,36 @@ export function AppLayout() {
               void logout().then(() => navigate('/login'));
             }}
           >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
-            </svg>
+            <Icon name="log-out" size={16} />
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="border-t border-white/[0.08] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-xs font-bold text-brand-950 ring-1 ring-white/15">
+              {initials(user?.name ?? '?')}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium text-white" title={user?.name}>
+                {user?.name}
+              </div>
+              <div className="text-[11px] uppercase tracking-wider text-brand-300/60">
+                {user?.role.toLowerCase()}
+              </div>
+            </div>
+            <button
+              className="rounded-lg p-2 text-brand-200/70 transition hover:bg-white/10 hover:text-white"
+              title="Sign out"
+              aria-label="Sign out"
+              onClick={() => {
+                void logout().then(() => navigate('/login'));
+              }}
+            >
+              <Icon name="log-out" size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -527,58 +693,103 @@ export function AppLayout() {
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    // Move focus into the drawer for keyboard and screen-reader users.
+    requestAnimationFrame(() => drawerRef.current?.focus());
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
   }, [mobileOpen]);
 
-  const mobilePrimary = links.filter((n) =>
-    ['/', '/grades', '/grade-entry', '/students', '/report-cards'].includes(n.to),
-  ).slice(0, 4);
+  // Close the drawer if the viewport grows past the lg breakpoint.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileOpen(false);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  const mobilePrimary = links
+    .filter((n) => ['/', '/grades', '/grade-entry', '/students', '/report-cards'].includes(n.to))
+    .slice(0, 4);
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-brand-950 lg:block">
-        {sidebar}
+      {/* Desktop sidebar — supports a persisted collapsed (icon-rail) mode */}
+      <aside
+        className={cx(
+          'fixed inset-y-0 left-0 z-30 hidden border-r border-white/[0.06] bg-brand-950 transition-[width] duration-200 lg:block',
+          collapsed ? 'lg:w-[4.75rem]' : 'lg:w-64',
+        )}
+      >
+        {sidebar(collapsed)}
       </aside>
+
+      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-brand-950/60" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-[min(18rem,88vw)] bg-brand-950 shadow-xl">
-            {sidebar}
+          <div
+            className="drawer-fade absolute inset-0 bg-brand-950/60 backdrop-blur-[2px]"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside
+            ref={drawerRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Main menu"
+            className="drawer-in absolute inset-y-0 left-0 w-[min(18rem,88vw)] bg-brand-950 shadow-2xl outline-none"
+          >
+            {sidebar(false)}
           </aside>
         </div>
       )}
-      <div className="flex min-h-screen flex-1 flex-col pb-16 lg:pl-64 lg:pb-0">
-        <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-stone-200 bg-white px-3 py-2.5 dark:border-stone-800 dark:bg-stone-950 sm:px-4">
-          <button
-            className="btn-ghost min-h-11 min-w-11 px-2 lg:hidden"
+
+      <div
+        className={cx(
+          'flex min-h-screen w-full min-w-0 flex-1 flex-col pb-16 transition-[padding] duration-200 lg:pb-0',
+          collapsed ? 'lg:pl-[4.75rem]' : 'lg:pl-64',
+        )}
+      >
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-1 border-b border-stone-200 bg-white px-3 backdrop-blur supports-[backdrop-filter]:bg-white/85 dark:border-stone-800 dark:bg-stone-950 dark:supports-[backdrop-filter]:bg-stone-950/85 sm:px-6 lg:px-8">
+          <HeaderIconButton
+            label="Open menu"
             onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            className="lg:hidden"
           >
             <Icon name="menu" size={20} />
-          </button>
-          <div className="min-w-0 flex-1 truncate text-sm font-semibold text-stone-800 dark:text-stone-100 lg:hidden">
+          </HeaderIconButton>
+          <HeaderIconButton
+            label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={toggleCollapsed}
+            className="hidden lg:inline-flex"
+          >
+            <Icon name={collapsed ? 'chevron-right' : 'chevron-left'} size={18} />
+          </HeaderIconButton>
+          <div className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-stone-800 dark:text-stone-100 lg:hidden">
             {school?.name ?? 'School Portal'}
           </div>
           <div className="hidden flex-1 lg:block" />
           <PwaControls />
           {hasRole('TEACHER', 'ADMIN') && (
-            <button
-              className="btn-ghost min-h-11 min-w-11 px-2.5"
-              title="My digital signature"
-              aria-label="My digital signature"
-              onClick={() => setSignatureOpen(true)}
-            >
+            <HeaderIconButton label="My digital signature" onClick={() => setSignatureOpen(true)}>
               <Icon name="pen" size={18} />
-            </button>
+            </HeaderIconButton>
           )}
           <NotificationBell />
           <ThemeToggle />
+          <div
+            className="mx-1 hidden h-6 w-px bg-stone-200 sm:block dark:bg-stone-800"
+            aria-hidden="true"
+          />
+          <UserMenu />
         </header>
-        <main className="flex-1 px-3 py-5 sm:px-6 lg:px-8">
-          <Outlet />
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[1500px]">
+            <Outlet />
+          </div>
         </main>
         <nav
           className="fixed inset-x-0 bottom-0 z-20 flex border-t border-stone-200 bg-white pb-safe dark:border-stone-800 dark:bg-stone-950 lg:hidden"
